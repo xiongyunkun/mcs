@@ -1,0 +1,70 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<div class="page-header">
+<h3>$User.name$信息</h3>
+</div>
+<form action="/usermgr/domod" method=post>
+<table class="table table-striped table-bordered table-hover" style="width:80%;">
+<tr>
+<td width="20%" height="26" class="td_bg" style="text-align: center;">账号:</td>
+<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="account" value="$User.account$" readonly="true"></td>
+</tr>
+<tr>
+<td width="20%" height="26" class="td_bg" style="text-align: center;">密码:</td>
+<td width="80%" height="26" style="text-align: left;" class="content"><input type=text name=password></td>
+</tr>
+<tr>
+<td width="20%" height="26" class="td_bg" style="text-align: center;">名字:</td>
+<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="name" value="$User.name$"></td>
+</tr>
+<tr>
+ <td width="20%" height="26" class="td_bg" style="text-align: center;">邮箱:</td>
+ <td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="mail" value="$User.mail$"></td>
+</tr>
+<tr>
+ <td width="20%" height="26" class="td_bg" style="text-align: center;">rtx:</td>
+ <td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="rtx" value="$User.rtx$"></td>
+</tr>
+<tr>
+ <td width="20%" height="26" class="td_bg" style="text-align: center;">手机:</td>
+ <td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="mobile" value="$User.mobile$"></td>
+</tr>
+<tr>
+ <td width="20%" height="26" class="td_bg" style="text-align: center;">qq:</td>
+ <td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="qq" value="$User.qq$"></td>
+</tr>
+#if System == "" then
+<tr>
+ <td width="20%" height="26" class="td_bg" style="text-align: center;">适用系统:</td>
+ <td width="80%" height="26" style="text-align: left;" class="content">
+#for SystemID, SystemName in pairs(SystemMap) do
+	<input type="checkbox" name="system" value="$SystemID$" $User.system[SystemID] and 'checked="checked"' or ""$ class="system $SystemID=='' and 'system_all' or 'system_other'$">
+		$SystemName$&nbsp;&nbsp;
+#end
+ </td>
+</tr>
+#end
+<tr>
+ <td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</div>
+<script>
+	$(document).ready(function(){
+		$(".system").change(function(){
+			var value = $(this).val();
+			if(value == ""){ //选中全选，其他选项则取消
+				$(".system_other").attr("checked",false);
+			}else{ //选中其他的则取消全选
+				$(".system_all").attr("checked",false);
+			}
+		});
+	})
+</script>
+</body>
+</html>

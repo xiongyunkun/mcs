@@ -1,0 +1,45 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+<div class="page-header">
+	<h3>玩家GM显示编辑</h3>
+</div>
+<form action="/gamemgr/player_gm_edit" method="post" id="postForm">
+<table class="table table-striped table-bordered table-hover" style="width:80%;margin-left:15px;">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+			<option value="">全部</option>
+#for PID,Platform in pairs(Platforms) do
+			<option value="$PID$">$Platform$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">玩家角色ID：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="Uid" value="" name="Uid">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">玩家角色名：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="RoleName" value="" name="RoleName">
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px"});
+})
+ </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<html>
+#include("include/inc_header_datatable.html")
+#include("include/filter.html")
+#if Options.PlatformID and Options.PlatformID ~= "" then
+<div class="tabbable">
+	<ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
+#for Index,TabName in pairs(TabList) do
+		<li $Index == 1 and 'class="active"' or ''$>
+			<a data-toggle="tab" href="#tab_$Index$">$TabName$</a>
+		</li>
+#end
+	</ul>
+</div>
+<div class="tab-content">
+	<div id="tab_1" class="tab-pane in active">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$RegData[HostID] and RegData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_2" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$LoginData[HostID] and LoginData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_3" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$AveOnlineData[HostID] and AveOnlineData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_4" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$MaxOnlineData[HostID] and MaxOnlineData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_5" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$PayNumData[HostID] and PayNumData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_6" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered " style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$PayTotalMoneyData[HostID] and PayTotalMoneyData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_7" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered " style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$PayCountData[HostID] and PayCountData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_8" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered " style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th>服</th>
+#for _,Day in pairs(DayList) do
+					<th>$Day$</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for HostID,ServerMark in pairs(ServerMarkMap) do
+				<tr>
+					<td nowrap="nowrap">$ServerMark$</td>
+#for _,Day in pairs(DayList) do
+					<td>$FirstPayNumData[HostID] and FirstPayNumData[HostID][Day] or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+</div>
+#else
+<div class="alert alert-warning" role="alert">请选择平台！</div>
+#end
+ <script>
+ $(document).ready(function(){
+	$('.dataTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"paging": true,
+		"bFilter": false,
+		"bLengthChange": false,
+	});
+	
+})
+</script>
+</body>
+</html>

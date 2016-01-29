@@ -1,0 +1,46 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+
+分区列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>id</td>
+<td>名称</td>
+<td>权重</td>
+<td>操作</td>
+</tr>
+#for id, Group in pairs(Groups) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<form action="/servermgr/domodgroup" method=post>
+	<td><input type=hidden name=gid value=$Group.id$></td>
+	<td><input type=text name=name value=$Group.name$></td>
+	<td><input type=text name=weight value=$Group.weight$></td>
+	<td>
+	<input type=submit name=mod value="修改"><br>
+	<a href="/servermgr/dodelgroup?gid=$Group.id$">删除</a>
+	</td>
+	</form>
+	</tr>
+#end
+</table><br>
+<hr>
+添加分区:<br>
+<form action="/servermgr/doaddgroup" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>名称:</td><td><input type="text" name="name"></td>
+</tr>
+<tr>
+<td width=200 align=right>权重:</td><td><input type="text" name="weight"></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

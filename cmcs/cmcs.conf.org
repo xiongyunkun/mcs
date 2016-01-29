@@ -1,0 +1,90 @@
+root $workpath$/;
+upstream cmcs {
+	drizzle_server 127.0.0.1:3306 dbname=toplist
+		password=smcsdb user=sysmcs charset=utf8 protocol=mysql;
+}
+lua_package_path "$workpath$/?.lua;;";
+lua_package_cpath "$workpath$/lib/?.so;;";
+
+init_by_lua_file $workpath$/base/init.lua;
+
+#allow 192.168.1.98;
+#deny all;
+
+server {
+listen 7633;
+server_name localhost;
+charset gbk;
+set $basegamepath "$BaseGamePath$";
+
+location / {
+	default_type "text/html";
+	index index.html;
+}
+
+location /getfile {
+	default_type "text/plain";
+	set $processfunc "GetFile";
+	content_by_lua_file modules/fileop.lua;
+}
+
+location /getgamefile {
+	default_type "text/plain";
+	set $processfunc "GetGameFile";
+	content_by_lua_file modules/fileop.lua;
+}
+
+location /getlog {
+	default_type "text/plain";
+	set $processfunc "GetLog";
+	content_by_lua_file modules/fileop.lua;
+}
+
+location /execute {
+	default_type "text/plain";
+	set $processfunc "DoShell";
+	content_by_lua_file modules/execute.lua;
+}
+location /executegm {
+	default_type "text/plain";
+	set $processfunc "DoGMShell";
+	content_by_lua_file modules/execute.lua;
+}
+
+location /putservfile {
+	default_type "text/plain";
+	set $processfunc "PutServFile";
+	content_by_lua_file modules/filewrite.lua;
+}
+
+location /dopay {
+	default_type "text/plain";
+	set $processfunc "DoPay";
+	content_by_lua_file modules/pay.lua;
+}
+
+location /do_cron_get_pay_result {
+	default_type "text/plain";
+	set $processfunc "DoCronGetPayResult";
+	content_by_lua_file modules/pay.lua;
+}
+
+location /proxy {
+	set_by_lua $uncode_host 'return ngx.unescape_uri(ngx.var.arg_host)';
+	proxy_pass http://$uncode_host?$request_body;
+}
+
+location /log_result {
+}
+
+location /getmysql {
+	default_type "text/plain";
+	set $processfunc "GetMysql";
+	content_by_lua_file modules/mysqlop.lua;
+}
+location /mysql {
+	drizzle_query $request_body;
+	drizzle_pass cmcs;
+}
+
+}

@@ -1,0 +1,73 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8">
+#include("include/inc_header_datatable.html")
+<body>
+<form class="search-box" method="GET">
+	<label>模块名：</label>	
+	<select name="Module">
+		<option value="">全部</option>
+#for id,Module in ipairs(Modules) do
+		<option value="$Module.name$" $Options and Module.name==Options.Module and "selected" or ""$>$Module.name$</option>
+#end
+	</select>
+	<label>操作人：</label>
+	<select name="Operator">
+		<option value="">全部</option>
+#for Account,UserName in pairs(Users) do
+		<option value="$Account$" $Options and Account==Options.Operator and "selected" or ""$>$UserName$</option>
+#end
+	</select>
+	<label>开始时间：</label>
+	<input type="text" value="$Options.StartTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="StartTime">
+	<label>结束时间：</label>
+	<input type="text" value="$Options.EndTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="EndTime">
+    <input type="submit" class="submit_btn" value="查询">
+</form>
+<table id="logTable" class="table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+	<thead>
+        <tr style="background-color: #f1f1f1;border-bottom: 1px solid #EDF2F7;">
+            <th>模块名</th>
+			<th>操作时间</th>
+            <th>操作人</th>
+            <th>操作日志</th>
+        </tr>
+    </thead>
+	<tbody>
+#for id,Log in ipairs(Logs) do
+        <tr>
+			<td style="text-align:center">$Log.Module$</td>
+			<td style="text-align:center">$Log.LogTime$</td>
+            <td style="text-align:center">$Log.OperatorName$</td>
+            <td style="text-align:center;word-break:break-all; word-wrap:break-word;" width="500px">$Log.Log$</td>
+        </tr>
+#end
+	</tbody>
+</table>
+<script>
+$(document).ready(function(){
+	$('#logTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 1, "desc" ]]
+	});
+})
+</script>
+</body>
+</html>

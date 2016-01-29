@@ -1,0 +1,34 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<form action="/publishmgr/doaddversion" method=post>
+	<table class="table table-striped table-bordered table-hover" style="width:80%">
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">版本类型:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">
+			<select name="type">
+				<option value=0>服务器</option> 
+				<option value=1>客户端</option> 
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">发布版本:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="version"></td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">
+			<textarea name=memo cols="30" rows="3"></textarea>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2 class="button content" style="text-align:center;">
+			<input type="submit" class="submit_btn" name="submit" value="提交"/>
+		</td>
+	</tr>
+	</table>
+</form>
+</body>
+</html>

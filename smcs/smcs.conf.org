@@ -1,0 +1,29 @@
+#database config
+upstream smcs {
+	drizzle_server 127.0.0.1:3306 dbname=smcs
+		password=SYsmcsdb user=sysmcs charset=utf8 protocol=mysql;
+}
+
+lua_package_path "$workpath$/?.lua;;";
+lua_package_cpath "$workpath$/lib/?.so;;";
+lua_shared_dict sessions 10m;
+lua_shared_dict sdkid_platform_map 1m;
+init_by_lua_file $workpath$/base/init.lua;
+
+server {
+	listen 8081;
+	server_name localhost;
+	charset utf8;
+	root $workpath$/;
+	include $workpath$/custom_conf/admin_modules.conf;
+	include $workpath$/custom_conf/custom_modules.conf;
+}
+server {
+	listen 8082;
+	server_name localhost;
+	charset utf8;
+	root $workpath$/;
+	set $system "oss";
+	include $workpath$/custom_conf/admin_modules.conf;
+	include $workpath$/custom_conf/oss_custom_modules.conf;
+}

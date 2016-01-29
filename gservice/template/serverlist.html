@@ -1,0 +1,54 @@
+<html>
+#include("include/inc_header.html")
+<body>
+#include("include/inc_position.html")
+
+服务器列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>id</td>
+<td>名称</td>
+<td>地址</td>
+<td>端口</td>
+<td>备注</td>
+<td>操作</td>
+</tr>
+#for id, Server in pairs(Servers) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<form action="/servermgr/domodserver" method=post>
+	<td><input type=hidden name=svrid value=$Server.id$>$Server.id$</td>
+	<td><input type=text name=name value=$Server.name$></td>
+	<td><input type=text name=address value=$Server.address$></td>
+	<td><input type=text name=ports value=$Server.ports$></td>
+	<td><textarea name=descinfo cols="30" rows="3">$Server.descinfo$</textarea></td>
+	<td>
+	<input type=submit name=mod value="修改"><br>
+	<a href="/servermgr/dodelserver?svrid=$Server.id$">删除</a>
+	</td>
+	</form>
+	</tr>
+#end
+</table><br>
+<hr>
+添加服务器:<br>
+<form action="/servermgr/doaddserver" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>名字:</td><td><input type="text" name="name"></td>
+</tr>
+<tr>
+<td width=200 align=right>地址:</td><td><input type="text" name="address"></td>
+</tr>
+<tr>
+ <td width=200 align=right>端口(多网端口用分号分开):</td><td><input type="text" name="ports"></td>
+</tr>
+<tr>
+ <td width=200 align=right>备注:</td><td><textarea name=descinfo cols="30" rows="3"></textarea></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

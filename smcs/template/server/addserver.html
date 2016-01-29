@@ -1,0 +1,88 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+	$(document).ready(function(){ 
+		$("#autoconfig").click(function(){
+			var address = $("input[name='address']").val();
+			if(address == ""){
+				alert("请正确填写地址！");
+				return false;
+			}
+			$.post("/servermgr/createport",{address:address},function(result){
+			    var strArray = result.split(",");
+				if(strArray.length == 2) {
+					$("#ports").val(parseInt(strArray[0]));
+					$("#crossport").val(parseInt(strArray[1]));
+				}
+			});
+		});
+	})
+</script>
+<div class="page-header">
+	<h3>添加服务器</h3>
+</div>
+<form action="/servermgr/doaddserver" method=post>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">HostId:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="hostid"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服务器名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="name"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">版本:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="version"></td>
+</tr>
+
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">地址:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="address">
+		<span style="margin-left:10px;"><button type="button" id="autoconfig">自动生成端口配置</button></span>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">端口(多网端口用分号分开):</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="ports" id="ports"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">跨服端口:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="crossport" id="crossport"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">状态:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><select name=status>
+#for id, value in pairs(Status) do
+		<option value="$id$">$value$</option>
+#end
+	</select></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">开服时间:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="startservertime" id="startservertime"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">优先级:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="priority" id="priority"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">维护Tips:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="tips" id="tips"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><textarea name=descinfo cols="30" rows="3"></textarea></td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

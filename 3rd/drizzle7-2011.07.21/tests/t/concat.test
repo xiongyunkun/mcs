@@ -1,0 +1,6 @@
+# Test CONCAT operator
+SELECT "foo" || "dog";
+SELECT "1" || "2";
+SELECT 1 || 2;
+
+SELECT "this" || "dog" || "does" || "not" || "hunt";

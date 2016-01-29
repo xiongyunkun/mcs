@@ -1,0 +1,62 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+
+用户列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>账号</td>
+<td>名字</td>
+<td>RTX</td>
+<td>qq</td>
+<td>电话</td>
+<td>邮箱</td>
+<td>操作</td>
+</tr>
+#for id, user in pairs(UserList) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<td><a href=/usermgr/reqmod?id=$user.id$>$user.account$</a></td>
+	<td>$user.name$</td>
+	<td>$user.rtx$</td>
+	<td>$user.qq$</td>
+	<td>$user.mobile$</td>
+	<td>$user.mail$</td>
+	<td><a href="/usermgr/dodel?id=$user.id$">删除</a></td>
+	</tr>
+#end
+</table><br>
+<hr>
+添加用户:<br>
+<form action="/usermgr/doadd" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>账号:</td><td><input type="text" name="account"></td>
+</tr>
+<tr>
+<td width=200 align=right>密码:</td><td><input type=text name=password></td>
+</tr>
+<tr>
+<td width=200 align=right>名字:</td><td><input type="text" name="name"></td>
+</tr>
+<tr>
+ <td width=200 align=right>邮箱:</td><td><input type="text" name="mail"></td>
+</tr>
+<tr>
+ <td width=200 align=right>rtx:</td><td><input type="text" name="rtx"></td>
+</tr>
+<tr>
+ <td width=200 align=right>手机:</td><td><input type="text" name="mobile"></td>
+</tr>
+<tr>
+ <td width=200 align=right>qq:</td><td><input type="text" name="qq"></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

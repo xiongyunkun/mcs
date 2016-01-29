@@ -1,0 +1,99 @@
+<html>
+#include("include/inc_header.html")
+<body>
+#include("include/inc_position.html")
+
+服务器分区管理<br>
+<form action="/servermgr/domodservergroup" method=post>
+<table width="100%" align=left>
+<tr bgcolor='#ACD6FF'>
+<td colspan=5>所有服务器</td>
+</tr>
+#local MaxCount = 0
+#for id, Server in ipairs(Servers) do
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.id
+#	local GroupNames = nil
+#	if InGroupServers[Server.id] then
+#		local NameTbl = {}
+#		for _, gid in ipairs(InGroupServers[Server.id]) do
+#			table.insert(NameTbl,GroupMap[gid].name)
+#		end
+#		GroupNames = table.concat(NameTbl,",")
+#	end
+#	if (MaxCount-1)%5 == 0 then
+	<tr bgcolor="$(id%2~=0) and '#CECEFF' or '#FBFBFF' $">
+#	end
+	<td width="20%">
+	<input type=radio name=cb_-1 value=$SvrId$><font color="$GroupNames and '#006400' or '#A00000'$">$Server.name$</font><font color="#008B8B">$GroupNames and ("["..GroupNames.."]") or ""$</font>
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td width="20%">&nbsp;</td>
+#end
+</tr>
+#end
+
+<td colspan=5>
+	选中服务器加入到:
+	<select name=gid>
+#for id, Group in ipairs(Groups) do
+		<option value="$Group.id$">$Group.name$</option>
+#end
+	</select>
+	<input type=submit name=sub value="加入">
+</td>
+# -- in group server list
+#MaxCount = 0
+#for id, Group in ipairs(Groups) do
+<tr bgcolor='#ACD6FF'>
+<td colspan=5>$Group.name$</td>
+</tr>
+#	local InGroupServers = GroupServers[Group.id]
+#	if InGroupServers then
+#		local MaxCount = 0
+#		for id, SvrId in ipairs(InGroupServers) do
+#			local Server = ServerMap[SvrId]
+#			MaxCount = MaxCount + 1
+#			if (MaxCount-1)%5 == 0 then
+	   	<tr bgcolor="$(id%2~=0) and '#CECEFF' or '#FBFBFF' $">
+#			end
+	   	<td width="20%">
+	   	$Server.name$
+		&nbsp;
+		<a href="/servermgr/domodserverindex?gid=$Group.id$&svrid=$SvrId$&dir=up">&lt;&lt;</a>
+		|
+		<a href="/servermgr/domodserverindex?gid=$Group.id$&svrid=$SvrId$&dir=down">&gt;&gt;</a>
+		&nbsp;&nbsp;&nbsp;
+		<a href="/servermgr/domodservergroup?cb_$Group.id$=$SvrId$&gid=-1&mod=get"> 删除 </a>
+			
+	   	</td>
+#			if (MaxCount)%5 == 0 then
+	   	</tr>
+#			end
+#		end
+#		local MoreTD = MaxCount%5
+#		if MoreTD > 0 then
+#			for i=1,(5-MoreTD) do
+	   		<td width="20%">&nbsp;</td>
+#			end
+	   </tr>
+#		end
+#	else
+<tr>
+<td colspan=5>没有服务器</td>
+</tr>
+#	end
+#end
+<tr>
+
+</tr>
+</table>
+</form>
+</body>
+</html>

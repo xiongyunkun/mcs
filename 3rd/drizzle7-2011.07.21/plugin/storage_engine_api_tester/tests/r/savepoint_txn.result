@@ -1,0 +1,124 @@
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+CREATE TABLE t1(a int, b VARCHAR(10), c VARCHAR(10)) ENGINE=STORAGE_ENGINE_API_TESTER;
+INSERT INTO t1 (a,b,c) VALUES (1,'1','ok'), (2,'2', 'ok'), (3,'3','ok');
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+::max_supported_key_length()
+::max_supported_keys()
+Cursor 1 Cursor()
+::doCreateTable()
+::SEAPITester()
+Cursor 1 ~Cursor()
+Cursor 2 Cursor()
+Cursor 2 ::doOpen()
+Cursor 2 ::store_lock()
+START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::doInsertRecord()
+Cursor 2 ::doInsertRecord()
+Cursor 2 ::doInsertRecord()
+END STATEMENT
+COMMIT
+::SEAPITester()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+SET AUTOCOMMIT=OFF;
+SAVEPOINT A;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+BEGIN
+In Transaction
+SET SAVEPOINT
+In Transaction
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0
+SELECT * FROM DATA_DICTIONARY.USER_DEFINED_SAVEPOINTS;
+SAVEPOINT_NAME
+A
+UPDATE t1 SET c = 'fail' WHERE a > 0;
+ROLLBACK TO SAVEPOINT A;
+COMMIT;
+SELECT * FROM t1;
+a	b	c
+1	1	ok
+2	2	ok
+3	3	ok
+COMMIT;
+DROP TABLE t1;
+select * from data_dictionary.seapitester_engine_state_history;
+STATE
+Cursor 2 ::store_lock()
+START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doUpdateRecord()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+ROLLBACK TO SAVEPOINT
+In Transaction
+COMMIT
+::SEAPITester()
+BEGIN
+In Transaction
+Cursor 2 ::store_lock()
+START STATEMENT
+Cursor 2 ::external_lock()
+Cursor 2 locked
+Cursor 2 ::info()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::scan_time()
+Cursor 2 locked
+Cursor 2 ::doStartTableScan()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::rnd_next()
+Cursor 2 ::doEndTableScan()
+Cursor 2 ::external_lock()
+Cursor 2 locked
+END STATEMENT
+COMMIT STATEMENT
+In Transaction
+Cursor 2 ::reset()
+Cursor 2 ::doOpen()
+COMMIT
+::SEAPITester()
+Cursor 2 ::close()
+Cursor 2 Cursor()
+Cursor 2 ~Cursor()
+BEGIN
+In Transaction
+select seapitester_clear_engine_state_history();
+seapitester_clear_engine_state_history()
+0

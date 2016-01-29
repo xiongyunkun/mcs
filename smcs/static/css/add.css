@@ -1,0 +1,29 @@
+.add {
+    background: url("/static/image/add.png") no-repeat scroll 0 2px #fff;
+    float: right;
+    line-height: 24px;
+    margin-right: 220px;
+    padding-left: 20px;
+}
+.add .content {
+    color: #ff5809;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.alert-warning {
+    background-image: linear-gradient(to bottom, #fcf8e3 0px, #f8efc0 100%);
+    background-repeat: repeat-x;
+    border-color: #f5e79e;
+	background-color: #fcf8e3;
+    border-color: #faebcc;
+    color: #8a6d3b;
+}
+.alert {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+	border: 1px solid transparent;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    padding: 15px;
+}

@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+libdrizzleincludedir=${includedir}/libdrizzle-2.0
+
+Name: libdrizzle-2.0
+Description: Drizzle Client & Protocol Library
+Version: 2011.07.21
+Libs: -L${libdir} -ldrizzle-2.0
+Cflags: -I${libdrizzleincludedir}

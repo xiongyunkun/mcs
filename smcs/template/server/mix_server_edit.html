@@ -1,0 +1,61 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+
+<div class="page-header">
+	<h3>混服编辑</h3>
+</div>
+<form action="" method="post" id="postForm">
+<table class="table table-striped table-bordered table-hover" style="width:80%;margin-left:15px;">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台" >
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $ServerInfo.PlatformID and ServerInfo.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服编号：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" value="$ServerInfo and ServerInfo.ServerID or ""$" 
+		 $ServerInfo and ServerInfo.ServerID and 'readonly="readonly"' or ''$ name="ServerID"/>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">HostID：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" value="$ServerInfo and ServerInfo.HostID or ""$" name="HostID"/>
+	</td>
+</tr>
+
+<tr>
+	<td colspan="4" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	var platformID = $(".platformID").val();
+	if(platformID != ""){
+		$(".platformID").attr("disabled","disabled");
+		$(".platformID").trigger("chosen:updated");
+	}
+	$("#postForm").submit(function(){
+		$(".platformID").attr("disabled",false);
+		var platformID = $(".platformID").val();
+		if(platformID == ""){
+			alert("请选择平台！");
+			return false;
+		}
+	});
+})
+ </script>
+</body>
+</html>

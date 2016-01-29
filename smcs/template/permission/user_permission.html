@@ -1,0 +1,134 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<div class="page-header">
+<h3>$UserInfo.name$权限列表</h3>
+</div>
+<form action="/usermgr/setpermission" method=post id="post_form">
+<input type=hidden name=UserID value=$UserID$>
+<div id="menu-box">
+    <div class="menulist" id="menuList">
+	<ul>
+		<li>
+			<span class="label label-info">选择角色权限：</span>
+			<select name="roleID" id="roleID" style="margin-left:10px;padding:0px;" class="chosen-select" tabindex="2" data-placeholder="选择角色">
+				<option value="">请选择</option>
+#for RoleID, RoleName in pairs(RoleMap) do
+				<option value="$RoleID$" $RoleID==SelectedRoleID and "selected" or ""$>$RoleName$</option>
+#end
+			</select>
+		</li>
+	</ul>
+#for _, Module in pairs(TreeMap) do
+	<ul>
+    <li>
+        <span class="cb_line" $Module.isshow == "false" and 'style="display:none;"' or ''$>
+            <span class="cb_icon"></span>
+            <input type="checkbox" style="margin: 0;" value="$Module.name$" name="MenuID" $SelectedModuleMap[Module.name] and "checked" or ""$>
+            <label for=""><span class="label label-success">$Module.name$</span></label>
+        </span>
+#if Module.children then
+		<ul style="margin-top:5px;">
+#for _, CModule in ipairs(Module.children) do
+				<span class="cb_line $CModule.isshow == 'true' and 'show_module' or 'hide_module'$" $CModule.isshow == "false" and 'style="display:none;"' or ''$>
+					<span class="cb_icon"></span>
+					<input type="checkbox" style="margin: 0;" value="$CModule.name$" name="MenuID" $SelectedModuleMap[CModule.name] and "checked" or ""$>
+					<label for="">$CModule.name$</label>
+				</span>
+			
+			
+		
+#end
+		</ul>
+#end
+    </li>
+	</ul>
+#end
+    <ul>
+		<li>
+			<span class="label label-info">选择平台权限：</span>
+			<select name="PlatformID" id="PlatformID" style="margin-left:10px;padding:0px;" multiple class="chosen-select" tabindex="2" data-placeholder="选择平台">
+				<option value="">请选择</option>
+#for PlatformID, PlatformName in pairs(PlatformList) do
+				<option value="$PlatformID$" $SelectedPlatformMap[PlatformID] and "selected" or ""$>$PlatformName$</option>
+#end
+			</select>
+		</li>
+	</ul>
+</div>
+<div style="text-align:center;margin-top:10px;">
+<input type="submit" value="设置" id="preForm" class="submit_btn"> 
+</div>
+</form>
+<div id="menuMask" style="height: 105px; top: 310px; left: 406px; display: none;"></div>
+</div>
+<script>
+$(document).ready(function(){
+	$("#roleID").chosen({width:"150px",});
+	$("#PlatformID").chosen({width:"400px",});
+	$(".cb_line input").change(function(){
+		var inputEm = $(this).parent('.cb_line').next('ul').find('input');
+		inputEm.prop("checked", $(this).is(":checked"));
+        if($(this).is(":checked")){
+            $(this).parents('li').children('.cb_line').find('input').prop('checked', true);
+        }
+	});
+	//如果show_module已勾选，则要把父选项下面的hide_module都勾选上
+	$(".show_module input").change(function(){
+		if($(this).is(":checked")){
+			//需要把父选项下面的hide_module都勾选上
+			$(this).parents('ul').children('.hide_module').find('input').prop('checked', true);
+		}else{
+			//如果父选项下面的show_module都已经取消了，则hide_module也取消
+			var flag = true;
+			$(this).parents('ul').find(".show_module").each(function(){
+				if($(this).find('input').is(":checked")){
+					flag = false;
+					return;
+				}
+			});
+			if(flag == true){
+				//需要把父选项下面的hide_module全部不选
+				$(this).parents('ul').children('.hide_module').find('input').prop('checked', false);
+			}
+		}
+	});
+	$("#roleID").change(function(){
+		var roleID = $(this).val();
+		if(roleID != ""){
+			$.post("/admin/roleperm",{roleID:roleID},function(result){
+				var strArray = result.split(",");
+				//先取消全部选中
+				$(".cb_line input").prop('checked', false);
+				//将所对应ID的checkbox都选中
+				$(".cb_line input").each(function(){
+					var checkVal = $(this).val();
+					for(var i=0; i< strArray.length; i++){
+						var strVal = $.trim(strArray[i]);
+						if(strVal==checkVal){
+							$(this).prop('checked', true);
+							break;
+						}
+					}
+				});
+			});
+		}
+	});
+	//判断是否选择了角色组和平台权限
+	$("#post_form").submit(function(){
+		var platformIDs = $("#PlatformID").val();
+		if(platformIDs == "" || platformIDs == null || platformIDs == undefined) {
+			alert("请选择平台！");
+			return false;
+		}
+		var roleID = $("#roleID").val();
+		if(roleID == "" || roleID == null || roleID == undefined) {
+			alert("请选择角色！");
+			return false;
+		}
+	});
+})
+</script>
+</body>
+</html>

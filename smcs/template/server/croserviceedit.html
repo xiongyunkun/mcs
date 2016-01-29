@@ -1,0 +1,42 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+<div class="page-header">
+	<h3>战区分配列表</h3>
+</div> 
+<form action="/croservermgr/serviceedit" method=post>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<input type="hidden" name="ID" value="$Service.ID or ''$"/>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服务名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="Name" value="$Service.ServiceName or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">默认自分组:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="NeedSelfGroup" value="$Service.NeedSelfGroup or '1'$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">接管模块:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="Module" value="$Service.Module or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<textarea name=Memo cols="30" rows="3">$Service.Memo or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

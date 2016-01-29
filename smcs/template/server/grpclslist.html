@@ -1,0 +1,45 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+function delete_confirm(id, name) {
+	if(confirm("删除"+name+"是不可恢复的，你确认要删除吗？")){
+		window.location.href = "/servermgr/dodelgrpcls?id="+id;
+	}
+}
+</script>
+<div class="page-header">
+<h3>分区列表</h3>
+<button class="btn btn-sm btn-warning" type="button" onclick="window.location.href='/servermgr/doshowaddgrpcls'" style="float:right;">添加服务区分类</button>
+</div>
+
+<table class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<td>ID</td>
+			<td>分类名称</td>
+			<td>分类说明</td>
+			<td>客户端地址</td>
+			<td>操作</td>
+		</tr>
+	</thead>
+	<tbody>
+#for id, GC in pairs(GroupClass or {}) do
+	<tr>
+		<form action="/servermgr/domodgrpcls" method=post>
+			<td><input type=hidden name=id value=$GC.id$>$GC.id$</td>
+			<td><input type=text name=name value=$GC.name$></td>
+			<td><input type=text name=descinfo value=$GC.descinfo$></td>
+			<td><input type=text name="clienturl" value="$GC.clienturl$" style="width:350px;"></td>
+			<td>
+				<input type="submit" class="submit_btn" name=mod value="修改">
+				<input type="button" class="submit_btn" onclick="delete_confirm('$GC.id$','$GC.name$')" value="删除">
+			</td>
+		</form>
+	</tr>
+	</tbody>
+#end
+</table>
+</body>
+</html>

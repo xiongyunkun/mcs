@@ -1,0 +1,132 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+	$(document).ready(function(){
+		$("#platformid").change(function(){
+			location.href = "/servermgr/groupserverlist?platformid="+$(this).val();
+		});
+		$("#preForm").click(function(){
+			var platformID = $("#platformid").val();
+			if(platformID == ""){
+				alert("请选择平台!");
+				return false;
+			}
+			window.location.href = "/servermgr/previewservlist?platformid="+platformID;
+		});
+	})
+</script>
+<div class="page-header">
+<h3>分区服务器管理</h3>
+<span style="margin-left:20px;">
+	<span>平台选择</span>
+	<select name="platformid" id="platformid">
+		<option value="">全部</option>
+#for id, Platform in pairs(Platforms) do
+		<option value="$id$" $id==PlatformID and "selected" or ""$>$Platform$</option>
+#end
+		</select>
+</span>
+</div>
+<form action="/servermgr/domodservergroup" method=post>
+<table class="table table-striped table-bordered table-hover">
+<tr>
+<td width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;" colspan="5">所有服务器</td>
+</tr>
+#local MaxCount = 0
+#for id, Server in ipairs(Servers) do
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.HostID
+#	local GroupNames = nil
+#	if InGroupServers[Server.HostID] then
+#		local NameTbl = {}
+#		for _, gid in ipairs(InGroupServers[Server.HostID] or {}) do
+#			table.insert(NameTbl,GroupMap[gid].name)
+#		end
+#		GroupNames = table.concat(NameTbl,",")
+#	end
+#	if (MaxCount-1)%5 == 0 then
+	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#	end
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	<input type=radio name=cb_-1 value=$SvrId$><font color="$GroupNames and '#006400' or '#A00000'$">$ServerInfoMap[Server.HostID]$</font><font color="#008B8B">$GroupNames and ("["..GroupNames.."]") or ""$</font>
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td width="20%" height="26" style="text-align: left;" class="content">&nbsp;</td>
+#end
+</tr>
+#end
+
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	选中服务器加入到:
+	<select name=gid>
+#for id, Group in ipairs(Groups) do
+		<option value="$Group.id$">$Group.name$</option>
+#end
+	</select>
+	<input type=submit name=sub class="submit_btn" value="加入">
+</td>
+# -- in group server list
+#MaxCount = 0
+#for id, Group in ipairs(Groups) do
+<tr>
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;">$Group.name$</td>
+</tr>
+#	local InGroupServers = GroupServers[Group.id]
+#	if InGroupServers then
+#		local MaxCount = 0
+#		for id, SvrId in ipairs(InGroupServers) do
+#			local Server = ServerMap[SvrId]
+#			MaxCount = MaxCount + 1
+#			if (MaxCount-1)%5 == 0 then
+	   	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#			end
+	   	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	   	$ServerInfoMap[Server.HostID]$
+		&nbsp;
+		<a href="/servermgr/domodserverindex?gid=$Group.id$&svrid=$SvrId$&dir=up">&lt;&lt;</a>
+		|
+		<a href="/servermgr/domodserverindex?gid=$Group.id$&svrid=$SvrId$&dir=down">&gt;&gt;</a>
+		&nbsp;&nbsp;&nbsp;
+		<a href="/servermgr/domodservergroup?cb_$Group.id$=$SvrId$&gid=-1&mod=get"> 删除 </a>
+			
+	   	</td>
+#			if (MaxCount)%5 == 0 then
+	   	</tr>
+#			end
+#		end
+#		local MoreTD = MaxCount%5
+#		if MoreTD > 0 then
+#			for i=1,(5-MoreTD) do
+	   		<td width="20%" height="26" style="text-align: left;" class="content">&nbsp;</td>
+#			end
+	   </tr>
+#		end
+#	else
+<tr>
+<td colspan=5 height="26" class="td_bg" style="text-align: left;">没有服务器</td>
+</tr>
+#	end
+#end
+<tr>
+
+</tr>
+<tr>
+
+</tr>
+<tr>
+	<td colspan="5" class="button content" style="text-align:center;">
+		<input type="button" class="btn btn-info" id="preForm" value="预览服务器列表"/> 
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

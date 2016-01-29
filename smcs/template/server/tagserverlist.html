@@ -1,0 +1,104 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+	$(document).ready(function(){
+		$("#platformid").change(function(){
+			location.href = "/servermgr/reqservertagmgr?platformid="+$(this).val();
+		});
+	})
+</script>
+<div class="page-header">
+<h3>服务器标签管理</h3> 
+<span style="margin-left:20px;">
+	<span>平台选择</span>
+	<select name="platformid" id="platformid">
+		<option value="">全部</option>
+#for id, Platform in pairs(Platforms) do
+ 		<option value="$id$" $id==PlatformID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+</span>
+</div>
+<form action="/servermgr/domodservertag" method=post>
+<table class="table table-striped table-bordered table-hover">
+<tr>
+<td width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;" colspan=5>无标签服务器</td>
+</tr>
+#local MaxCount = 0
+#for id, Server in ipairs(NoTagServers) do
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.HostID
+#	if (MaxCount-1)%5 == 0 then
+	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#	end
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	<input type=checkbox name=cb_-1_$id$ value=$SvrId$><font color="#A00000'">$ServerInfoMap[Server.HostID]$</font>
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">&nbsp;</td>
+#end
+</tr>
+#end
+
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	选中服务器加入到标签:
+	<select name=tagid>
+#for id, Tag in ipairs(TagList) do
+		<option value="$Tag.id$">$Tag.name$</option>
+#end
+	</select>&nbsp;&nbsp;
+	<input type=submit name=sub class="submit_btn" value="加入">
+</td>
+# -- in group server list
+#MaxCount = 0
+#for id, Group in ipairs(TagList) do
+<tr>
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;">$Group.name$</td>
+</tr>
+#	local InGroupServers = TagServers[Group.id]
+#	if InGroupServers then
+#		local MaxCount = 0
+#		for id, SvrId in ipairs(InGroupServers) do
+#			local Server = ServerMap[SvrId]
+#			MaxCount = MaxCount + 1
+#			if (MaxCount-1)%5 == 0 then
+	   	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#			end
+	   	<td width="20%">
+	   	$ServerInfoMap[Server.HostID]$
+		&nbsp;
+		<a href="/servermgr/domodservertag?cb_$Group.id$_$id$=$SvrId$&tagid=-1&mod=get"> 删除 </a>
+			
+	   	</td>
+#			if (MaxCount)%5 == 0 then
+	   	</tr>
+#			end
+#		end
+#		local MoreTD = MaxCount%5
+#		if MoreTD > 0 then
+#			for i=1,(5-MoreTD) do
+	   		<td width="20%" height="26" style="text-align: left;" class="content">&nbsp;</td>
+#			end
+	   </tr>
+#		end
+#	else
+<tr>
+<td colspan="5" height="26" class="td_bg" style="text-align: left;">没有服务器</td>
+</tr>
+#	end
+#end
+<tr>
+
+</tr>
+</table>
+</form>
+</body>
+</html>

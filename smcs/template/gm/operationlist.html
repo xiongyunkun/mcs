@@ -1,0 +1,127 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+$(document).ready(function(){
+	$('#logTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 5, "desc" ]]
+	});
+	$(".fancybox").fancybox();
+	$(".platformID").chosen({width:"100px",});
+	$(".hostID").chosen({width:"150px",});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+})
+</script>
+<button class="btn btn-warning" type="button" onclick="window.location.href='/gmmgr/operationedit'" >添加操作</button>
+<form class="search-box" method="GET" action="/gmmgr/operationlist">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	
+	<label>服务器名称：</label>	
+	<select name="HostID" class="chosen-select hostID" tabindex="2" data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$" $Options.HostID and Options.HostID==tostring(ID) and "selected" or ""$>$ServerName$</option>
+#end
+	</select>
+	<label>指令名称：</label>	
+	<select name="OperationType">
+		<option value="">全部</option>
+#for RuleID,RuleName in pairs(RuleList) do
+		<option value="$RuleID$" $Options.RuleID and Options.RuleID==tostring(RuleID) and "selected" or ""$>$RuleName$</option>
+#end
+	</select>
+	<label>操作人：</label>	
+	<select name="Operator">
+		<option value="">全部</option>
+#for ID,Name in pairs(Users) do
+		<option value="$ID$" $Options.Operator and Options.Operator==tostring(ID) and "selected" or ""$>$Name$</option>
+#end
+	</select>
+	<br>
+	<label>流水号：</label>	
+	<input type="text" value="$Options.TransID or ""$" name="TransID">
+	<label>开始时间：</label>
+	<input type="text" value="$Options.StartTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="StartTime">
+	<label>结束时间：</label>
+	<input type="text" value="$Options.EndTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="EndTime">
+    <input type="submit" class="submit_btn" value="查询">
+</form>
+
+<table id="logTable" class="table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+	<thead>
+        <tr style="background-color: #f1f1f1;border-bottom: 1px solid #EDF2F7;">
+            <th>平台名称</th>
+            <th>服务器名称</th>
+            <th>指令名称</th>
+			<th>指令值</th>
+			<th>流水号</th>
+            <th>操作时间</th>
+			<th>操作人</th>
+            <th>提交时间</th>
+            <th>状态</th>
+        </tr>
+    </thead>
+	<tbody>
+#for id, Operation in ipairs(OperationInfoList) do
+	<tr>
+		<td style="text-align:center">$Platforms[Operation.PlatformID]$</td>
+		<td style="text-align:center;word-break:break-all; word-wrap:break-word;" width="200px">$Operation.ServerNames$</td>
+		<td style="text-align:center">$RuleList[tonumber(Operation.RuleID)] or ""$</td>
+		<td style="text-align:center">$Operation.GMValues or ""$</td>
+		<td style="text-align:center">$Operation.TransID or ""$</td>
+		<td style="text-align:center">$Operation.OperationTime or ""$</td>
+		<td style="text-align:center">$Users[Operation.Operator] or Operation.Operator$</td>
+		<td style="text-align:center">$Operation.SubmitTime or ""$</td>
+		<td style="text-align:center">
+#if Operation.Status == 0 then
+	<a href="/gmmgr/operationedit?ID=$Operation.ID$" title="编辑修改">已编辑</a>
+#elseif Operation.Status == 1 then
+	<a class="fancybox fancybox.iframe" href="/gmmgr/operationedit?ID=$Operation.ID$" title="点击查看执行结果">已提交</a>
+#else
+	<a class="fancybox fancybox.iframe" href="/gmmgr/operationresult?ID=$Operation.ID$" title="点击查看执行结果">已执行</a>
+#end
+		</td>
+	</tr>
+#end
+</tbody>
+</table>
+
+</body>
+</html>

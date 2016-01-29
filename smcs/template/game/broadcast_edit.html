@@ -1,0 +1,169 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+
+<div class="page-header">
+	<h3>公告编辑</h3>
+</div>
+<form action="/gamemgr/broadcastedit" method="post" id="postForm">
+<input type="hidden" name="ID" value="$ID or ""$">
+<table class="table table-striped table-bordered table-hover" style="width:80%;margin-left:15px;">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+			<option value="">全部</option>
+#for PID,Platform in pairs(Platforms) do
+			<option value="$PID$" $BroadcastInfo.PlatformID and BroadcastInfo.PlatformID==PID and "selected" or ""$>$Platform$</option>
+#end
+		</select>
+	</td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">公告类型：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="BroadType">
+#for ID,Value in pairs(BroadTypes) do
+		<option value="$ID$" $BroadcastInfo.BroadType and BroadcastInfo.BroadType == ID and "selected" or ""$>$Value$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">选择大区：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="ServerType">
+#for ID,Value in pairs(ServerTypes) do
+			<option value="$ID$" $BroadcastInfo.ServerType == ID and "selected" or ""$>$Value$</option>
+#end
+		</select>
+	</td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">选择服：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
+			<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+			<option value="$ID$" 
+			$BroadcastInfo.HostIDs and ((BroadcastInfo.HostIDs==tostring(ID)) or (type(BroadcastInfo.HostIDs) == "table" and table.member_key(BroadcastInfo.HostIDs, tostring(ID)))) and "selected" or ""$>
+			$ServerName$
+			</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">操作类型：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
+		<select name="OperateType" id="OperateType">
+#for ID,Value in pairs(OperationTypes) do
+			<option value="$ID$" $BroadcastInfo.OperateType == ID and "selected" or ""$>$Value$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr class="period">
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">开始时间：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="StartTime" value="$BroadcastInfo.StartTime or ''$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="StartTime">
+	</td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">结束时间：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="EndTime" value="$BroadcastInfo.EndTime or ''$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="EndTime">
+	</td>
+</tr>
+<tr class="period">
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">发送间隔：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="SendInterval" value="$BroadcastInfo.SendInterval or 15$" placeholder="">
+	</td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">发送次数：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="SendNum" value="$BroadcastInfo.SendNum or 0$" placeholder="0代表不限次数">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">公告内容：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
+		<textarea name=Content cols="50" rows="3" id="Content">$BroadcastInfo.Content or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
+		<textarea name=Memo cols="50" rows="3">$BroadcastInfo.Memo or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td colspan="4" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".hostID").chosen({
+		width:'300px',
+	});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+	//如果是立即执行则隐藏period字段
+	var opertionType = $("#OperateType").val();
+	if(opertionType == "1"){
+		$(".period").hide();
+	}
+	$("#OperateType").change(function(){
+		var opertionType = $(this).val();
+		if(opertionType == "1"){
+			$(".period").hide();
+		}else{
+			$(".period").show();
+		}
+	});
+	//表单提交时候验证一下
+	$("#postForm").submit(function(){
+		var content = $("#Content").val();
+		if(content == ""){
+			alert("公告内容不能为为空！");
+			return false;
+		}
+		var startTime = $("#StartTime").val();
+		var endTime = $("#EndTime").val();
+		var opertionType = $("#OperateType").val(); 
+		if(opertionType == "2"){ // 操作类型为定时执行的时候
+			if(startTime == ""){
+				alert("开始时间不能为空！");
+				return false;
+			}
+			if(endTime == ""){
+				alert("结束时间不能为空！");
+				return false;
+			}
+			startTime = js_strto_time(startTime)
+			endTime = js_strto_time(endTime)
+			if(startTime > endTime){
+				alert("开始时间不能大于结束时间！");
+				return false;
+			}
+		}
+	});
+})
+function js_strto_time(str_time){
+    var new_str = str_time.replace(/:/g,'-');
+    new_str = new_str.replace(/ /g,'-');
+    var arr = new_str.split("-");
+    var datum = new Date(Date.UTC(arr[0],arr[1]-1,arr[2],arr[3]-8,arr[4],arr[5]));
+    return strtotime = datum.getTime()/1000;
+}
+ </script>
+</body>
+</html>

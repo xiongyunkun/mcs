@@ -1,0 +1,216 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/filter.html")
+<div class="tabbable">
+	<ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
+		<button class="erro_btn" type="button" onclick="rejectAllApply()" style="float:right;margin:-1px 0px 0 0">全部拒绝</button>&nbsp;&nbsp;
+		<button class="submit_btn" type="button" onclick="acceptAllApply()" style="float:right;margin:-1px 10px 0 0">全部同意</button>
+		<li class="active">
+			<a data-toggle="tab" href="#tab_1">未审核列表</a>
+		</li>
+		<li>
+			<a data-toggle="tab" href="#tab_2">已审核列表</a>
+		</li>
+	</ul>
+</div>
+<div class="tab-content">
+	<div id="tab_1" class="tab-pane in active">
+		<table id="no_audit" class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th class="center">
+						<label>
+							<input class="ace" type="checkbox">
+							<span class="lbl"></span>
+						</label>
+					</th>
+#for _,Title in pairs(Titles) do
+					<th class="center">$Title$</th>
+#end	
+					<th class="center">操作</th>			
+				</tr>
+			</thead>
+			<tbody>
+#for ID,AuditInfo in ipairs(AuditingList) do
+				<tr id="$AuditInfo.ID$" updatetime="$AuditInfo.LastUpdateTime$">
+					<td class="center">
+						<label>
+							<input class="ace" type="checkbox">
+							<span class="lbl"></span>
+						</label>
+					</td>
+#for ID,Value in ipairs(AuditInfo) do
+#if ID == #AuditInfo then
+					<td nowrap="nowrap" class="center">$Value$</td>
+#else
+					<td>$Value$</td>
+#end
+					
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_2" class="tab-pane">
+		<table id="history_audit" class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+#for _,Title in pairs(Titles) do
+					<th class="center">$Title$</th>
+#end				
+					<th class="center">审核时间</th>
+					<th class="center">审核人</th>
+					<th class="center">申请结果</th>
+				</tr>
+			</thead>
+			<tbody>
+#for ID,AuditInfo in ipairs(AuditedList) do
+				<tr>
+#for _,Value in ipairs(AuditInfo) do
+					<td>$Value$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<script language="JavaScript">
+$(document).ready(function(){
+	$('#no_audit').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, 'desc' ]], //按哪列排序，序号是从0开始
+		"iDisplayLength": 50, //一页展示多少行
+	});
+	$('#history_audit').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, 'desc' ]], //按哪列排序，序号是从0开始
+		"iDisplayLength": 50, //一页展示多少行
+	});
+	$('table th input:checkbox').on('click' , function(){
+		var that = this;
+		$(this).closest('table').find('tr > td:first-child input:checkbox').each(function(){
+			this.checked = that.checked;
+			$(this).closest('tr').toggleClass('selected');
+		});
+						
+	});
+})
+
+function acceptApply(ID, applicant) {
+	if(confirm("你确认要同意来自"+applicant+"的返利道具申请吗?")){
+		var updateTime = $("#"+ID).attr("updatetime");
+		$.post("/email_apply_mgr/apply_audit",{ID:ID, updateTime:updateTime, Status:2},function(result){
+			result = parseInt(result);
+			if(result==1){
+				window.location.reload();
+			}else if(result == 2){
+				alert("申请单已被修改，请重新刷新后审核！");
+				return false;
+			}
+		});
+	}
+}
+function rejectApply(ID, applicant){
+	if(confirm("你确认要拒绝来自"+applicant+"的返利道具申请吗?")){
+		var updateTime = $("#"+ID).attr("updatetime");
+		$.post("/email_apply_mgr/apply_audit",{ID:ID, updateTime:updateTime, Status:3},function(result){
+			result = parseInt(result);
+			if(result==1){
+				window.location.reload();
+			}else if(result == 2){
+					alert("申请单已被修改，请重新刷新后审核！");
+					return false;
+			}
+		});
+	}
+}
+function acceptAllApply() {
+	if(confirm("你确认要全部同意吗?")){
+		var IDArray = [];
+		var TimeArray = [];
+		$("tr.selected").each(function(){
+			IDArray.push($(this).attr("id"));
+			TimeArray.push($(this).attr("updatetime"));
+		});
+		var ID = IDArray.join(",");
+		var updateTimes = TimeArray.join(",");
+		if(ID != ""){
+			$.post("/email_apply_mgr/apply_audit",{ID:ID, updateTime:updateTimes, Status:2},function(result){
+				result = parseInt(result);
+				if(result==1){
+					window.location.reload();
+				}else if(result == 2){
+					alert("申请单已被修改，请重新刷新后审核！");
+					return false;
+				}
+			});
+		}
+	}
+}
+function rejectAllApply(){
+	if(confirm("你确认要全部拒绝吗?")){
+		var IDArray = [];
+		var TimeArray = [];
+		$("tr.selected").each(function(){
+			IDArray.push($(this).attr("id"));
+			TimeArray.push($(this).attr("updatetime"));
+		});
+		var ID = IDArray.join(",");
+		var updateTimes = TimeArray.join(",");
+		if(ID != ""){
+			$.post("/email_apply_mgr/apply_audit",{ID:ID, updateTime:updateTimes, Status:3},function(result){
+				result = parseInt(result);
+				if(result==1){
+					window.location.reload();
+				}else if(result == 2){
+					alert("申请单已被修改，请重新刷新后审核！");
+					return false;
+				}
+			});
+		} 
+		
+	}
+}
+</script>
+</body>
+</html>

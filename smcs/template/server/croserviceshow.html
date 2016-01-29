@@ -1,0 +1,56 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+<script language="JavaScript">
+	function deleteService(ID,Name){
+		if(ID && ID != ""){
+			if(confirm("你确定要删除"+Name+"吗?")){
+				$.post("/croservermgr/servicedelete",{ID:ID},function(result){
+			 		result = parseInt(result);
+			 		if(result==1){
+			 			$("#"+ID).remove();
+			 		}			 
+				});
+			}
+		}
+	}
+</script>
+<div class="page-header">
+	<h3>跨服服务列表</h3>
+	<button class="btn btn-sm btn-warning" type="button" onclick="window.location.href='/croservermgr/serviceedit'" style="float:right;">添加跨服</button>
+</div> 
+<table class="table table-striped table-bordered table-hover">
+	<thead>
+	<tr>
+		<th>服务名称</th>
+		<th>默认自分组</th>
+		<th>接管模块</th>
+		<th>备注</th>
+		<th>操作</th>
+	</tr>
+	</thead>
+	<tbody>
+#for id, Service in ipairs(ServiceList) do
+	<tr id="$Service.ID$">
+		<td>$Service.ServiceName$</td>
+		<td>$Service.NeedSelfGroup$</td>
+		<td>$Service.Module$</td>
+		<td>$Service.Memo$</td>
+		<td>
+			<div class="visible-md visible-lg hidden-sm hidden-xs action-buttons">
+				<a class="green" href="/croservermgr/serviceedit?ID=$Service.ID$" title="编辑">
+					<i class="icon-pencil bigger-110"></i>
+				</a>
+				<a class="red" href="#" onclick="deleteService('$Service.ID$','$Service.ServiceName$')" title="删除">
+					<i class="icon-trash bigger-110"></i>
+				</a>
+			</div>
+		</td>
+	</tr>
+#end
+</tbody>
+</table>
+</div>
+
+</body>
+</html>

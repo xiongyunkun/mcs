@@ -1,0 +1,37 @@
+<html>
+#include("include/inc_header_datatable.html")
+<script type="text/javascript" src="include/jquery.js"></script>
+<script type="text/javascript">
+	var wait = "";
+	var count = 0;
+	var checkfile = "$CheckFile$";
+	var intid=self.setInterval("clock()",500);
+	function clock()
+  	{
+		if (count == 0)
+		{
+			count = 1;
+			$(document).ready(function() 
+			{
+	 	 		$('#list').load('/publishmgr/docheckprogress?checkfile=' + checkfile, function() 
+				{
+ 					if (document.getElementById("list").innerHTML.indexOf("progress done") >= 0)
+					{
+						document.getElementById("tips").innerHTML = "<font size='20' color='green'><a href='/$FinishUri$?address=$Address$'>执行完毕</a></font>";
+  	  	  				window.clearInterval(intid);
+					}
+					count = 0;
+
+				});
+			});
+		}
+  	}
+
+
+
+</script>
+<body>
+<div id="tips"><font size='20' color='red'>脚本执行中</font></div>
+<div id="list"></div>
+</body>
+</html>

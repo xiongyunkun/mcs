@@ -1,0 +1,77 @@
+<html>
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" method="post" action="/gamemgr/dokeygen">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$">$Platform$</option>
+#end
+	</select>
+	<label>活动内容：</label><input type="text" name="Name" value="" placeholder="活动内容...">
+	<label>使用类型：</label>	
+	<select name="KeyType">
+#for ID,Type in pairs(KeyTypes) do
+		<option value="$ID$">$Type$</option>
+#end
+	</select>
+	<label>生成数量：</label><input type="text" name="KeyNum" value="" placeholder="个数...">	
+	<br>
+	<label>有效期从：</label>
+	<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="StartTime">
+	<label>至：</label>
+	<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="EndTime">
+	<br>
+	<label>奖励列表：</label>
+	<br>
+	<div>
+		<label style="font-weight:normal;">钻石：</label>
+		<input type="text" name="Gold" value="" placeholder="钻石数量...">
+	<!--
+		<label style="font-weight:normal;">绑钻：</label>
+		<input type="text" name="CreditGold" value="" placeholder="绑钻数量...">
+	-->
+		<label style="font-weight:normal;">金币：</label>
+		<input type="text" name="Money" value="" placeholder="金币数量...">
+	</div>
+	<div id="addItems">
+		<div>
+			<label style="font-weight:normal;">道具：</label>
+			<input type="text" name="Item" class="item" value="" placeholder="物品ID...">
+			<input type="text" name="Numbers" class="number" value="" placeholder="个数...">
+			<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>
+			<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/>
+		</div>
+	</div>
+	<div style="margin:10px 0 0 300px;">
+	<input type="submit" class="submit_btn" value="提交"> 
+</div>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".giftID").chosen({width:"200px",});
+	var availableTags = [$table.concat(ItemStrList, ",")$];
+	//添加道具
+	$(document).on('click', '.add_item', function() {
+		var itemDom = $(this).parent().clone();
+		//清空内容
+		itemDom.find(".item").val("");
+		itemDom.find(".number").val("");
+		itemDom.appendTo("#addItems");
+		//重新绑定一下事件
+		itemDom.find(".item").autocomplete({source: availableTags,minLength: 2});
+	});
+	//删除道具
+	$(document).on('click', '.del_item', function() {
+		//剩余一个不能删除
+		if($("#addItems").children().length > 1){
+			$(this).parent().remove();
+		} 
+	});
+	$(".item").autocomplete({source: availableTags,minLength: 2});
+})
+ </script>
+
+</body>
+</html>

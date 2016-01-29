@@ -1,0 +1,206 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/inc_position.html")
+#include("template/player/emailShow.html")
+<div class="tabbable">
+	<ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
+		<li class="active">
+			<a data-toggle="tab" href="#tab_1">未审核列表</a>
+		</li>
+		<li>
+			<a data-toggle="tab" href="#tab_2">已审核列表</a>
+		</li>
+	</ul>
+</div>
+<div class="tab-content">
+	<div id="tab_1" class="tab-pane in active">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+#for _,Title in pairs(Titles) do
+					<th>$Title$</th>
+#end	
+					<th>操作</th>			
+				</tr>
+			</thead>
+			<tbody>
+#for ID,AuditInfo in ipairs(AuditingList) do
+				<tr id="$AuditInfo.ID$" class="auditing_apply">
+					<td>$AuditInfo[1]$</td>
+					<td class="audit_platform" platformID="$AuditInfo.ApplyInfo.PlatformID$">$AuditInfo[2]$</td>
+					<td class="audit_server_type" serverType="$AuditInfo.ApplyInfo.ServerType$">$AuditInfo[3]$</td>
+					<td class="audit_server">$AuditInfo[4]$</td>
+					<td class="audit_operation_type" operationType="$AuditInfo.ApplyInfo.OperationType$">$AuditInfo[5]$</td>
+					<td class="audit_rolenames">$AuditInfo[6]$</td>
+					<td class="audit_min_level">$AuditInfo[7]$</td>
+					<td class="audit_create_role_time">$AuditInfo[8]$</td>
+					<td class="audit_title">$AuditInfo[9]$</td>
+					<td class="audit_content">$AuditInfo[10]$</td>
+					<td>$AuditInfo[11]$</td>
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_2" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+#for _,Title in pairs(Titles) do
+					<th>$Title$</th>
+#end				
+					<th>审核时间</th>
+					<th>审核人</th>
+					<th>审核结果</th>
+				</tr>
+			</thead>
+			<tbody>
+#for ID,AuditInfo in ipairs(AuditedList) do
+				<tr>
+#for _,Value in ipairs(AuditInfo) do
+					<td>$Value$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<script language="JavaScript">
+$(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".OperationType").chosen({width:"100px",});
+	$(".ForbidTime").chosen({width:"100px",});
+	$(".hostID").chosen({width:'500px'});
+	
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+	$(".OperationType").change(function(){
+		var ID = $(this).val();
+		if(ID == 1){ //单独发送
+			$("#multisend").hide();
+			$("#onlysend").show();
+		}else{
+			$("#multisend").show();
+			$("#onlysend").hide();
+		}
+	});
+
+	$("#postForm").submit(function(){
+		//判断是否选择了平台
+		var platformID = $(".platformID").val();
+		if(platformID == ""){
+			alert("请选择平台！");
+			return false;
+		}
+	});
+	$('.dataTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, 'desc' ]], //按哪列排序，序号是从0开始
+		"iDisplayLength": 50, //一页展示多少行
+	});
+	$(".auditing_apply").click(function(){
+		var ID = $(this).attr("id");
+		$("#ID").val(ID); //ID赋值
+		var platformID = $(this).find(".audit_platform").attr("platformID");
+		$(".platformID").val(platformID);
+		$(".platformID").trigger("chosen:updated");
+		//大区类型
+		var serverType = $(this).find(".audit_server_type").attr("serverType");
+		$(".serverType").val(serverType);
+		var servers = $(this).find(".audit_server").html();
+		servers = servers.split(",");
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '';
+			for(id in serverList){
+				var selectStr = "";
+				for(sid in servers){
+					if(serverList[id] == servers[sid]){
+						selectStr = 'selected="selected"'
+					}
+				}
+				ServerStr += '<option value="'+id+'"'+selectStr+'>'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+		//操作类型
+		var operationType = $(this).find(".audit_operation_type").attr("operationType");
+		$(".OperationType").val(operationType);
+		$(".OperationType").trigger("chosen:updated");
+		if(operationType != "1"){ //群发
+
+			$("#multisend").show();
+			$("#onlysend").hide();
+		}else{
+			$("#multisend").hide();
+			$("#onlysend").show();
+		}
+		//角色名列表
+		var rolenames = $(this).find(".audit_rolenames").html();
+		$(".RoleNames").val(rolenames);
+		//最低等级
+		var minLevel = $(this).find(".audit_min_level").html();
+		if(minLevel != ""){
+			$(".minLevel").val(minLevel);
+		}
+		//创角时间
+		var createTime = $(this).find(".audit_create_role_time").html();
+		if(createTime != ""){
+			createTime = createTime.split(" ");
+			$(".createRoleTime").val(createTime[0]);
+		}
+		//标题和内容
+		var title = $(this).find(".audit_title").html();
+		var content = $(this).find(".audit_content").html();
+		$(".title").val(title);
+		$(".content").val(content);
+	});
+	$(".apply_delete").click(function(e){
+		var ID = $(this).parent().parent().attr("ID");
+		if(confirm("删除是不可恢复的，你确认要删除吗?")){
+			$.post("/email_apply_mgr/apply_delete",{ID:ID},function(result){
+				result = parseInt(result);
+				if(result==1){
+					$("#"+ID).remove();
+				}
+			});
+		}
+		e.stopPropagation();
+	})
+})
+
+</script>
+</body>
+</html>

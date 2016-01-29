@@ -1,0 +1,49 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+$(document).ready(function(){
+	$("#back_button").click(function(){
+		window.location.href = "/gmmgr/operationedit?ID="+$("#operationid").val();
+	});
+})
+</script>
+<div class="page-header">
+	<h3>服务器操作预览</h3>
+</div>
+<form action="/gmmgr/previewpost" method="post" id="postForm">
+<input type="hidden" name="ID" value="$OperationInfo.ID$" id="operationid"/>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">$OperationInfo.PlatformName$</td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">服务器列表:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">$OperationInfo.ServerNames$</td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">执行进程:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">$OperationInfo.GsID$</td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">GM命令:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">
+		<input id="CmdValue" style="margin-left:5px;" type="text" value="$GMCMD$" name="CmdValue" size="100">
+		</td>
+	</tr>
+	<tr>
+		<td width="20%" height="26" class="td_bg" style="text-align: center;">执行时间:</td>
+		<td width="80%" height="26" style="text-align: left;" class="content">$OperationInfo.OperationTime$</td>
+	</tr>
+	<tr>
+		<td style="text-align:center;" class="button content" colspan="2">
+			<input type="submit" value="提交" name="submit" class="submit_btn" id="submit_button">&nbsp;&nbsp; 
+			<input type="button" value="返回" class="submit_btn" id="back_button">
+		</td>
+	</tr>
+</table>
+</form>
+</body>
+</html>

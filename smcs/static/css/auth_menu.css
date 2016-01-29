@@ -1,0 +1,62 @@
+@charset "utf-8";
+.box_title {
+    color: #20b308;
+    display: block;
+    margin: 0;
+    padding: 8px 15px;
+}
+#menuList { min-height: 40px; border: 1px solid #aaa; background: #fafafa; }
+#menuMask { width: 730px; background: #fafafa; z-index: 10; position: absolute; display:none; filter:alpha(opacity=50); -moz-opacity:0.5; opacity:0.5; }
+#menuList ul{
+    list-style: none;
+    padding: 0 0 0 25px;
+    margin: 0;
+}
+#menuList ul li{
+    padding: 0;
+    margin: 10px 0;
+}
+#menuList p{
+    padding: 0;
+    margin: 10px 0;
+}
+#menuList .cb_line{
+    height: 16px;
+    line-height: 16px;
+    display: inline-block;
+}
+
+#menuList .cb_icon{
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    border: 0;
+}
+#menuList .minus{
+    background-image: url(/static/image/minus.png);
+}
+#menuList .plus{
+    background-image: url(/static/image/plus.png);
+}
+
+#menuList label{
+	font: 12px/20px "微软雅黑",Arial,Helvetica, sans-serif;
+	color: #737373;
+}
+#menuList .chosen-results {
+    list-style: outside none none;
+    margin: 0 4px 4px 0;
+    padding: 0 0 0 4px;
+}
+#menuList .chosen-results li {
+    margin: 0;
+    padding: 5px 6px;
+}
+#menuList .chosen-choices{
+	padding: 0 5px;
+}
+
+#menuList .chosen-choices li{
+	margin: 3px 5px 3px 0;
+	padding: 3px 20px 3px 5px;
+}

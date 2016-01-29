@@ -1,0 +1,40 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+
+<div class="page-header">
+	<h3>添加分组</h3>
+</div>
+<form action="/servermgr/doaddgroup" method=post>
+<table class="table table-striped table-hover" style="width:80%">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="name"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">权重:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="weight"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">标记:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+#local Flag = {
+#	[1] = "推荐",
+#	[2] = "普通",
+#	[3] = "隐藏",
+#}
+		<select name=flag>
+#for id,name in pairs(Flag) do
+			<option value="$id$">$name$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</div>

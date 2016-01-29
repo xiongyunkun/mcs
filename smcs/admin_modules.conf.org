@@ -1,0 +1,85 @@
+location / {
+	default_type "text/html";
+	set $processfunc "ReqLogin";
+	content_by_lua_file admin/login.lua;
+}
+
+location ~ /\. {
+	deny all;
+	access_log off;
+	log_not_found off;
+}
+
+location ~ ^/favicon\.ico$ {
+	log_not_found off;
+	access_log off;
+}
+
+location /static {
+}
+
+location /img {
+}
+
+location /dologin {
+	default_type "text/html";
+	set $processfunc "DoLogin";
+	content_by_lua_file admin/login.lua;
+}
+
+location /logout {
+	default_type "text/html";
+	set $processfunc "DoLogout";
+	content_by_lua_file admin/login.lua;
+}
+
+location /mysql {
+	drizzle_query $request_body;
+	drizzle_pass smcs;
+}
+
+#base function location
+location /admin/modulelist {
+	default_type "text/html";
+	set $processfunc "ReqAdminList";
+	set $module_name "模块管理";
+	content_by_lua_file admin/funcmgr.lua;
+}
+
+location /admin/moduledel {
+	default_type "text/html";
+	set $processfunc "DoAdminDel";
+	set $module_name "删除模块";
+	content_by_lua_file admin/funcmgr.lua;
+}
+
+location /admin/moduleadd {
+	default_type "text/html";
+	set $processfunc "DoAdminAdd";
+	set $module_name "添加模块";
+	content_by_lua_file admin/funcmgr.lua;
+}
+
+location /admin/modulemod {
+	default_type "text/html";
+	set $processfunc "DoAdminModify";
+	set $module_name "修改模块";
+	content_by_lua_file admin/funcmgr.lua;
+}
+
+location /header {
+	default_type "text/html";
+	set $processfunc "ReqHeader";
+	content_by_lua_file admin/header.lua;
+}
+
+location /funclist {
+	default_type "text/html";
+	set $processfunc "ReqFuncList";
+	content_by_lua_file admin/funcmgr.lua; 
+}
+
+location /proxy {
+	set_by_lua $uncode_host 'return ngx.unescape_uri(ngx.var.arg_host)';
+	proxy_pass http://$uncode_host?$request_body;
+}

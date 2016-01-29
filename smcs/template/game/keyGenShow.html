@@ -1,0 +1,31 @@
+<html>
+#include("include/inc_header_datatable.html")
+<button style="float:right;margin:5px 5px 0 0" onclick="window.location.href='/gamemgr/dokeygen'" type="button" class="btn btn-warning">生成激活码</button>
+<form class="search-box form-inline" method="GET" action="/gamemgr/keygen">
+	<label>活动名称：</label>	
+	<select name="ActivityID" class="chosen-select">
+		<option value="">请选择活动名称</option>
+#for ID,Value in pairs(ActivityMap) do
+		<option value="$ID$" $Options.ActivityID and Options.ActivityID==tostring(ID) and "selected" or ""$>$Value$</option>
+#end
+	</select>
+	<input type="submit" name="Submit" class="submit_btn" value="查询">
+	<input type="submit" name="Submit" class="submit_btn" value="导出">
+</form>
+<script>
+$(document).ready(function(){
+	$(".chosen-select").chosen({width:"150px",});
+})
+function AbortKey(ID,Name){
+	if(confirm("你确定要让"+Name+"的激活码全部失效吗？")){
+		$.post("/gamemgr/keyabort",{ActivityID:ID},function(result){
+			if(result == 1){
+				window.location.reload();
+			}
+		});
+	}
+}
+</script>
+#include("include/datatables.html")
+</body>
+</html>

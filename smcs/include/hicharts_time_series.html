@@ -1,0 +1,64 @@
+ <script>
+ var d = new Date()
+ var offset = d.getTimezoneOffset();  //时区差
+ var cssID = "$Hicharts.CssID$";
+$(document).ready(function(){
+	$("#"+cssID).highcharts({
+        chart: {
+            zoomType: 'x'
+        },
+        title: {
+            text: '$Hicharts.Text$'
+        },
+        subtitle: {
+            text: document.ontouchstart === undefined ?
+            '' :
+             'Pinch the chart to zoom in'
+        },
+        xAxis: {
+            type: 'datetime',
+            minRange: $Hicharts.TimeRange * 1000$ // 时间间隔
+        },
+        yAxis: {
+            title: {
+                text: '$Hicharts.Title$'
+            }
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+		series: [{
+                type: 'area',
+                name: '$Hicharts.SeriesName$',
+                pointInterval: $Hicharts.PointInterval * 1000$, //时间间隔
+                pointStart: $Hicharts.Timestamp * 1000$ - offset *60 *1000, //还需要考虑时区差
+                data: [
+                    $table.concat(Hicharts.DateData, ",")$
+                ]
+            }]
+    });
+})
+ </script>
+<div id="container" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
+ <div style="clear:both"></div>

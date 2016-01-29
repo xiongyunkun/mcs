@@ -1,0 +1,125 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+	$(document).ready(function(){
+		$("#platformid").change(function(){
+			location.href = "/serviceopermgr/edit?ID=$ID$&PlatformID="+$(this).val();
+		});
+		$("#timeType").change(function(){
+			if($(this).val() == "2"){
+				$("#operationTime").hide();
+			}else{
+				$("#operationTime").show();
+			}
+		});
+		$("#postForm").submit(function(){
+			//先判断是否选择了平台
+			if($("#platformid").val() == ""){
+				alert("请选择平台！");
+				return false;
+			}
+			//再判断是否选择了服务器
+			var length = $("input[name='HostIDs']:checked").length;
+			if(length<1){
+				alert("请选择服务器！");
+				return false;
+			}
+		});
+		$("#delete_button").click(function(){
+			if(confirm("你确定要删除吗？")){
+				var ID = $("#operationid").val();
+				if(ID != ""){
+					$.post("/serviceopermgr/delete",{ID:ID},function(result){
+						result = parseInt(result);
+						if(result==1){
+							alert("删除成功！");
+							window.location.href = "/serviceopermgr/operationlist";
+						}
+					});
+				}else{
+					window.location.href = "/serviceopermgr/operationlist";
+				}
+				
+			}
+		});
+	})
+</script>
+<form action="/serviceopermgr/editpost" method="post" id="postForm">
+<div class="page-header">
+	<h3>服务器操作管理</h3>
+	<span style="margin-left:20px;">
+	<span>平台选择</span>
+	<select name="PlatformID" id="platformid">
+		<option value="">全部</option>
+#for id, Platform in pairs(Platforms) do
+ 		<option value="$id$" $id==PlatformID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+</span>
+</div>
+<input type="hidden" name="ID" value="$ID$" id="operationid"/>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<tr>
+<td width="100%" height="26" class="td_bg" style="text-align: left;" colspan=5>服务器列表</td>
+</tr>
+#local MaxCount = 0
+#for id, Server in ipairs(Servers) do
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.hostid
+#	if (MaxCount-1)%5 == 0 then
+	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#	end
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	<input type=checkbox name="HostIDs" value="$SvrId$" $OperationInfo and OperationInfo.HostIDs and OperationInfo.HostIDs[tostring(SvrId)] and "checked" or ""$>
+	<font color="#A00000'">$Server.name$</font>
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">&nbsp;</td>
+#end
+</tr>
+#end
+<tr>
+	<td height="26" class="td_bg" style="text-align: center;">操作类型:</td>
+	<td colspan="4" width="100%" height="26" style="text-align: left;" class="content">
+		<select name=OperationType>
+#for id, Type in pairs(OperationTypes) do
+			<option value="$id$" $OperationInfo and OperationInfo.OperationType and OperationInfo.OperationType == id and "selected" or ""$>$Type$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td height="26" class="td_bg" style="text-align: center;">执行时间:</td>
+	<td colspan="4" width="100%" height="26" style="text-align: left;" class="content">
+		<select name="TimeType" id="timeType">
+#for id, Type in pairs(TimeTypes) do
+			<option value="$id$" $OperationInfo and OperationInfo.TimeType and OperationInfo.TimeType == id and "selected" or ""$>$Type$</option>
+#end
+		</select>
+		<input id="operationTime" style="margin-left:5px;" type="text" value="$OperationTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="OperationTime">
+	</td>
+</tr>
+<tr>
+	<td height="26" class="td_bg" style="text-align: center;">备注:</td>
+	<td colspan="4" width="100%" height="26" style="text-align: left;" class="content">
+		<textarea rows="2" cols="30" name="Memo">$OperationInfo and OperationInfo.Memo or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td style="text-align:center;" class="button content" colspan="5">
+		<input type="submit" value="提交" name="submit" class="submit_btn" id="submit_button">&nbsp;&nbsp; 
+		<input type="button" value="删除" class="submit_btn" id="delete_button">
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

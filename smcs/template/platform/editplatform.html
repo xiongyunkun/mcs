@@ -1,0 +1,63 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+
+<div class="page-header">
+	<h1>平台编辑</h1>
+</div>
+<form action="/platformmgr/edit" method=post>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台ID:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="PlatformID" value="$PlatformInfo and PlatformInfo.PlatformID or ''$"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="PlatformName" value="$PlatformInfo and PlatformInfo.PlatformName or ''$"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">排序序号:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="Sort" value="$PlatformInfo and PlatformInfo.Sort or ''$"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">状态:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="Status">
+			<option value="1" $PlatformInfo and PlatformInfo.Status==1 and "selected" or ""$>可用</option>
+			<option value="2" $PlatformInfo and PlatformInfo.Status==2 and "selected" or ""$>停用</option>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服ID范围(用逗号分开):</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="ServerIDRange" value="$PlatformInfo and PlatformInfo.ServerIDRange or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">3W地址:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="W3Url" value="$PlatformInfo and PlatformInfo.W3Url or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">SDKID:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="SDKID" value="$PlatformInfo and PlatformInfo.SDKID or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<textarea name=Memo cols="30" rows="3">$PlatformInfo and PlatformInfo.Memo or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

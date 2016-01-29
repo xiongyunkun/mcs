@@ -1,0 +1,70 @@
+<html>
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" method="post" action="/playermgr/doforbidden">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	<label>服名称：</label>	
+	<select name="HostID" class="chosen-select hostID" tabindex="2" data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$" 
+			$Options.HostID and ((Options.HostID==tostring(ID)) or (type(Options.HostID) == "table" and table.member_key(Options.HostID, tostring(ID)))) and "selected" or ""$>
+			$ServerName$
+		</option>
+#end
+	</select>
+	<label>操作方式：</label>	
+	<select name="OperationType" class="chosen-select OperationType" tabindex="2" data-placeholder="选择操作方式">
+#for ID,Type in pairs(OperationTypes) do
+		<option value="$ID$" $Options.OperationType and tonumber(Options.OperationType)==ID and "selected" or ""$>$Type$</option>
+#end
+	</select>
+	<select name="ForbidTime" class="chosen-select ForbidTime" tabindex="2" data-placeholder="选择操作时间">
+#for ID,Time in pairs(ForbidTimes) do
+		<option value="$ID$" $Options.ForbidTime and Options.ForbidTime==ID and "selected" or ""$>$Time$</option>
+#end
+	</select>
+<br>
+<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
+<br>	
+<textarea class="span5" rows="3" cols="60" name="RoleName" style="margin-left:10px;">$Options.RoleName or ''$</textarea>
+<br>
+<span style="margin-left:10px;">封禁(解禁)原因 </span>
+<br>	
+<textarea class="span5" rows="1" cols="60" name="Reason" style="margin-left:10px;">$Options.Reason or ''$</textarea>
+<br>
+<div style="margin:10px 0 0 300px;">
+	<input type="submit" class="submit_btn" value="提交"> 
+</div>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".OperationType").chosen({width:"100px",});
+	$(".ForbidTime").chosen({width:"100px",});
+	$(".hostID").chosen({
+		width:'$FilterStyles and FilterStyles.hostID and FilterStyles.hostID.width or "150px"$',
+	});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+})
+ </script>
+#include("include/datatables.html")
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+<div class="page-header">
+	<h3>跨服编辑</h3>
+</div> 
+<form action="/croservermgr/genfile" method=post>
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台列表:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" id="platformList">
+#for id, Name in pairs(RestPlatforms) do
+
+	<input type="checkbox" name="platformids" value="$id$" $(CroServerInfo.PlatformIDs and CroServerInfo.PlatformIDs[id]) and "checked" or ""$>
+		<a class="fancybox fancybox.iframe" href="/croservermgr/serverdata?id=$id$&name=$Name$" title="点击查看服数据">$Name$</a>
+#end	
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">战区名称：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="name" value="$CroServerInfo.Name or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">标准人数：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="normalNum" value="$CroServerInfo.NormalNum or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">最小人数：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="minNum" value="$CroServerInfo.MinNum or ''$">
+	</td> 
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">关联跨服服务：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="serviceID" id="serviceID">
+			<option value ="">请选择</option>
+#for Key,Value in pairs(ServiceMap) do
+			<option value ="$Key$" $CroServerInfo.ServiceID == Key and "selected" or ""$>$Value$</option>
+#end
+		</select>
+	</td> 
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<textarea rows="2" cols="20" name="memo">$CroServerInfo.Memo or ''$</textarea>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="hidden" name="id" value="$ID$"> 
+		<input type="submit" class="submit_btn" name="submit" value="自动生成"/> 
+	</td>
+</tr>
+</form>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$(".fancybox").fancybox();
+		$("#serviceID").change(function(){
+			var serviceID = $(this).val();
+			if(serviceID != ""){
+				$.post("/croservermgr/get_platform",{serviceID:serviceID},function(result){
+					var platformList = eval("("+result+")");
+					var platformStr = "";
+					for (id in platformList){
+						platformStr += '<input type="checkbox" name="platformids" value="'+id+'">'
+							+'<a class="fancybox fancybox.iframe" href="/croservermgr/serverdata?id='
+							+id+'&name='+platformList[id]+'" title="点击查看服数据">'+platformList[id]+'</a>';
+					}
+					$("#platformList").html(platformStr);
+				});
+			}
+		});
+	});
+</script>
+</body>
+</html>

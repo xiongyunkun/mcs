@@ -1,0 +1,16 @@
+@charset "utf-8";
+*{ margin:0px; padding:0px;}
+body { font:12px/24px "微软雅黑"; color:#444;}
+img{ border:none;}
+a{ color:#444; text-decoration:none;}
+a:hover{ text-decoration:underline;}
+ul,li{ list-style:none;}
+.clear{ clear:both;}
+.slide_left{ width:200px; float:left; margin:1px 36px 0 0;}
+.l_box{ margin-bottom:1px;}
+.l_box h3{ width:185px; padding-left:15px; height:28px; color:#ffffff; background:#428bca url(/static/image/tit_bg.gif) no-repeat right top; font-size:12px; line-height:28px;}
+.s_box{ padding:5px 0 0 10px;}
+.s_box li{ line-height:25px; height:25px;}
+.s_box li a span{ color:#ef3605;}
+li.on a{color: #428bca; font-weight: bold;}
+

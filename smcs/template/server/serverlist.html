@@ -1,0 +1,124 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+$(document).ready(function(){
+	$('#logTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+	});
+})
+
+function submit_form(hostID){
+	$("#form_"+hostID).submit();
+}
+
+function delete_confirm(serverID,serverName) {
+	if(confirm("删除是不可恢复的，你确认要删除"+serverName+"吗?")){
+		$.get("/servermgr/dodelserver?svrid="+serverID, function(result){
+			if(result){
+				$("#"+serverID).remove();
+			}
+		});
+	}
+}
+
+function updateList(){
+	$.post("/servermgr/updateiplist", {}, function(result){
+		if(result == 0){
+			alert("更新成功！");
+		}else{
+			alert("更新失败！");
+		}
+	});
+}
+
+</script>
+<button class="btn btn-warning" type="button" onclick="window.location.href='/servermgr/doshowservlist'" style="float:right;margin:5px 5px 0 0">添加服务器</button>
+<button class="btn btn-warning" type="button" style="float:right;margin:5px 5px 0 0">更新gservice白名单</button>
+<form class="search-box" method="GET">
+	<label>平台名称：</label>	
+	<select name="platformid">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $PlatformID and PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+    <input type="submit" class="submit_btn" value="查询">
+</form>
+
+<table id="logTable" class="table table-striped table-bordered table-hover no-margin-bottom no-border-top" style="border-collapse: collapse;width:100%;">
+	<thead>
+        <tr style="background-color: #f1f1f1;border-bottom: 1px solid #EDF2F7;">
+            <th>hostid</th>
+            <th>服务器名称</th>
+            <th>版本</th>
+			<th>地址</th>
+            <th>端口</th>
+            <th nowrap="nowrap">跨服端口</th>
+			<th nowrap="nowrap">同步状态</th>
+            <th nowrap="nowrap">开服时间</th>
+            <th nowrap="nowrap">合服时间</th>
+            <th nowrap="nowrap">优先级</th>
+            <th nowrap="nowrap">维护Tips</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+	<tbody>
+#for id, Server in pairs(Servers) do
+#	local stid = Server.status and tonumber(Server.status) or 0
+	<tr id="$Server.hostid$">
+		<form action="/servermgr/domodserver" method="post" id="form_$Server.hostid$">
+			<td style="text-align:center"><input type=hidden name=svrid value=$Server.hostid$>$Server.hostid$</td>
+			<td style="text-align:center"><input type=text name=name value=$Server.name$></td>
+			<td style="text-align:center"><input type=text name=version style = "width:60px;" value=$Server.version$></td>
+			<td style="text-align:center"><input type=text name=address style = "width:120px;" value=$Server.address$></td>
+			<td style="text-align:center"><input type=text name=ports style = "width:60px;" value=$Server.ports$></td>
+			<td style="text-align:center"><input type=text name=crossport style = "width:60px;" value=$Server.crossport or ''$></td>
+			<td style="text-align:center"><select name=status>
+#for id,name in pairs(Status) do
+				<option value=$id$ $id==stid and "selected" or ""$>$name$</option>
+#end
+			</select></td>
+			<td style="text-align:center"><input type=text name=startservertime style = "width:120px;" value="$Server.startservertime or ''$"></td>
+			<td style="text-align:center"><input type=text name=mergeservertime style = "width:120px;" value="$Server.mergeservertime or ''$"></td>
+			<td style="text-align:center"><input type=text name=priority style = "width:60px;" value=$Server.priority or 1$></td>
+			<td style="text-align:center"><input type=text name=tips style = "width:60px;" value=$Server.tips or ''$></td>
+			<td nowrap="nowrap">
+				
+				<div class="visible-md visible-lg hidden-sm hidden-xs action-buttons">
+					<a class="blue" href="#" title="保存" onclick="submit_form('$Server.hostid$')">
+						<i class="icon-save bigger-140"></i>
+					</a>
+					<a class="red" href="#" onclick="delete_confirm('$Server.hostid$')" title="删除">
+						<i class="icon-trash bigger-140"></i>
+					</a>
+				</div>
+				
+			</td>
+		</form>
+	</tr>
+#end
+</tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+a {font-size: 8pt;font-weight: bold; text-decoration:none}
+a:link { COLOR: #8B0000; }/* 红色、无下划线*/
+a:visited { color:#8B0000;} 
+a:active { COLOR: #FF0000;}
+a:hover { COLOR: #FF0000;}

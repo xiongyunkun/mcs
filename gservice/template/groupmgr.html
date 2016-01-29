@@ -1,0 +1,36 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+
+角色列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>Id</td>
+<td>名字</td>
+<td>操作</td>
+</tr>
+#for id, group in pairs(Groups) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<td>$group.id$</td>
+	<td>$group.name$</td>
+	<td><a href="/admin/listgroupperm?grpid=$group.id$">设置权限</a>&nbsp;&nbsp;<a href="/admin/delrole?grpid=$group.id$">删除</a></td>
+	</tr>
+#end
+</table><br>
+<hr>
+添加角色:<br>
+<form action="/admin/addrole" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>名字:</td><td><input type="text" name="grpname"></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+pkgincludedir=@pkgincludedir@
+
+Name: drizzle7
+Description: Drizzle Development Headers
+Version: 7
+Cflags: -I${pkgincludedir}
+

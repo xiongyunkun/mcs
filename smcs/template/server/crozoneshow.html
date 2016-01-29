@@ -1,0 +1,71 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script type="text/javascript">
+$(document).ready(function(){  
+	$("#export").click(function(){
+		var serviceID = $("#serviceid").val();
+		$.post("/croservermgr/exportzone",{serviceID:serviceID},function(result){
+			if(result && parseInt(result)==1){
+				alert("生成成功！");
+			}
+		});
+	});
+})
+</script>
+<div class="page-header">
+	<h3>战区分配列表</h3>
+</div> 
+<table class="table table-striped table-bordered table-hover">
+	<thead>
+	<tr>
+		<th>战区</th>
+		<th>平台</th>
+		<th>服务器</th>
+		<th>开服时间</th>
+		<th>7日在线峰值</th>
+		<th>目标服</th>
+	</tr>
+	</thead>
+	<tbody>
+#for ZoneName, Servers in pairs(CroList) do
+#for id, Server in ipairs(Servers) do
+	<tr id="$Server.HostID$">
+#if id == 1 then
+			<td rowspan="$#Servers$">
+				<input type=hidden name=zonename value=$ZoneName$>
+				$ZoneName$
+			</td>
+#end
+			<td>$PlatformMap[Server.platformid]$</td>
+			<td>$Server.name$</td>
+			<td>$os.date("%Y-%m-%d %X",(Server.StartTime or ngx.time()))$</td>
+			<td>$(Server.Avg7Num or 0)$</td>
+#if id == 1 then
+			<td rowspan="$#Servers$">
+#for _, TargetServer in ipairs(TargetServers) do 
+#if TargetServer.hostid == Server.TargetServer then
+	$TargetServer.name$
+#end
+#end
+			</td>
+#end
+	</tr>
+#end
+#end
+	<tr>
+		
+		<td colspan="6" class="button content" style="text-align:center;">
+			<input type="submit" class="submit_btn" name="submit" id="export" value="生成文件"/> 
+		</td>
+	</tr>
+	</tbody>
+	
+</table>
+<div>
+	<input type=hidden name="serviceid" id="serviceid" value="$ServiceID$">
+</div>
+</div>
+</body>
+</html>

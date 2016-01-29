@@ -1,0 +1,58 @@
+ <script>
+ var dtID = "$DataTable.ID$";
+ $(document).ready(function(){
+	$('#'+dtID).dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "$DataTable.NoResult or '没有匹配结果'$",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"paging": $DataTable.NoDivPage and 'false' or 'true'$, //是否分页
+		"bSort" : $DataTable.bSort and 'false' or 'true'$, //是否排序
+		"bFilter": false,
+		"bLengthChange": false,
+		"info":     $DataTable.NoInfo and 'false' or 'true'$, //是否显示有多少行
+		"order": [[ $DataTable.SortCol or 0$, '$DataTable.SortBy or "desc"$' ]], //按哪列排序，序号是从0开始
+		"iDisplayLength": $DataTable.DisplayLength or 10$, //一页展示多少行
+	});
+	$(".help").qtip();
+})
+</script>
+<div>
+	<table id="logTable" class="table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+		<thead>
+			<tr class="table_head">
+#for Index,Title in ipairs(Titles) do
+				<th>
+					$Title$
+#if TitleTips and TitleTips[Index] then
+	<img class="help" title="$TitleTips[Index]$" src="/static/image/indIntro.png" width="16" height="16" style="margin-bottom: -4px;" />
+#end					
+				</th>
+#end
+			</tr>
+		</thead>
+		<tbody>
+#for _,DateData in ipairs(TableData) do
+			<tr>
+#for _,Data in ipairs(DateData) do
+				<td>$Data$</td>
+#end
+			</tr>
+#end
+		</tbody>
+	</table>
+ </div>
+

@@ -1,0 +1,41 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+
+设置角色[$GroupPermissionInfo.Name$]的权限<br>
+<form action="/admin/dosetpermission" method=post>
+<input type=hidden name=gid value=$GroupPermissionInfo.Id$>
+<table width="100%" align=left>
+#local MaxCount = 0
+#for id, ModuleInfo in pairs(Modules) do
+#	MaxCount = MaxCount + 1
+#	if (MaxCount-1)%5 == 0 then
+	<tr bgcolor="$(id%2~=0) and '#CECEFF' or '#FBFBFF' $">
+#	end
+	<td>
+	<input type=checkbox name=perm$MaxCount$ value=$ModuleInfo.name$ $GroupPermissionInfo.Perms[ModuleInfo.name] and "checked" or ""$>$ModuleInfo.name$
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td>&nbsp;</td>
+#end
+</tr>
+#end
+<tr>
+<td colspan=5>
+	<input type=hidden name=maxcount value=$MaxCount$>
+	<input type=submit name=sub value="设置">
+</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

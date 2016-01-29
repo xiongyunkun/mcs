@@ -1,0 +1,41 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=gbk">
+<head>
+	<link rel="StyleSheet" href="/script/dtree.css" type="text/css"/>
+	<script type="text/javascript" src="/script/dtree.js"></script>
+</head>
+<body>
+<div class="dtree">
+<script type="text/javascript">
+<!--
+d = new dTree('d');
+d.add(0,-1,'');
+#local Idx = 1
+#function MakeIndex(IndTbl,Lv,UpIdx)
+#	local RetStr = ""
+#	local href = "d.add(%d,%d,'%s','%s','','main');\n"
+#	local nohref = "d.add(%d,%d,'%s','','','main');\n"
+#	for _, Info in ipairs(IndTbl) do
+#		if Info.act then
+#			RetStr = RetStr .. string.format(href,Idx,UpIdx,Info.name,Info.act)
+#			Idx = Idx + 1
+#		else
+#			RetStr = RetStr .. string.format(nohref,Idx,UpIdx,Info.name)
+#			Idx = Idx + 1
+#		end
+#		if Info.sub then
+#			RetStr = RetStr .. MakeIndex(Info.sub, Lv+1,Idx - 1)
+#		end
+#	end
+#	return RetStr
+#end
+#local Ind = MakeIndex(FuncIndex,0, Idx-1)
+#Ind = Ind..string.format("d.add(%d,%d,'%s','%s','','_top');\n",Idx,0,"退出","/logout")
+$Ind$
+document.write(d);
+//-->
+</script>
+</div>
+<hr>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<html>
+#include("include/inc_header_datatable.html")
+#include("include/filter.html")
+<style>
+	table th{word-break: keep-all;white-space:nowrap;}
+</style>
+<div class="tab-content">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th rowspan="2" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">日期</th>
+#for _,InstanceName in pairs(TRAIL_NAME_MAP) do
+					<th colspan="3" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$InstanceName$</th>
+#end				
+				</tr>
+				<tr class="table_head">
+#for _,InstanceName in pairs(TRAIL_NAME_MAP) do
+					<th nowrap="nowrap" style="text-align:center;">参与次数</th>
+					<th nowrap="nowrap" style="text-align:center;">参与人数</th>
+					<th nowrap="nowrap" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">参与率<img class="help" title="参与人数/当日登陆人数" src="/static/image/indIntro.png" width="16" height="16" style="margin-bottom: -4px;" />
+					</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for Day, DayInfo in pairs(InstanceRes) do
+				<tr>
+					<td nowrap="nowrap" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">$Day$</td>
+#for ID,_ in pairs(TRAIL_NAME_MAP) do
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].PlayNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].UidNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$DayInfo[ID] and DayInfo[ID].UidNum and LoginRes[Day] and LoginRes[Day].LoginNum and (math.floor(DayInfo[ID].UidNum * 10000/LoginRes[Day].LoginNum)/100 .. "%") or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+</div>
+ <script>
+ $(document).ready(function(){
+	$('.dataTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"paging": true,
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, 'desc' ]], //按哪列排序，序号是从0开始
+	});
+	
+})
+</script>
+</body>
+</html>

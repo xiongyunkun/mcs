@@ -1,0 +1,91 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+$(document).ready(function(){
+	$('#logTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false
+	});
+})
+function delete_confirm(ID, name) {
+	if(confirm("删除是不可恢复的，你确认要删除"+name+"吗?")){
+		$.post("/usermgr/dodel",{ID:ID},function(result){
+			result = parseInt(result);
+			if(result==1){
+				$("#"+ID).remove();
+			}
+		});
+	}
+}
+</script>
+<button class="btn btn-warning" type="button" onclick="window.location.href='/usermgr/doadd'" style="float:right;margin:5px 5px 0 0">添加用户</button>
+<form class="search-box" method="GET" action="/usermgr/list">
+	<label>账号：</label>	
+	<input type="text" name="account" value="$Account$">
+	<label>名字：</label>	
+	<input type="text" name="name" value="$Name$">
+    <input type="submit" class="submit_btn" value="查询">
+</form>
+<table id="logTable" class="table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+	<thead>
+		<tr class="table_head">
+			<th>账号</th>
+			<th>名字</th>
+			<th>qq</th>
+			<th>电话</th>
+			<th>邮箱</th>
+#if System == "" then
+			<th>适用系统</th>
+#end
+			<th>操作</th>
+		</tr>
+	</thead>
+	<tbody>
+#for id, user in pairs(UserList) do
+	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $" id="$user.id$">
+	<td style="text-align:center">$user.account$</td>
+	<td style="text-align:center">$user.name$</td>
+	<td style="text-align:center">$user.qq$</td>
+	<td style="text-align:center">$user.mobile$</td>
+	<td style="text-align:center">$user.mail$</td>
+#if System == "" then
+	<td style="text-align:center">$user.SystemName$</td>
+#end
+	<td style="text-align:center">
+		<div class="visible-md visible-lg hidden-sm hidden-xs action-buttons">
+			<a class="blue" href="/usermgr/reqmod?id=$user.id$" title="编辑">
+				<i class="icon-pencil bigger-110"></i>
+			</a>
+			<a class="green" href="/usermgr/setpermission?id=$user.id$" title="设置权限">
+				<i class="icon-cog bigger-110"></i>
+			</a>
+			<a class="red" href="#" onclick="delete_confirm('$user.id$','$user.name$')" title="删除">
+				<i class="icon-trash bigger-110"></i>
+			</a>
+		</div>
+	</td>
+	</tr>
+#end
+</tbody>
+</table>
+</body>
+</html>

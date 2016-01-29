@@ -1,0 +1,32 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+
+账号角色列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>账号</td>
+<td>角色</td>
+<td>操作</td>
+</tr>
+#for id, UserInfo in pairs(UserGroupInfo) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<form action="/admin/adduserrole" method=post>
+	<td><input type=hidden name=name value=$UserInfo.User.name$><input type=hidden name=uid value=$UserInfo.User.id$>$UserInfo.User.account$($UserInfo.User.name$)</td>
+	<td>
+#	for _, Group in pairs(Groups) do
+	<input type=checkbox name=gid$Group.id$ value=$Group.id$ $UserInfo.Groups[Group.id] and "checked" or ""$>$Group.name$&nbsp;&nbsp;
+#	end
+	</td>
+	<td>
+	<input type=submit name=mod value="修改"><br>
+	</td>
+	</form>
+	</tr>
+#end
+</table>
+</body>
+</html>

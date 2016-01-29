@@ -1,0 +1,39 @@
+<form class="search-box form-inline" id="postForm" method="post" action="/item_apply_mgr/apply_edit">
+	<input type="hidden" name="ID" value="" id="ID">
+	<div>
+		<label>平台名称：</label>	
+		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+			<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+			<option value="$ID$">$Platform$</option>
+#end
+		</select>
+		<label>服名称：</label>	
+		<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
+			<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+			<option value="$ID$">$ServerName$</option>
+#end
+		</select>
+	</div>
+	<div>
+		<label>申请原因：</label>
+		<input type="text" value="福利申请" name="Reason" style="width:300px;" id="Reason">
+	</div>
+	<div id="onlysend">	
+		<textarea class="span5" rows="3" cols="60" name="RoleNames" style="margin-left:10px;" id="RoleNames"></textarea>
+		<span style="vertical-align:40px">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
+	</div>
+	<div id="addItems">
+		<div>
+			<label style="font-weight:normal;">道具：</label>
+			<input type="text" name="Item" class="item" value="" placeholder="物品ID...">
+			<input type="text" name="Numbers" class="number" value="" placeholder="个数...">
+			<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>
+			<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/>
+		</div>
+	</div>
+	<div style="margin:-40px 0 0 550px;float:left;position:absolute;">
+		<input class="submit_btn" type="submit" value="提交">
+	</div>
+</form>

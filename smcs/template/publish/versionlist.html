@@ -1,0 +1,60 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+function delete_confirm(Version) {
+	if(confirm("删除是不可恢复的，你确认要删除发布版本:"+Version+"吗?")){
+		window.location.href="/publishmgr/dodelversion?version="+Version;
+	}
+}
+</script>
+<button class="btn btn-warning" type="button" onclick="window.location.href='/publishmgr/reqaddversion'" style="float:right;margin:5px 5px 0 0">添加发布版本</button>
+<table id="SvrTbl" class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<th colspan=4 style="text-align:left;">服务器发布版本</th>
+		</tr>
+		<tr>
+			<th style="text-align: center;">版本</th>
+			<th style="text-align: center;">备注</th>
+			<th style="text-align: center;">创建时间</th>
+			<th style="text-align: center;">操作</th>
+		</tr>
+	</thead>
+#for Idx, VerInfo in ipairs(ServerVersions) do
+	<tr id="$VerInfo.version$">
+		<th style="text-align: center;">$VerInfo.version$</th>
+		<th style="text-align: center;">$VerInfo.memo$</th>
+		<th style="text-align: center;">$VerInfo.ctime$</th>
+		<th style="text-align: center;">
+			<input type="button" class="submit_btn" onclick="delete_confirm('$VerInfo.version$')" value="删除">	
+		</th>
+	</tr>
+#end
+</table>
+<table id="CliTbl" class="table table-striped table-bordered table-hover">
+	<thead>
+		<tr>
+			<th colspan=4 style="text-align:left;">客户端发布版本</th>
+		</tr>
+		<tr>
+			<th style="text-align: center;">版本</th>
+			<th style="text-align: center;">备注</th>
+			<th style="text-align: center;">创建时间</th>
+			<th style="text-align: center;">操作</th>
+		</tr>
+	</thead>
+#for Idx, VerInfo in ipairs(ClientVersions) do
+	<tr id="$VerInfo.version$">
+		<th style="text-align: center;">$VerInfo.version$</th>
+		<th style="text-align: center;">$VerInfo.memo$</th>
+		<th style="text-align: center;">$VerInfo.ctime$</th>
+		<th style="text-align: center;">
+			<input type="button" class="submit_btn" onclick="delete_confirm('$VerInfo.version$')" value="删除">	
+		</th>
+	</tr>
+#end
+</table>
+</body>
+</html>

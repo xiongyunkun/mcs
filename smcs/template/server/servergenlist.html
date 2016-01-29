@@ -1,0 +1,221 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<script language="JavaScript">
+	$(document).ready(function(){
+		$("#platformid").change(function(){
+			var sdkid = $("#sdkid").val();
+			var iswhite = $("#iswhite").val();
+			var channelid = $("#channelid").val();
+			var subchannelid = $("#subchannelid").val();
+			location.href = "/serverlistmgr/sdkserverlist?platformid="+$(this).val()+"&sdkid="+sdkid+"&iswhite="+iswhite+"&channelid="+channelid+"&subchannelid="+subchannelid;
+		});
+		$("#join").submit(function(){
+			var sdkid = $("#sdkid").val();
+			$("#sdkid_1").val(sdkid);
+			
+			var iswhite = $("#iswhite").val();
+			$("#iswhite_1").val(iswhite);
+
+			var channelid = $("#channelid").val();
+			$("#channelid_1").val(channelid);
+
+			var subchannelid = $("#subchannelid").val();
+			$("#subchannelid_1").val(subchannelid);
+			
+			var envname = $("#envname").val();
+			$("#envname_1").val(envname);
+
+		});
+		$("#preForm").click(function(){
+			var FileName = "$Filename$";
+			
+			if (FileName == ""){
+				alert("没有选择当前服务器列表");
+				return false;
+			}
+			
+			var envname = $("#envname").val();
+			
+			window.location.href = "/serverlistmgr/previewsdkserver?filename="+FileName+"&envname="+envname;
+
+		});
+		$("#createserver").click(function(){
+			var FileName = "$Filename$";
+			if (FileName == ""){
+				alert("没有选择当前服务器列表");
+				return false;
+			}
+			
+			var envname = $("#envname").val();
+			if ($("#envname").find("内服")){
+				if(confirm("仍旧有url选择用内服的url,你确认要生成吗？")){
+					$.post("/serverlistmgr/sdkserverlistsub",{filename: FileName, envname: envname},function(result){
+						if(result){
+							alert("生成成功！")
+						}
+					});
+				}
+			}else{
+				$.post("/serverlistmgr/sdkserverlistsub",{filename: FileName, envname: envname},function(result){
+					if(result){
+						alert("生成成功！")
+					}
+				});
+			}
+		});
+		$("#updateenv").click(function(){
+			var envname = $("#envname").val()
+			$.post("/serverlistmgr/updateenv", {envname:envname},function(result){
+				if(result){
+					alert("刷新成功！")
+				}
+			});
+		});
+	})
+</script>
+<div class="page-header">
+<h3>服务器列表生成管理</h3> 
+</div>
+<form action="/serverlistmgr/reqsdkserverlist" method=get>
+<table class="table table-striped table-bordered table-hover">
+<tr>
+
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	SDKId:
+	<select name=sdkid id="sdkid">
+#for id, Name in pairs(SDKCfg.Id2Name) do
+		<option value="$id$" $tonumber(Options.sdkid) == id and "selected = 'selected'" or ""$>$Name$</option>
+#end
+	</select>&nbsp;&nbsp;
+	
+	ChannelId:
+	<input type="text" name="channelid" id="channelid" value=$Options.channelid or ""$>
+	SubChannelId:
+	<input type="text" name="subchannelid" id="subchannelid" value=$Options.subchannelid or ""$>
+	
+	是否是白名单:
+	<select name=iswhite id="iswhite">
+#for id, Name in pairs(IsWhite) do
+		<option value="$id$" $tonumber(Options.iswhite) == id and "selected = 'selected'" or ""$>$Name$</option>
+#end
+	</select>&nbsp;&nbsp;
+
+	<input type=submit name=sub class="submit_btn" value="查询">
+</td>
+</tr>
+
+<tr>
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;">
+	当前服务器列表: $Filename$
+</td>
+</tr>
+
+<tr>
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;font-weight:bold;">
+	Env配置选择:
+	<select name=envname id="envname">
+#for id, url in pairs(SDKCfg.UrlList) do
+		<option value="$id$" $Options.envname == id and "selected = 'selected'" or ""$>$id$</option>
+#end
+	</select>&nbsp;&nbsp;
+	
+	<input type="button" class="btn btn-info" id="updateenv" value="刷新环境Url"/> 
+</td>
+</tr>
+
+#MaxCount = 0
+#for id, Server in ipairs(SDKList) do
+<tr>
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.HostID
+#	if (MaxCount-1)%5 == 0 then
+   	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#	end
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	   	$ServerInfoMap[Server.HostID]$ &nbsp;
+		<a href="/serverlistmgr/domodserverlist?cb_-1_$id$=$SvrId$&filename=$Filename$&mod=get"> 删除 </a>
+   	</td>
+#	if (MaxCount)%5 == 0 then
+	   	</tr>
+#	end
+
+#	local MoreTD = MaxCount%5
+#	if MoreTD > 0 then
+#		for i=1,(5-MoreTD) do
+   		<td width="20%" height="26" style="text-align: left;" class="content">&nbsp;</td>
+#		end
+#	end
+</tr>
+#end
+#if MaxCount == 0 then
+<tr>
+<td colspan="5" height="26" class="td_bg" style="text-align: left;">没有服务器</td>
+</tr>
+#end
+</table>
+</form>
+
+<form action="/serverlistmgr/domodserverlist" method=post id="join">
+<input type="hidden" name="sdkid" id="sdkid_1" value=""/>
+<input type="hidden" name="iswhite" id="iswhite_1" value=""/>
+<input type="hidden" name="channelid" id="channelid_1" value=""/>
+<input type="hidden" name="subchannelid" id="subchannelid_1" value=""/>
+<input type="hidden" name="envname" id="envname_1" value=""/>
+
+<table class="table table-striped table-bordered table-hover">
+<tr>
+<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	平台选择
+	<select name="platformid" id="platformid">
+		<option value="">全部</option>
+#for id, Platform in pairs(Platforms) do
+ 		<option value="$id$" $id==PlatformID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+</td>
+</tr>
+
+	<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	剩余服务器: </td>
+#local MaxCount = 0
+#for id, Server in ipairs(LeftServers) do
+#	MaxCount = MaxCount + 1
+#	SvrId = Server.HostID
+#	if (MaxCount-1)%5 == 0 then
+	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
+#	end
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
+	<input type=checkbox name=cb_-1_$id$ value=$SvrId$><font color="#A00000'">$ServerInfoMap[Server.HostID]$</font>
+	</td>
+#	if (MaxCount)%5 == 0 then
+	</tr>
+#	end
+#end
+#local MoreTD = MaxCount%5
+#if MoreTD > 0 then
+#for i=1,(5-MoreTD) do
+	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">&nbsp;</td>
+#end
+</tr>
+#end
+<tr>
+	<td colspan="5" width="100%" height="26" class="td_bg" style="text-align: left;">
+	选中服务器加入到当前服务器列表:
+	<input type=submit name=sub class="submit_btn" value="加入">
+	</td>
+</tr>
+
+<tr>
+	<td colspan="5" class="button content" style="text-align:center;">
+		<input type="button" class="btn btn-info" id="preForm" value="预览服务器列表"/> 
+		<input type="button" class="btn btn-info" id="createserver" value="生成服务器列表"/> 
+	</td>
+</tr>
+
+</table>
+</form>
+</body>
+</html>
+

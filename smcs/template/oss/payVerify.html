@@ -1,0 +1,10 @@
+<html>
+#include("include/inc_header_datatable.html")
+#include("include/filter.html")
+#if Options.PlatformID and Options.PlatformID ~= "" then
+#include("include/datatables.html")
+#else
+<div class="alert alert-warning" role="alert">请选择平台！</div>
+#end
+</body>
+</html>

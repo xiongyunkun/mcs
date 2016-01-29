@@ -1,0 +1,6 @@
+location ~ /youmi/do_pay_callback {
+	default_type "text/plain";
+	set $processfunc "PayCallback";
+	content_by_lua_file modules/youmi/pay.lua;
+}
+

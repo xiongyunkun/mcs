@@ -1,0 +1,40 @@
+<html>
+<body>
+当前位置: $CURPOSITION$<br>
+#if ExtMsg then
+处理结果:<font color="#FF0000">$ExtMsg$</font><br>
+#end
+#if User then
+用户信息修改<br>
+正在修改的用户:$User.name$<br>
+<form action="/usermgr/domod" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>账号:</td><td><input type="text" name="account" value="$User.account$" readonly="true"></td>
+</tr>
+<tr>
+<td width=200 align=right>密码:</td><td><input type=text name=password></td>
+</tr>
+<tr>
+<td width=200 align=right>名字:</td><td><input type="text" name="name" value="$User.name$"></td>
+</tr>
+<tr>
+ <td width=200 align=right>邮箱:</td><td><input type="text" name="mail" value="$User.mail$"></td>
+</tr>
+<tr>
+ <td width=200 align=right>rtx:</td><td><input type="text" name="rtx" value="$User.rtx$"></td>
+</tr>
+<tr>
+ <td width=200 align=right>手机:</td><td><input type="text" name="mobile" value="$User.mobile$"></td>
+</tr>
+<tr>
+ <td width=200 align=right>qq:</td><td><input type="text" name="qq" value="$User.qq$"></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+#end
+</body>
+</html>

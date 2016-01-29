@@ -1,0 +1,21 @@
+<html>
+#include("include/inc_header_datatable.html")
+<button class="btn btn-warning" type="button" onclick="window.location.href='/servermgr/mix_server_edit'" >添加操作</button>
+#include("include/filter.html")
+#include("include/datatables.html")
+<script type="text/javascript">
+	function deleteServer(PlatformID, ServerID, PlatformName){
+		if(PlatformID && PlatformID != "" && ServerID && ServerID != ""){
+			if(confirm("你确定要删除"+PlatformName+"下面的"+ServerID+"吗?")){
+				$.post("/servermgr/mix_server_delete",{PlatformID:PlatformID, ServerID:ServerID},function(result){
+			 		result = parseInt(result);
+			 		if(result==1){
+			 			window.location.reload();
+			 		}			 
+				});
+			}
+		}
+	}
+</script>
+</body>
+</html>

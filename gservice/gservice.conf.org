@@ -1,0 +1,120 @@
+#database config
+upstream gservice {
+	drizzle_server 127.0.0.1:3306 dbname=smcs
+		password=smcsdb user=smcs charset=utf8 protocol=mysql;
+}
+
+lua_package_path "$workpath$/?.lua;;";
+lua_package_cpath "$workpath$/lib/?.so;;";
+
+init_by_lua_file $workpath$/base/init.lua;
+
+allow 14.29.84.48;
+allow 192.168.1.97;
+#allow 192.168.1.112;
+#include $workpath$/custom_conf/ip.conf;
+
+server {
+listen 7666;
+server_name localhost;
+charset utf8;
+root $workpath$/;
+
+location / {
+	#default_type "text/html";
+	#set $processfunc "ReqLogin";
+	#content_by_lua_file admin/login.lua;
+}
+
+location ~ /\. {
+	deny all;
+	access_log off;
+	log_not_found off;
+}
+
+location ~ ^/favicon\.ico$ {
+	log_not_found off;
+	access_log off;
+}
+
+location /script {
+}
+
+location /img {
+}
+
+location /mysql {
+	drizzle_query $request_body;
+	drizzle_pass gservice;
+}
+
+#base function location
+location /alert {
+	default_type "text/plain";
+	set $processfunc "DoSendAlert";
+	content_by_lua_file interface/send_alert.lua;
+
+}
+
+location /downloadservlist {
+	default_type "text/plain";
+	set $processfunc "DoUploadServList";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+
+location /gethostlist {
+	default_type "text/plain";
+	set $processfunc "DoGetHostList";
+	content_by_lua_file modules/server/servinterface.lua;
+} 
+
+location /gethostlistphp {
+	default_type "text/plain";
+	set $processfunc "DoGetHostListPhp";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+
+location /gethostconf {
+	default_type "text/plain";
+	set $processfunc "DoGetHostConfParam";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+
+location /upservstatus {
+	default_type "text/html";
+	set $processfunc "DoUpServStaus";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+
+location /proxy {
+	set_by_lua $uncode_host 'return ngx.unescape_uri(ngx.var.arg_host)';
+	proxy_pass http://$uncode_host?$request_body;
+}
+
+location /getcrossconf {
+	default_type "text/plain";
+	set $processfunc "DoGetCrossConf";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /exchangekey {
+	default_type "text/plain";
+	set $processfunc "ExchangeKey";
+	content_by_lua_file modules/cdkey/cdkey.lua;
+}
+
+location /update_pay_status {
+	default_type "text/plain";
+	set $processfunc "UpdatePayStatus";
+	content_by_lua_file modules/pay/pay_status.lua;
+}
+
+location /getserverconf {
+	default_type "text/plain";
+	set $processfunc "DoGetServerListConf";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+
+#youmi platform
+include $workpath$/custom_conf/youmi.path;
+
+}

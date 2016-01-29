@@ -1,0 +1,25 @@
+<html>
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" method="get" action="">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	<label>查询CD KEY：</label>	
+	<input type="text" name="CDKey" value="$Options.CDKey or ''$" placeholder="输入cdkey...">	
+	<label>玩家角色ID：</label>	
+	<input type="text" name="Uid" value="$Options.Uid or ''$" placeholder="玩家角色ID">
+	<input type="submit" class="submit_btn" value="查询"> 
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+})
+ </script>
+#include("include/datatables.html")
+
+</body>
+</html>

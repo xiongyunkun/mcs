@@ -1,0 +1,78 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+#include("include/inc_position.html")
+<div class="page-header">
+<h3>$GroupPermissionInfo.Name$权限列表</h3>
+</div>
+<form action="/admin/dosetpermission" method=post>
+<input type=hidden name=gid value=$GroupId$>
+<div id="menu-box">
+    <div class="menulist" id="menuList">
+	
+#for _, Module in pairs(TreeMap) do
+	<ul>
+    <li>
+        <span class="cb_line" $Module.isshow == "false" and 'style="display:none;"' or ''$>
+            <span class="cb_icon"></span>
+            <input type="checkbox" style="margin: 0;" value="$Module.name$" name="MenuID" $PermMap[Module.name] and "checked" or ""$>
+            <label for=""><span class="label label-success">$Module.name$</span></label>
+        </span>
+#if Module.children then
+		<ul style="margin-top:5px;">
+#for _, CModule in ipairs(Module.children) do
+				<span class="cb_line $CModule.isshow == 'true' and 'show_module' or 'hide_module'$" $CModule.isshow == "false" and 'style="display:none;"' or ''$>
+					<span class="cb_icon"></span>
+					<input type="checkbox" style="margin: 0;" value="$CModule.name$" name="MenuID" $PermMap[CModule.name] and "checked" or ""$>
+					<label for="">$CModule.name$</label>
+				</span>
+			
+			
+		
+#end
+		</ul>
+#end
+    </li>
+	</ul>
+#end
+    
+</div>
+<div style="text-align:center;margin-top:10px;">
+<input type="submit" value="设置" id="preForm" class="submit_btn"> 
+</div>
+</form>
+<div id="menuMask" style="height: 105px; top: 310px; left: 406px; display: none;"></div>
+</div>
+<script>
+$(document).ready(function(){
+	$(".cb_line input").change(function(){
+		var inputEm = $(this).parent('.cb_line').next('ul').find('input');
+		inputEm.prop("checked", $(this).is(":checked"));
+        if($(this).is(":checked")){
+            $(this).parents('li').children('.cb_line').find('input').prop('checked', true);
+        }
+	});
+	//如果show_module已勾选，则要把父选项下面的hide_module都勾选上
+	$(".show_module input").change(function(){
+		if($(this).is(":checked")){
+			//需要把父选项下面的hide_module都勾选上
+			$(this).parents('ul').children('.hide_module').find('input').prop('checked', true);
+		}else{
+			//如果父选项下面的show_module都已经取消了，则hide_module也取消
+			var flag = true;
+			$(this).parents('ul').find(".show_module").each(function(){
+				if($(this).find('input').is(":checked")){
+					flag = false;
+					return;
+				}
+			});
+			if(flag == true){
+				//需要把父选项下面的hide_module全部不选
+				$(this).parents('ul').children('.hide_module').find('input').prop('checked', false);
+			}
+		}
+	})
+})
+</script>
+</body>
+</html>

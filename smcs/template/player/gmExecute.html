@@ -1,0 +1,70 @@
+<html>
+#include("include/inc_position.html")
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" method="post" action="/playermgr/gmexecute">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	<label>选择大区：</label>	
+	<select name="ServerType">
+#for ID,Value in pairs(ServerTypes) do
+		<option value="$ID$">$Value$</option>
+#end
+	</select>
+	<br>
+	<label>服名称：</label>	
+	<select name="HostID" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$">$ServerName$</option>
+#end
+	</select>
+	<br>
+	<label style="font-weight:normal;">玩家角色列表，用 分号(;) 来分隔多个角色名</label>
+	<br>
+	<label>
+		<textarea name="RoleName" cols="60" rows="3" class="span5"></textarea>
+	</label>
+	<br>
+	<label>选择指令：</label>	
+	<select name="GMID" class="chosen-select gmID" tabindex="2" data-placeholder="选择指令">
+		<option value="">请选择GM指令值</option>
+#for ID,GMName in pairs(GMList) do
+		<option value="$ID$">$GMName$</option>
+#end
+	</select>
+	<br>
+	<label>输入参数：</label>
+	<input type="text" placeholder="GM参数,多个参数用空格..." value="" name="GMParams" style="width:400px;">
+	<div style="margin:10px 0 0 300px;">
+		<input type="submit" class="submit_btn" value="提交"> 
+	</div>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".hostID").chosen({
+		width:'600px',
+	});
+	$(".gmID").chosen({width:"450px",});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+})
+ </script>
+#include("include/datatables.html")
+</body>
+</html>

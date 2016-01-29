@@ -1,0 +1,83 @@
+<html>
+#include("include/inc_header.html")
+<body>
+#include("include/inc_position.html")
+
+模块列表<br>
+<table width="100%" align=left>
+<tr bgcolor="#ff7575">
+<td>名称</td>
+<td>location</td>
+<td>处理模块</td>
+<td>处理方法</td>
+<td>所属模块</td>
+<td>显示</td>
+<td>备注</td>
+<td>操作</td>
+</tr>
+#for id, Module in pairs(Modules) do
+	<tr bgcolor="$(id%2==0) and '#CECEFF' or '#FBFBFF' $">
+	<form action="/admin/modulemod" method=post>
+	<td><input type=text name=name value=$Module.name$><input type=hidden name=oldname value=$Module.name$></td>
+	<td><input type=text name=uri value=$Module.uri$></td>
+	<td><input type=text name=module value=$Module.module$></td>
+	<td><input type=text name=procfunc value=$Module.procfunc$></td>
+	<td>
+	<select name=parent>
+#local ModuleNames = GetModuleNames(nil, Module.name)
+#table.insert(ModuleNames,1,"")
+#for _, MName in ipairs(ModuleNames) do
+		<option value="$MName$" $(MName==Module.parent) and "selected" or ""$>$MName=="" and "无" or MName$</option>
+#end
+	</select>
+	</td>
+	<td><input type="Radio" name="isshow" value="true" $(Module.isshow == "true") and "checked" or ""$>显示&nbsp;<input type="Radio" name="isshow" value="false" $(Module.isshow == "false") and "checked" or ""$>不显示</td>
+	<td><textarea name=descinfo cols="30" rows="3">$Module.descinfo$</textarea></td>
+	<td>
+	<input type=submit name=mod value="修改"><br>
+	<a href="/admin/moduledel?name=$UriEncode(Module.name)$">删除</a>
+	</td>
+	</form>
+	</tr>
+#end
+</table><br>
+<hr>
+添加模块:<br>
+<form action="/admin/moduleadd" method=post>
+<table width="100%" align=left>
+<tr>
+<td width=200 align=right>名字:</td><td><input type="text" name="name"></td>
+</tr>
+<tr>
+<td width=200 align=right>location:</td><td><input type="text" name="uri"></td>
+</tr>
+<tr>
+ <td width=200 align=right>处理模块:</td><td><input type="text" name="module"></td>
+</tr>
+<tr>
+ <td width=200 align=right>处理方法:</td><td><input type="text" name="procfunc"></td>
+</tr>
+<tr>
+ <td width=200 align=right>所属模块:</td><td>
+ 	<select name=parent>
+#local ModuleNames = GetModuleNames(nil, nil)
+#table.insert(ModuleNames,1,"")
+#for _, MName in ipairs(ModuleNames) do
+		<option value="$MName$" $(MName=="") and "selected" or ""$>$MName=="" and "无" or MName$</option>
+#end
+	</select>
+ </td>
+</tr>
+<tr>
+ <td width=200 align=right>是否显示:</td><td><input type="Radio" name="isshow" value="true">显示&nbsp;<input type="Radio" name="isshow" value="false" checked>不显示</td>
+</tr>
+<tr>
+ <td width=200 align=right>备注:</td><td><textarea name=descinfo cols="30" rows="3"></textarea></td>
+</tr>
+<tr>
+ <td width=200 align=right><input type="submit" name="提交"></td><td>&nbsp;</td>
+</tr>
+</table>
+</form>
+</body>
+</html>

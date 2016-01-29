@@ -1,0 +1,180 @@
+<html>
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" id="postForm" method="post" action="/playermgr/doitem">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	<label>选择大区：</label>	
+	<select name="ServerType">
+#for ID,Value in pairs(ServerTypes) do
+		<option value="$ID$">$Value$</option>
+#end
+	</select>
+	<label>服名称：</label>	
+	<select name="HostID" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$" 
+			$Options.HostID and ((Options.HostID==tostring(ID)) or (type(Options.HostID) == "table" and table.member_key(Options.HostID, tostring(ID)))) and "selected" or ""$>
+			$ServerName$
+		</option>
+#end
+	</select>
+	<br>
+	<label>操作方式：</label>	
+	<select name="OperationType" class="chosen-select OperationType" tabindex="2" data-placeholder="选择操作方式">
+#for ID,Type in pairs(OperationTypes) do
+		<option value="$ID$">$Type$</option>
+#end
+	</select>
+	<br>
+<span id="plus">
+	<span id="multisend" style="display:none;">
+		<label>最低等级：</label>
+		<input type="text" name="MinLevel" value="">	
+		<label>创角时间：</label>
+		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="CreateTime">
+		<label>是否在线：</label>
+		<select name="IsOnline">
+			<option value="">不限</option>
+			<option value="1">在线</option>
+		</select>
+		<label>是否定时发送：</label>
+		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="IsLimitTime">
+	</span>
+	<span id="onlysend">
+		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
+		<br>	
+		<textarea class="span5" rows="3" cols="60" name="RoleName" style="margin-left:10px;"></textarea>
+	</span>
+	<br>
+	<span id="email">
+		<label>邮件标题：</label>
+		<input type="text" name="Title" value="">
+	</span>
+	<br>
+	<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
+	<br>
+	<div id="addItems">
+		<div>
+			<label style="font-weight:normal;">钻石：</label>
+			<input type="text" name="Gold" value="" placeholder="钻石数量...">
+			<label style="font-weight:normal;">金币：</label>
+			<input type="text" name="Money" value="" placeholder="金币数量...">
+		</div>
+		<div>
+			<label style="font-weight:normal;">道具：</label>
+			<input type="text" name="Item" class="item" value="" placeholder="物品ID...">
+			<input type="text" name="Numbers" class="number" value="" placeholder="个数...">
+			<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>
+			<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/>
+		</div>
+	</div>
+</span>
+
+<span id="minus" style="display:none;">
+	<span>
+		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
+		<br>	
+		<textarea class="span5" rows="3" cols="60" name="MinusRoleName" style="margin-left:10px;"></textarea>
+	</span>
+	<br>
+	<label>道具：</label>
+	<input type="text" class="item" name="MinusItem" value="" placeholder="物品ID...">
+	<input type="text" name="MinusNumbers" value="" placeholder="个数...">
+</span>	
+<div style="margin:10px 0 0 300px;">
+	<input type="submit" class="submit_btn" value="提交"> 
+</div>
+</form>
+ <script language="JavaScript">
+ //获得ItemID
+ function getItemID(ItemStr){
+	var strArray = ItemStr.split("_");
+	if(strArray.length >= 2){
+		return strArray[1];
+	}else{
+		return strArray[0]; //否则返回第一个
+	}
+ }
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".OperationType").chosen({width:"100px",});
+	$(".hostID").chosen({
+		width:'500px',
+	});
+	
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+	$(".OperationType").change(function(){
+		var ID = $(this).val();
+		if(ID == 1){ //单独发送
+			$("#minus").hide();
+			$("#plus").show();
+			$("#multisend").hide();
+			$("#onlysend").show();
+		}else if(ID == 2){ //群发
+			$("#minus").hide();
+			$("#plus").show();
+			$("#multisend").show();
+			$("#onlysend").hide();
+		}else if(ID == 3){ //扣除道具
+			$("#minus").show();
+			$("#plus").hide();
+		}
+	});
+	var availableTags = [$table.concat(ItemStrList, ",")$];
+	//添加道具
+	$(document).on('click', '.add_item', function() {
+		var itemDom = $(this).parent().clone();
+		//清空内容
+		itemDom.find(".item").val("");
+		itemDom.find(".number").val("");
+		itemDom.appendTo("#addItems");
+		//重新绑定一下事件
+		itemDom.find(".item").autocomplete({source: availableTags,minLength: 2});
+		//$( ".item" ).on( "autocompletefocus", function( event, ui ) {
+		//	var value = getItemID(ui.item.value);
+		//	ui.item.value = value;
+		//});
+	});
+	//删除道具
+	$(document).on('click', '.del_item', function() {
+		//剩余一个不能删除
+		if($("#addItems").children().length > 1){
+			$(this).parent().remove();
+		} 
+	});
+	$(".item").autocomplete({source: availableTags,minLength: 2});
+	//$( ".item" ).on( "autocompletefocus", function( event, ui ) {
+	//	var value = getItemID(ui.item.value);
+	//	ui.item.value = value;
+	//});
+	$("#postForm").submit(function(){
+		//判断是否选择了平台
+		var platformID = $(".platformID").val();
+		if(platformID == ""){
+			alert("请选择平台！");
+			return false;
+		}
+	});
+})
+ </script>
+#include("include/datatables.html")
+
+</body>
+</html>

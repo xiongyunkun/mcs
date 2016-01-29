@@ -1,0 +1,79 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+
+<div class="page-header">
+	<h3>超级会员区服编辑</h3>
+</div>
+<form action="/gamemgr/player_server_edit" method="post" id="postForm">
+#if ServerInfo.HostID then
+<input type="hidden" name="PlatformID" value="$ServerInfo.PlatformID or ""$">
+<input type="hidden" name="HostID" value="$ServerInfo.HostID or ""$">
+#end
+<table class="table table-striped table-bordered table-hover" style="width:80%;margin-left:15px;">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="PlatformID" class="chosen-select platformID" tabindex="2" $ServerInfo.HostID and "disabled" or ""$ data-placeholder="选择平台">
+			<option value="">全部</option>
+#for PID,Platform in pairs(Platforms) do
+			<option value="$PID$" $ServerInfo.PlatformID and ServerInfo.PlatformID==PID and "selected" or ""$>$Platform$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<select name="HostID" class="chosen-select hostID" tabindex="2" $ServerInfo.HostID and "disabled" or ""$ data-placeholder="选择服">
+			<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+			<option value="$ID$" 
+			$ServerInfo.HostID and ServerInfo.HostID==tostring(ID) and "selected" or ""$>
+			$ServerName$
+			</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">钻石上限额度：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="GoldLimit" value="$ServerInfo.GoldLimit or ''$" name="GoldLimit"> 10 钻石 = 1元RMB.
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">QQ：</td>
+	<td width="30%" height="26" style="text-align: left;" class="content">
+		<input type="text" id="QQ" value="$ServerInfo.QQ or ''$" name="QQ"> 
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px"});
+	$(".hostID").chosen({
+		width:'150px',
+	});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+})
+ </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf8">
+<head>
+	<link href="/static/bootstrap/css/bootstrap.css" rel="stylesheet">
+	<link href="/static/assets/css/ace.min.css?t=3" rel="stylesheet">
+	<link href="/static/assets/css/font-awesome.min.css" rel="stylesheet">
+	<script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
+</head>
+<body scroll="no" style="overflow:hidden;padding:0px;">
+<div class="slide_left">
+
+<ul class="nav nav-list">
+#for id,Info in ipairs(FuncIndex) do
+		<li>
+			<a href="$Info.act or '#'$" class="href_menu">
+				<i class="$Info.icon or 'icon-home'$"></i>
+				<span class="menu-text">$Info.name$</span>
+#if Info.sub then
+				<b class="arrow icon-angle-down"></b>
+#end
+			</a>
+#if Info.sub then
+			<ul class="submenu" style="display:none;">
+#for id,SubInfo in ipairs(Info.sub) do
+				<li>
+#if SubInfo.act then
+					<a href="$SubInfo.act$" target="main">
+						<i class="icon-double-angle-right"></i>
+						$SubInfo.name$
+					</a>
+#else
+					$SubInfo.name$
+#end
+				</li>
+#end
+			</ul>
+#end
+		</li>
+#end
+</ul>
+</div>
+
+<script language="JavaScript">
+$(document).ready(function(){
+	//$(".s_box").hide(); //把子菜单都隐藏
+	$(".href_menu").click(function(){ //收缩菜单
+		$(this).parent().siblings().find(".submenu").hide();
+		$(this).next().slideToggle(300);
+		$("li").removeClass("active");
+		$(this).parent().addClass("active");
+	});
+	$(".submenu a").click(function(){
+		$(".submenu li").removeClass("active");
+		$(this).parent().addClass("active");
+	});
+})
+</script>
+</body>
+</html>

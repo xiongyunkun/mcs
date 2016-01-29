@@ -1,0 +1,52 @@
+<html>
+#include("include/inc_header_v2.html")
+<body>
+
+<div class="page-header">
+	<h3>GM指令编辑</h3>
+</div>
+<form action="/gmmgr/ruleedit" method=post>
+<input type="hidden" name="ID" value="$ID or ""$">
+<table class="table table-striped table-bordered table-hover" style="width:80%">
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">指令名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="Name" value="$RuleInfo and RuleInfo.Name or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">指令规则:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="Rule" value="$RuleInfo and RuleInfo.Rule or ''$" style="width:400px;">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">参数样式:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="RuleFormat" value="$RuleInfo and RuleInfo.RuleFormat or ''$" style="width:400px;">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<textarea name=Memo cols="30" rows="3">$RuleInfo and RuleInfo.Memo or ""$</textarea>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">允许运营操作:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="OssFlag">
+			<option value="0" $RuleInfo and RuleInfo.OssFlag == 0 and "selected" or ""$>否</option>
+			<option value="1" $RuleInfo and RuleInfo.OssFlag == 1 and "selected" or ""$>是</option>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td colspan="2" class="button content" style="text-align:center;">
+		<input type="submit" class="submit_btn" name="submit" value="提交"/> 
+	</td>
+</tr>
+</table>
+</form>
+</body>
+</html>
