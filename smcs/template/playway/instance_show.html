@@ -1,6 +1,111 @@
 <html>
 #include("include/inc_header_datatable.html")
 #include("include/filter.html")
-#include("include/datatables.html")
+<style>
+	table th{word-break: keep-all;white-space:nowrap;}
+</style>
+<div class="tabbable">
+	<ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
+#for Index,TabName in pairs(TabList) do
+		<li $Index == 1 and 'class="active"' or ''$>
+			<a data-toggle="tab" href="#tab_$Index$">$TabName$</a>
+		</li>
+#end
+	</ul>
+</div>
+<div class="tab-content">
+	<div id="tab_1" class="tab-pane in active">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th rowspan="2" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">日期</th>
+#for _,InstanceName in pairs(SysInstanceList) do
+					<th colspan="3" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$InstanceName$</th>
+#end				
+				</tr>
+				<tr class="table_head">
+#for ID, _ in pairs(SysInstanceList) do
+					<th nowrap="nowrap" style="text-align:center;">参与人数</th>
+					<th nowrap="nowrap" style="text-align:center;">功能开放人数</th>
+					<th nowrap="nowrap" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">参与率<img class="help" title="参与人数/功能开放人数($InstLevelMap[ID] and InstLevelMap[ID] or ''$级)" src="/static/image/indIntro.png" width="16" height="16" style="margin-bottom: -4px;" />
+					</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for Day, DayInfo in pairs(InstanceRes) do
+				<tr>
+					<td nowrap="nowrap" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">$Day$</td>
+#for ID, _ in pairs(SysInstanceList) do
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].UidNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].OpenFuncNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$DayInfo[ID] and DayInfo[ID].UidNum and DayInfo[ID].OpenFuncNum ~= 0 and (math.floor(DayInfo[ID].UidNum * 10000/DayInfo[ID].OpenFuncNum)/100 .. "%") or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+	<div id="tab_2" class="tab-pane">
+		<table class="dataTable table table-striped table-bordered" style="border-collapse: collapse;width:100%;">
+			<thead>
+				<tr class="table_head">
+					<th rowspan="2" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">日期</th>
+#for _,InstanceName in pairs(TimerInstanceList) do
+					<th colspan="3" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$InstanceName$</th>
+#end				
+				</tr>
+				<tr class="table_head">
+#for ID, _ in pairs(TimerInstanceList) do
+					<th nowrap="nowrap" style="text-align:center;">参与人数</th>
+					<th nowrap="nowrap" style="text-align:center;">功能开放人数</th>
+					<th nowrap="nowrap" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">参与率<img class="help" title="参与人数/功能开放人数($InstLevelMap[ID] and InstLevelMap[ID] or ''$级)" src="/static/image/indIntro.png" width="16" height="16" style="margin-bottom: -4px;" />
+					</th>
+#end				
+				</tr>
+			</thead>
+			<tbody>
+#for Day, DayInfo in pairs(InstanceRes) do
+				<tr>
+					<td nowrap="nowrap" style="text-align:center; border-right-width: 2px;border-right-color: #99cc00;">$Day$</td>
+#for ID,_ in pairs(TimerInstanceList) do
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].UidNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;">$DayInfo[ID] and DayInfo[ID].OpenFuncNum or "-"$</td>
+					<td nowrap="nowrap" style="text-align:center;border-right-width: 2px;border-right-color: #99cc00;">$DayInfo[ID] and DayInfo[ID].UidNum and DayInfo[ID].OpenFuncNum ~= 0 and (math.floor(DayInfo[ID].UidNum * 10000/DayInfo[ID].OpenFuncNum)/100 .. "%") or "-"$</td>
+#end
+				</tr>
+#end
+			</tbody>
+		</table>
+	</div>
+</div>
+ <script>
+ $(document).ready(function(){
+	$('.dataTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"paging": true,
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, 'desc' ]], //按哪列排序，序号是从0开始
+	});
+	
+})
+</script>
 </body>
 </html>

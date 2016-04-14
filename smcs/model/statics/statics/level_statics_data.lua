@@ -34,7 +34,11 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.Date and Options.Date ~= "" then
 		Where = Where .. " and Date = '" .. Options.Date .. "'"

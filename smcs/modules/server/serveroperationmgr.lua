@@ -27,8 +27,8 @@ TimeTypes = {
 
 function OperationList(self)
 	Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	OperationInfoList = ServerOperationData:Get(Options)
 	--获得平台列表
 	local PlatformList = PlatformData:GetPlatform()
@@ -69,7 +69,7 @@ end
 function Edit(self)
 	ID = GetQueryArg("ID") or ""
 	PlatformID = GetQueryArg("PlatformID") or ""
-	OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	if ID and ID ~= "" then
 		OperationInfo = ServerOperationData:Get({ID = ID})
 		if OperationInfo and OperationInfo[1] then
@@ -111,7 +111,7 @@ function EditPost(self)
 	end
 	if Args.TimeType == "2" then
 		--立即执行的话执行时间就是当前时间
-		Args.OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+		Args.OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	end
 	local User = UserData:GetUserById(GetSession("UserId"))
 	Args.Operator = User and User["account"] or ""

@@ -16,42 +16,36 @@ local ReplaceArray = {[";"]="^^" ,[","] = "@@"} --标题和内容中需要替换
 
 --道具操作
 function ItemShow(self, PlatformID, Results)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	Options.PlatformID = Options.PlatformID or PlatformID
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local ServerTypes = CommonFunc.GetMulServerTypes()
-	local ItemStrList = {}
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	ServerTypes = CommonFunc.GetMulServerTypes()
+	ItemStrList = {}
 	for ItemID, ItemName in pairs(ItemDataMap or {}) do
 		table.insert(ItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
 	end
-	
+	--1.0版本的物品列表
+	OldItemStrList = {}
+	for ItemID, ItemName in pairs(OldItemDataMap or {}) do
+		table.insert(OldItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
+	end
+	DeductItemTypes = {"背包","身上"}
 	--展示数据
-	local Titles = {"平台", "服", "账号", "角色", "执行结果", }
+	Titles = {"平台", "服", "账号", "角色", "执行结果", }
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
-	local TableData = {}
+	TableData = {}
 	for _, Result in ipairs(Results or {}) do
 		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Result.Result or "执行失败"}
 		table.insert(TableData, CTable)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		ServerTypes = ServerTypes,
-		ItemStrList = ItemStrList,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-		OperationTypes = OperationTypes,
-	}
-	Viewer:View("template/player/itemShow.html", Params)
+	Viewer:View("template/player/itemShow.html")
 end
 
 --道具操作提交
@@ -92,6 +86,7 @@ function SendItem(self, Options)
 end
 
 --群发道具
+--20150316:改成调用道具群发补偿模块
 function SendAllItem(self, Options)
 	local LimitOptions = {}
 	if Options.MinLevel and Options.MinLevel ~= "" then
@@ -100,29 +95,32 @@ function SendAllItem(self, Options)
 	if Options.CreateTime and Options.CreateTime ~= "" then
 		LimitOptions["MinBornTime"] = GetTimeStamp(Options.CreateTime .. " 00:00:00")
 	end
-	if Options.IsOnline and Options.IsOnline ~= "" then
-		LimitOptions["IsOnline"] = Options.IsOnline
-	end
-	if Options.IsLimitTime and Options.IsLimitTime ~= "" then
-		LimitOptions["IsLimitTime"] = GetTimeStamp(Options.IsLimitTime)
-	end
 	local OptionStr = Serialize(LimitOptions)
 	OptionStr = string.gsub(OptionStr, '"', "'")
 	--获得奖励列表
-	local ItemStr = self:GetItems(Options)
-	local Gold = Options.Gold and tonumber(Options.Gold) or 0
-	local Money = Options.Money and tonumber(Options.Money) or 0 
-	ItemStr = Money .. "," .. Gold .. "," .. ItemStr
-
+	local Items = self:GetItems4SendAllItem(Options)
+	--加上钻石
+	if Options.Gold and tonumber(Options.Gold) then
+		local GoldInfo = {Type=CommonData.mBONUS_GOLD, SubType=0, Amount=tonumber(Options.Gold)}
+		table.insert(Items, GoldInfo)
+	end
+	--绑钻
+	if Options.CreditGold and tonumber(Options.CreditGold)then
+		local CreditGoldInfo = {Type=CommonData.mBONUS_CREDITGOLD, SubType=0, Amount=tonumber(Options.CreditGold)}
+		table.insert(Items, CreditGoldInfo)
+	end
+	--金币
+	if Options.Money and tonumber(Options.Money) then
+		local MoneyInfo = {Type=CommonData.mBONUS_MONEY, SubType=0, Amount=tonumber(Options.Money)}
+		table.insert(Items, MoneyInfo)
+	end
+	local ItemStr = Serialize(Items)
+	ItemStr = string.gsub(ItemStr, '"', "'")
 	--执行GM指令,先获得服列表
 	Options.HostID = type(Options.HostID) == "table" and table.concat(Options.HostID, ",") or Options.HostID
 	Options.HostID = Options.HostID or ""
 	local HostIDs = string.split(Options.HostID, ",")
-	local NHostIDs = {}
-	for _, HostID in ipairs(HostIDs) do
-		table.insert(NHostIDs, tonumber(HostID))
-	end
-	local HostList = ServerData:GetServerList(Options.ServerType, NHostIDs, Options.PlatformID)
+	local HostList = ServerData:GetServerList(Options.ServerType, HostIDs, Options.PlatformID)
 	local HostResults = {} --初始化结果
 	for _, HostID in ipairs(HostList) do
 		local HostInfo = {HostID = HostID}
@@ -131,11 +129,11 @@ function SendAllItem(self, Options)
 	--发送邮件
 	local OperationInfo = GMRuleData:Get({ID = SendAllItemID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Title = self:ReplaceStr(Options.Title)
 	local Content = self:ReplaceStr(Options.Content)
 	--验证参数
-	local GMParams = {Title, Content, ItemStr, OptionStr} 
+	local GMParams = {MessageID, Title, Content, ItemStr, OptionStr} 
 	local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 	if not Flag then
 		ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -154,6 +152,7 @@ end
 --道具扣除
 function DelItem(self, Options)
 	local RoleName = Options.MinusRoleName
+	local DeductType = Options.DeductItemType
 	local UserList = {}
 	if RoleName and RoleName ~= "" then
 		local RoleNames = string.split(RoleName, ";")
@@ -176,14 +175,15 @@ function ExecteDelGM(self, Options, UserList)
 	--获得GM指令
 	local OperationInfo = GMRuleData:Get({ID = DelItemID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
+	local DeductItemType = Options.DeductItemType
 	local ItemID = Options.MinusItem
 	ItemID = self:GetItemID(ItemID)
 	if ItemID ~= "" and tonumber(ItemID) then
 		local Number = Options.MinusNumbers
 		for _, UidInfo in ipairs(UserList) do
 			--验证参数
-			local GMParams = {UidInfo.Uid,ItemID, Number, "smcs_GM删除"} 
+			local GMParams = {UidInfo.Uid, DeductItemType, ItemID, Number, "smcs_GM删除"} 
 			local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 			if not Flag then
 				ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -204,16 +204,17 @@ function ExecuteGM(self, GMID, Options, UserList)
 	--获得GM指令
 	local OperationInfo = GMRuleData:Get({ID = GMID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Title = Options.Title
 	local Content = Options.Content
 	local ItemStr = self:GetItems(Options)
 	local Gold = Options.Gold and tonumber(Options.Gold) or 0
+	local CreditGold = Options.CreditGold and tonumber(Options.CreditGold) or 0
 	local Money = Options.Money and tonumber(Options.Money) or 0 
-	ItemStr = Money .. "," .. Gold .. "," .. ItemStr
+	ItemStr = Money .. "," .. Gold .. "," .. CreditGold .. "," .. ItemStr
 	for _, UidInfo in ipairs(UserList) do
 		--验证参数
-		local GMParams = {UidInfo.Uid, Title, Content, ItemStr}
+		local GMParams = {UidInfo.Uid, MessageID, Title, Content, ItemStr}
 		local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 		if not Flag then
 			ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -247,11 +248,8 @@ function GetItems(self, Options)
 		end
 	else
 		local Items = self:GetItemID(Items)
-		if Items ~= "" and tonumber(Items) then
-			local Number = tonumber(Numbers) or 1
-			table.insert(ItemList, Items)
-			table.insert(ItemList, Number)
-		end
+		table.insert(ItemList, Items)
+		table.insert(ItemList, Numbers or 1)
 	end
 	local ItemStr = table.concat(ItemList, ",")
 	return ItemStr
@@ -297,13 +295,9 @@ end
 function GetItemID(self, ItemStr)
 	local Array = string.split(ItemStr, "_")
 	if #Array >= 2 then
-		if ItemDataMap[tonumber(Array[2])] then
-			return Array[2]
-		end
+		return Array[2]
 	else
-		if ItemDataMap[tonumber(Array[1])] then
-			return Array[1]
-		end
+		return Array[1]
 	end
 end
 

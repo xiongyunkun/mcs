@@ -10,15 +10,10 @@
 function GetJsonServer(self)
 	local Args = GetPostArgs()
 	local PlatformID = Args.PlatformID
-	local ServList = MixServerData:Get({PlatformID = PlatformID})
-	local ServerInfoList = ServerData:GetAllServers()
-	local ServerInfoMap = {}
-	for _, Info in ipairs(ServerInfoList) do
-		ServerInfoMap[Info.hostid] = Info.name
-	end 
+	ServList = ServerData:GetServer({PlatformID = PlatformID})
 	local ServerMap = {}
 	for _ , Server in ipairs(ServList) do
-		ServerMap[tostring(Server.HostID)] = ServerInfoMap[Server.HostID] or ""
+		ServerMap[tostring(Server.hostid)] = Server.name
 	end
 	local JsonStr = json.encode(ServerMap)
 	ngx.say(JsonStr)

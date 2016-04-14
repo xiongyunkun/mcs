@@ -9,15 +9,9 @@
 local RunTimeLogFile = "engine/runtime.log" --文件名
 local RequestType = "getlog"
 local StaticsIndex = "RunErroStatics"
-local StaticsIndexInter = "RunErroStaticsInter"
 local ErroLogResultPath = "game_logs/game_erro_result.log" --外网服务器日志存放路径
-local ErroLogPath = "game_logs/game_erro.log" --97服务器拖回来的日志存放路径
-
-local RTXReciever = "0039,0090,0017,0072,0100" --如果有多个请用逗号隔开
-
-local ServerRTXReciever = RTXReciever
-local ClientRTXReciever = RTXReciever .. ",0041,0106,0032,0050,0107,0108"
-
+local ErroLogPath = "game_logs/game_erro.log" --98服务器拖回来的日志存放路径
+local RTXReciever = "0083,0012,0013,0030,0088,0099" --如果有多个请用逗号隔开
 local TimeInterval = 15 --15分钟执行一次
 
 --获得上一次的统计时间
@@ -37,13 +31,13 @@ end
 --外网服错误日志统计接口
 function CronExecute(self)
 	local ServerPlatformMap = ServerData:GetStaticsServers()
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	
 	local NowTimeStr = os.date("%Y-%m-%d %H:%M:%S", NowTime)
 	local DefaultStartTime = os.date("%Y-%m-%d 00:00:00", NowTime)  --默认是当天的0点
 	local StartTimeMap = self:GetStartTimeMap()
 	local Results = {}
-	for HostID, _ in pairs(ServerPlatformMap) do
+	for HostID, PlatformID in pairs(ServerPlatformMap) do
 		--构建请求参数
 		local Params = {
 			FileNames = RunTimeLogFile,
@@ -113,6 +107,7 @@ function AnalysisLog(self, HostID, Response, Results)
 						HostIDs = {[HostID] = ErroInfo.ErroNum, TotalNum = ErroInfo.ErroNum},
 						Content = ErroInfo.Content,
 						Time = ErroInfo.Time,
+						Reason = ErroInfo.Reason,
 					}
 				else
 					--否则只对服的错误数+1和总错误数+1
@@ -137,10 +132,13 @@ function ExtractErro(self, LogContent)
 		if StartIdx then
 			LastTime = string.sub(Line, StartIdx+1, EndIdx-1) --截取时间
 			if string.find(Line, "traceback:") then --是错误日志，记录下来
-				ErroKey = string.sub(Line, EndIdx+1)
-				Results[ErroKey] = Results[ErroKey] or {ErroNum = 0, Content = {}}
+				local ErroMsg = string.sub(Line, EndIdx+1)
+				local Reason = nil
+				ErroKey, Reason = self:ExtractErrKey(ErroMsg)
+				Results[ErroKey] = Results[ErroKey] or {ErroNum = 0, Content = {},}
 				Results[ErroKey].ErroNum = Results[ErroKey].ErroNum + 1
 				Results[ErroKey].Time = LastTime
+				Results[ErroKey].Reason = Reason
 				table.insert(Results[ErroKey].Content, Line)
 			end
 		else --是错误日志的后面部分
@@ -156,14 +154,29 @@ function ExtractErro(self, LogContent)
 	return Results, LastTime
 end
 
+--提取出错误代码所在位置以及错误原因
+function ExtractErrKey(self, ErrMsg)
+	ErrMsg = string.gsub(ErrMsg, "(%(%d%d%))", "") --过滤掉进程号
+	local SIdx, EIdx = string.find(ErrMsg, "[%s%S]-%.lua:%d+:") --匹配错误代码所在位置
+	if not SIdx then
+		SIdx, EIdx = string.find(ErrMsg, '%[string[%s%S]-%.lua"%]:%d+:')
+	end
+	if not EIdx then 
+		return ErrMsg, "" --直接返回
+	end
+	local Reason = string.sub(ErrMsg, EIdx+1)
+	local CodePosition = string.sub(ErrMsg, 1, EIdx)
+	return CodePosition, Reason
+end
+
 --封装RTX消息
-function GetRTXMsg(self, ErroKey, HostIDNums, ErroTime)
+function GetRTXMsg(self, ErroKey, HostIDNums, ErroTime, Reason)
 	local ServerList = ServerData:GetAllServers()
 	local ServerMap = {}
 	for _, ServerInfo in ipairs(ServerList) do
 		ServerMap[ServerInfo.hostid] = ServerInfo.name
 	end
-	local Content = "(" .. ErroTime .. ")" .. ErroKey
+	local Content = "(" .. ErroTime .. ")" .. ErroKey .. (Reason or "")
 	local ServerErros = {}
 	for HostID, Num in pairs(HostIDNums or {}) do
 		if HostID == "TotalNum" then
@@ -181,12 +194,12 @@ end
 
 --请求获得日志统计文件(内网服务器请求统计)
 function CronGetRunErroFile(self)
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	self:RenameLogFile(NowTime) --重命名log文件
 	local Url = CommonData.ERRO_LOG_STATICS_URL
 	local Flag, Response = ReqOutUrl(Url)
 	Response  = UnSerialize(Response)
-	if Response and type(Response) == "table" and table.size(Response) > 0 then
+	if Response and table.size(Response) > 0 then
 		--对比时间看看是否需要更新日志文件
 		local LastStaticsTime = nil
 		local KeyValueInfo = KeyValueData:Get({Key = StaticsIndex})
@@ -202,9 +215,8 @@ function CronGetRunErroFile(self)
 				--写入文件
 				LogFile:write(LogContent)
 				--然后RTX提醒
-				local ErroMsg = self:GetRTXMsg(ErroKey, LogInfo["HostIDs"], LogInfo.Time) 
-				CommonFunc.SendRTX(ServerRTXReciever, "服务器错误提醒", ErroMsg)
-				CommonFunc.SendMail( "", "服务器错误" .. ErroKey, LogContent)
+				local ErroMsg = self:GetRTXMsg(ErroKey, LogInfo["HostIDs"], LogInfo.Time, LogInfo.Reason) 
+				CommonFunc.SendRTX(RTXReciever, "服务器错误提醒", ErroMsg)
 			end
 			LogFile:close()
 			--同时还要更新统计时间
@@ -212,44 +224,6 @@ function CronGetRunErroFile(self)
 		end
 	end
 	ngx.say("ok")
-
-	self:CronGetRunErroFileInter()
-end
-
-function CronGetRunErroFileInter(self)
-	if not CommonData.ERRO_LOG_STATICS_URL_INTER then return end
-
-	local NowTime = ngx.time()
-	self:RenameLogFile(NowTime) --重命名log文件
-	local Url = CommonData.ERRO_LOG_STATICS_URL_INTER
-	local Flag, Response = ReqOutUrl(Url)
-	Response  = UnSerialize(Response)
-	if Response and type(Response) == "table" and table.size(Response) > 0 then
-		--对比时间看看是否需要更新日志文件
-		local LastStaticsTime = nil
-		local KeyValueInfo = KeyValueData:Get({Key = StaticsIndexInter})
-		if KeyValueInfo and KeyValueInfo[1] then
-			LastStaticsTime = KeyValueInfo[1].Value
-		end
-		if LastStaticsTime ~= Response.StaticsTime then	
-			local LogFile = assert(io.open(ErroLogPath, 'a+')) --追加写
-			for ErroKey, LogInfo in pairs(Response.Content) do
-				--先记录文件
-				local LogContent = "ErroNum:" .. Serialize(LogInfo["HostIDs"]) .. "\n"
-				LogContent = LogContent .. LogInfo["Content"] .. "\n"
-				--写入文件
-				LogFile:write(LogContent)
-				--然后RTX提醒
-				local ErroMsg = self:GetRTXMsg(ErroKey, LogInfo["HostIDs"], LogInfo.Time) 
-				CommonFunc.SendRTX(ServerRTXReciever, "服务器错误提醒", ErroMsg)
---				CommonFunc.SendMail( "", "服务器错误" .. ErroKey, LogContent)
-			end
-			LogFile:close()
-			--同时还要更新统计时间
-			KeyValueData:Insert({Key = StaticsIndexInter, Value = Response.StaticsTime})
-		end
-	end
-	ngx.say("inter ok")
 end
 
 --返回错误统计日志文件（外网服务器接口）

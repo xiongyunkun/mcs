@@ -5,8 +5,8 @@
 
 function LogList(self)
 	Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-86400)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	--获得模块名列表
 	Modules = ModulesData:GetAllModules() 
 	--获得用户名列表
@@ -26,8 +26,8 @@ end
 
 function OperationList(self)
 	Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-86400)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	--获得模块名列表
 	Modules = ModulesData:GetAllModules() 
 	--获得用户名列表

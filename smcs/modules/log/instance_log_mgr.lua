@@ -5,29 +5,36 @@
 -- 副本日志查询
 --
 --]]
--- local OperationTypes = {"挑战", "扫荡"}
--- local OperationResults = {[0] = "失败", [1] = "成功"}
+local OperationTypes = {"挑战", "扫荡"}
+local OperationResults = {[0] = "失败", [1] = "成功", [-1] = ""}
 --物品日志操作面板展示
 function LogShow(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time() - 86400 * 7)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d 00:00:00",os.time())
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",os.time())
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	
-	local Filters = {
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	local InstanceList = {}
+	for ID, InstName in pairs(CommonData.SYS_INSTANCES) do
+		InstanceList[ID] = InstName
+	end
+	for ID, InstName in pairs(CommonData.TIMER_INSTANCES) do
+		InstanceList[ID] = InstName
+	end
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "label",["Text"] = "角色ID:"},
 		{["Type"] = "text",["Name"] = "Uid", ["Placeholder"] = "角色ID"},
 		{["Type"] = "label",["Text"] = "角色名:"},
 		{["Type"] = "text",["Name"] = "Name", ["Placeholder"] = "角色名"},
+		{["Type"] = "Select",["Label"] = "类型",["Name"] = "InstanceType", ["Values"] = InstanceList},
 		{["Type"] = "<br>",},
 		{["Type"] = "label",["Text"] = "副本ID:"},
-		{["Type"] = "text",["Name"] = "StageId", ["Placeholder"] = "副本ID"},
-		{["Type"] = "label",["Text"] = "副本类型:"},
-		{["Type"] = "text",["Name"] = "StageType", ["Placeholder"] = "副本类型"},
+		{["Type"] = "text",["Name"] = "InstanceID", ["Placeholder"] = "副本ID"},
+		{["Type"] = "label",["Text"] = "副本名称:"},
+		{["Type"] = "text",["Name"] = "InstanceName", ["Placeholder"] = "副本名称"},
 
 		{["Type"] = "StartTime",["Format"] = "yyyy-MM-dd HH:mm:ss"},
 		{["Type"] = "EndTime", ["Format"] = "yyyy-MM-dd HH:mm:ss"},
@@ -35,9 +42,11 @@ function LogShow(self)
 	}
 
 	--展示数据
-	local Titles = {'时间', "平台", "服", "角色ID", "角色名", "副本ID", "副本名称", '副本类型', '挑战结果', '挑战次数','获得奖励','星级评定'}
+	Titles = {'时间', "平台", "服", "角色ID", "角色名", "副本类型","副本ID", '副本名称', "挑战类型", "挑战结果",
+		'挑战次数','获得奖励','星级评定'}
 	local PlatformStr = PlatformID and Platforms[Options.PlatformID] or "all"
-	local TableData = {}
+	
+	TableData = {}
 	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID and Options.HostID ~= "" then
 		local LogList = InstanceLogData:Get(Options.PlatformID, Options)
 		for _, Log in ipairs(LogList) do
@@ -47,16 +56,16 @@ function LogShow(self)
 			table.insert(Data, Options.HostID and Servers[tonumber(Options.HostID)] or "all")
 			table.insert(Data, Log.Uid)
 			table.insert(Data, Log.Name)
-			table.insert(Data, Log.StageId)
-			local InstName = STAGE_MAP[tonumber(Log.StageId)] or ""
-			table.insert(Data, InstName)
-			table.insert(Data, Log.StageType)
-			local Result = Log.IsFinish > 0 and "成功" or "失败"
+			table.insert(Data, InstanceList[Log.InstanceType] or "")
+			table.insert(Data, Log.InstanceID)
+			table.insert(Data, Log.InstanceName)
+			table.insert(Data, OperationTypes[Log.OperationType])
+			local Result = OperationResults[Log.Result]
 			table.insert(Data, Result)
-			table.insert(Data, Log.Times)
-			local BonusList = self:GetBonus(Log.Bonus)
-			table.insert(Data, Result == "成功" and Serialize(BonusList) or "")
-			table.insert(Data, Log.IsFinish)
+			table.insert(Data, Log.Num)
+			local RewardList = self:GetReward(Log.Reward)
+			table.insert(Data, Result == "成功" and Serialize(RewardList) or "")
+			table.insert(Data, Log.Star)
 			table.insert(TableData, Data)
 		end
 		if Options.Submit == "导出" then
@@ -65,36 +74,27 @@ function LogShow(self)
 			return
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["DisplayLength"] = 50,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/log/instance_log_list.html", Params)
+	Viewer:View("template/log/instance_log_list.html")
 end
 
 --获得奖励列表
-function GetBonus(self, Bonuss)
+function GetReward(self, Rewards)
 	local Results = {}
-	local BonusList = string.split(Bonuss, ";")
-	for _, Bonus in ipairs(BonusList) do
+	local RewardList = string.split(Rewards, ";")
+	for _, Reward in ipairs(RewardList) do
 		--再用下划线划分
-		local BonusInfo = string.split(Bonus, "_")
-		if #BonusInfo == 5 then
-			local BonusName = BonusInfo[2]
-			if BonusName == "物品" then
-				local ItemName = ItemDataMap[tonumber(BonusInfo[3])] or "未知物品"
-				Results[ItemName] = (Results[ItemName] or 0) + tonumber(BonusInfo[4])
+		local RewardInfo = string.split(Reward, "_")
+		if #RewardInfo == 3 and CommonData.BONUS_ID2NAME[tonumber(RewardInfo[1])] then
+			local RewardName = CommonData.BONUS_ID2NAME[tonumber(RewardInfo[1])]
+			if RewardName == "物品" then
+				local ItemName = ItemDataMap[tonumber(RewardInfo[2])] or "未知物品"
+				Results[ItemName] = (Results[ItemName] or 0) + tonumber(RewardInfo[3])
 			else
-				Results[BonusName] = (Results[BonusName] or 0) + tonumber(BonusInfo[4])
+				Results[RewardName] = (Results[RewardName] or 0) + tonumber(RewardInfo[3])
 			end
 		end
 	end

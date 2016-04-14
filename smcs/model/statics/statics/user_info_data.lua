@@ -12,16 +12,6 @@ CREATE TABLE `tblUserInfo` (
   `Level` int(11) NOT NULL DEFAULT '1' COMMENT '玩家等级',
   `RegTime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '注册时间',
   `Sex` tinyint(1) NOT NULL DEFAULT '1' COMMENT '性别',
-  `LastUpdateTime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '更新时间',
-  `OnlineFlag` tinyint(1) NOT NULL DEFAULT '1' COMMENT '在线标记位',
-  `LastLogoutTime` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '上次离线时间',
-  `TotalOnlineTime` int(11) NOT NULL DEFAULT '0' COMMENT '在线时长',
-  `Gold` int(11) NOT NULL DEFAULT '0' COMMENT '非绑钻数',
-  `Money` int(11) NOT NULL DEFAULT '0' COMMENT '金币数',
-  `TotalGold` int(11) DEFAULT '0' COMMENT '充值钻石总数',
-  `VipLevel` tinyint(4) DEFAULT '0' COMMENT 'VIP等级',
-  `IsVip` tinyint(4) DEFAULT '0' COMMENT 'VIP是否激活?',
-  `Fighting` int(11) DEFAULT '0' COMMENT '战斗力',
   PRIMARY KEY (`Uid`),
   KEY `index1` (`Urs`),
   KEY `index2` (`Name`)
@@ -41,10 +31,39 @@ function Get(self, Options)
 		Where = Where .. " and Uid = '" .. Options.Uid .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		if HostID == tonumber(Options.HostID) then
+			Where = Where .. " and HostID = '" .. HostID .. "'"
+		else
+			local HostIDs = {HostID, Options.HostID} --还要包含之前的服在里面
+			Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
+		end
 	end
 	if Options.HostIDs and Options.HostIDs ~= "" then
-		Where = Where .. " and HostID in ('" .. Options.HostIDs .. "')"
+		local HostIDs = Options.HostIDs
+		HostIDs = string.split(HostIDs, "','")
+		if not Options.NoMerge then
+			local NewHostIDs = {}
+			local THostMap = {}
+			for _, HostID in ipairs(HostIDs) do
+				HostID = CommonFunc.GetToHostID(HostID) --合服转换
+				if not THostMap[HostID] then
+					table.insert(NewHostIDs, HostID)
+					THostMap[HostID] = true
+				end
+			end
+			--两个数组合并
+			for _, HostID in ipairs(HostIDs) do
+				if not THostMap[tonumber(HostID)] then
+					table.insert(NewHostIDs, tonumber(HostID))
+				end
+			end
+			HostIDs = NewHostIDs
+		end
+		Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
 	end
 	if Options.Urs and Options.Urs ~= "" then
 		Where = Where .. " and Urs = '" .. Options.Urs .. "'"
@@ -67,9 +86,6 @@ function Get(self, Options)
 	if Options.MinLevel and Options.MinLevel ~= "" then
 		Where = Where .. " and Level >= '" .. Options.MinLevel .. "'"
 	end
-	if Options.VipLevel and Options.VipLevel ~= "" then
-		Where = Where .. " and VipLevel = '" .. Options.VipLevel .. "'"
-	end
 	local Sql = "select * from "..PlatformID.."_statics.tblUserInfo " .. Where
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return {}, Err end
@@ -77,12 +93,12 @@ function Get(self, Options)
 end
 
 local InsertCols = {"HostID", "Uid", "Urs", "Name", "Time", "Sex", "LastUpdateTime"}
-local Cols = {"HostID", "Uid", "Urs", "Name", "LastLoginTime", "Sex", "LastUpdateTime"}
+local Cols = {"HostID", "Uid", "Urs", "Name", "LastLoginTime", "RegTime", "Sex", "LastUpdateTime"}
 
 --批量插入
 function BatchInsert(self, PlatformID, Results)
 	local StrResults = {}
-	local LastUpdateTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local LastUpdateTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local DefaultValues = {["OnlineFlag"] = 0, ["LastUpdateTime"] = LastUpdateTime,}
 	for Idx, Result  in ipairs(Results) do
 		local TResult = {}
@@ -93,6 +109,9 @@ function BatchInsert(self, PlatformID, Results)
 			end
 			Value = "'" .. Value .. "'"
 			table.insert(TResult, Value)
+			if Col == "Time" then --还需要把这列记为注册时间
+				table.insert(TResult, Value)
+			end
 		end
 		local StrValue = table.concat(TResult, ",")
 		table.insert(StrResults, StrValue)
@@ -101,21 +120,21 @@ function BatchInsert(self, PlatformID, Results)
 	-- 采用批量插入的方式
 	Sql = Sql .. table.concat(StrResults, "),(") 
 		.. ") on duplicate key update Name = values(Name),LastLoginTime=values(LastLoginTime),LastUpdateTime=values(LastUpdateTime),OnlineFlag='1'"	
-
+	
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res		
 end
 
-local UpdateCols = {"HostID", "Uid", "Urs", "Name", "Level","LastLogoutTime","TotalOnlineTime", 
-	"Gold","TotalGold","Money","OnlineFlag", "LastUpdateTime","VipLevel", "IsVip", "Fighting"}
-local ColMap = {["LastLogoutTime"] = "Time",["Level"] = "Level", ["TotalOnlineTime"] = "OnTime",} --需要配置重新进行转换的列
-local DuplicateUpCols = {"Name", "Urs", "Level","LastLogoutTime", "Gold","TotalGold","Money",
-	"OnlineFlag","LastUpdateTime","VipLevel", "IsVip", "Fighting"}
+local UpdateCols = {"HostID", "Uid", "Urs", "Name", "Level","LastLogoutTime","SceneUid",
+				"TotalOnlineTime","Fighting","Gold","TotalGold","Money","OnlineFlag","LastUpdateTime","VipLevel", "IsVip",}
+local ColMap = {["LastLogoutTime"] = "Time",["Level"] = "Lv", ["TotalOnlineTime"] = "OnTime",} --需要配置重新进行转换的列
+local DuplicateUpCols = {"Name", "Urs", "Level","LastLogoutTime","SceneUid","Fighting",
+	"Gold","TotalGold","Money","OnlineFlag","LastUpdateTime","VipLevel", "IsVip",}
 
 function BatchUpdate(self, PlatformID, Results)
 	local StrResults = {}
-	local LastUpdateTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local LastUpdateTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local DefaultValues = {["OnlineFlag"] = 0, ["LastUpdateTime"] = LastUpdateTime,}
 	for Idx, Result  in ipairs(Results) do
 		local TResult = {}
@@ -162,28 +181,32 @@ function BatchUpdateName(self, PlatformID, Results)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblUserInfo(".. table.concat(NameCols, ",") .. ") values("
 	-- 采用批量更新的方式
 	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update Name = values(Name)"
-	
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res
 end
 
---更新注册时间
-function UpdateRegTime(self, PlatformID, Results)
+--批量更新玩家等级
+function BatchUpdateLevel(self, PlatformID, Results)
 	local StrResults = {}
-	local NameCols = {"HostID", "Uid", "Urs", "Time"}
+	local NameCols = {"HostID", "Uid", "Urs", "Level", "Name"}
 	for Idx, Result  in ipairs(Results) do
 		local TResult = {}
 		for _, Col in ipairs(NameCols) do
-			local Value = "'" .. (Result[Col] or "") .. "'"
+			local Value = ""
+			if Col == "Level" then
+				Value = "'" .. (Result["NewLevel"] or "") .. "'"
+			else
+				Value = "'" .. (Result[Col] or "") .. "'"
+			end
 			table.insert(TResult, Value)
 		end
 		local StrValue = table.concat(TResult, ",")
 		table.insert(StrResults, StrValue)
 	end
-	local Sql = "insert into " .. PlatformID .. "_statics.tblUserInfo(HostID,Uid,Urs,RegTime) values("
+	local Sql = "insert into " .. PlatformID .. "_statics.tblUserInfo(".. table.concat(NameCols, ",") .. ") values("
 	-- 采用批量更新的方式
-	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update RegTime = values(RegTime)"
+	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update Level = values(Level), Name= values(Name)"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res

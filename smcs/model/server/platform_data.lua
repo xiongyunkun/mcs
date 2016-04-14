@@ -10,8 +10,6 @@ REATE TABLE `tblPlatform` (
   `ServerIDRange` varchar(32) NOT NULL DEFAULT '' COMMENT '服ID范围',
   `Memo` varchar(128) NOT NULL DEFAULT '' COMMENT '备注',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
-  `W3Url` varchar(64) NOT NULL DEFAULT '' COMMENT '3w地址',
-  `SDKID` int(11) DEFAULT '0' COMMENT '平台SDKID',
   PRIMARY KEY (`PlatformID`)
  ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='平台信息表' ;
 
@@ -20,21 +18,21 @@ module(...,package.seeall)
 
 --获得所有平台
 function GetPlatform(self, PlatformID)
-	local Where = " where Flag = 'true' "
+	local Where = ""
 	if PlatformID and PlatformID ~= "" then
-		Where = Where .. " and PlatformID = '" .. PlatformID .. "'"
+		Where = " and PlatformID = '" .. PlatformID .. "'"
 	end
-	local Sql = "select * from smcs.tblPlatform " .. Where .. " order by Sort ASC"
+	local Sql = "select * from smcs.tblPlatform where Flag = 'true'" .. Where .. " order by Sort ASC"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res
 end
 
 
-PlatformCol = {"PlatformID", "PlatformName", "Sort", "Status", "ServerIDRange", "Memo", "W3Url", "SDKID"}
+PlatformCol = {"PlatformID", "PlatformName", "Sort", "Status", "ServerIDRange", "Memo"}
 -- 插入更新操作
 function UpdatePlatform(self, PlatformInfo)
-	local Sql = "insert into smcs.tblPlatform (PlatformID, PlatformName, Sort, Status, ServerIDRange, Memo, W3Url, SDKID) values( "
+	local Sql = "insert into smcs.tblPlatform (PlatformID, PlatformName, Sort, Status, ServerIDRange, Memo) values( "
 	local Values = {}
 	local UpdateValues = {}
 	for _, ColName in ipairs(PlatformCol) do

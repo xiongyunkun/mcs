@@ -57,6 +57,16 @@ function Insert(self, Args)
 	end
 	Sql = Sql .. table.concat(Values, ",") .. ")"
 	DB:ExeSql(Sql)
+	--查询获得ID
+	local SelectStrs = {}
+	for _, Col in ipairs(InsertCols) do
+		local Value = Args[Col] and Col .. " = '" .. Args[Col] .. "' " or Col .. " = '' "
+		table.insert(SelectStrs, Value)
+	end
+	local SelectSql = "select ID from smcs.tblActivityCfg where " .. table.concat( SelectStrs, " and ")
+	local Res, Err = DB:ExeSql(SelectSql)
+	if not Res or not Res[1] then return nil, Err end
+	return Res[1]["ID"]
 end
 
 function Update(self, Args)
@@ -76,6 +86,11 @@ end
 
 function Delete(self, ID)
 	local Sql = "update smcs.tblActivityCfg set Flag = 'false' where ID = '" .. ID .. "'"
+	DB:ExeSql(Sql)
+end
+
+function UpdateStatus(self, ID, Status)
+	local Sql = "update smcs.tblActivityCfg set Status = '" .. Status .. "' where ID = '" .. ID .. "'"
 	DB:ExeSql(Sql)
 end
 

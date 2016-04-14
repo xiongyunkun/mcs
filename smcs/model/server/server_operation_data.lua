@@ -73,7 +73,7 @@ function Insert(self, LogInfo)
 			table.insert(Values, Value)
 		end
 		--提交时间变为现在的时间
-		local SubmitTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+		local SubmitTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 		table.insert(Values, "SubmitTime = '" .. SubmitTime .. "'")
 		local ValueStr = table.concat(Values, ",")
 		Sql = Sql .. ValueStr .. " where ID = '" .. LogInfo.ID .. "'"

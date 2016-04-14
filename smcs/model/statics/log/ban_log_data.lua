@@ -26,7 +26,11 @@ module(...,package.seeall)
 function Get(self, PlatformID, Options)
 	local Where = " where 1=1 "
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.Time and Options.Time ~= "" then
 		Where = Where .. " and Time = '" .. Options.Time .. "'"
@@ -58,7 +62,18 @@ function Get(self, PlatformID, Options)
 	return Res
 end
 
-local Cols = {"HostID", "Uid", "Name", "Operator", "OperationType", "BanStartTime", "BanEndTime", "Reason", "Time"}
+--获得某一时间点的数据，并且组装成{Uid=Time}格式
+function GetSameTimeStatics(self, PlatformID, Options)
+	local Res = self:Get(PlatformID, Options)
+	local Results = {}
+	for _, Info in ipairs(Res) do
+		Results[tonumber(Info.Uid)] = Info.Time
+	end
+	return Results
+end
+
+local Cols = {"HostID", "Uid", "Name", "Operator", "OperationType", "BanStartTime", "BanEndTime", 
+	"Reason", "Time", "ExtInfo"}
 
 function BatchInsert(self, PlatformID, Results)
 	local StrResults = {}

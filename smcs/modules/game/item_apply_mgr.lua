@@ -11,15 +11,22 @@ local MessageID = 1113 --对应到消息配置表中消息ID
 local ReplaceArray = {[";"]="^^" ,[","] = "@@"} --标题和内容中需要替换的字符串
 local EmailTitle = "GM奖励邮件"
 local EmailContent = "感谢您的支持，本邮件为GM发送的奖励邮件！"
+local StatusMap = {
+	[1] = "未审核",
+	[2] = "已审核",
+	[3] = "审核未通过",
+	[4] = "道具已发送",
+	[5] = "不发送道具",
+}
 
 function ApplyList(self, ErrMsg)
-	local ExtMsg = ErrMsg
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	ExtMsg = ErrMsg
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	Options.RoleName = Options.RoleName or ""
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 
 	local ServerList = ServerData:GetAllServers()
 	local NewServers = {}
@@ -28,13 +35,13 @@ function ApplyList(self, ErrMsg)
 	end
 	ServerList = NewServers
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
 	}
 	--展示数据
-	local Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请原因"}
+	Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请原因"}
 	local User = UserData:GetUserById(GetSession("UserId"))
 	local UserAccount = User and User["account"]
 	if not UserAccount then 
@@ -42,10 +49,10 @@ function ApplyList(self, ErrMsg)
 	end
 	Options.Applicant = UserAccount
 	local ApplyList = ItemApplyData:Get(Options)
-	local TableData = {}
-	local AuditingList = {}
-	local AuditedList = {}
-	local ApplyInfo = {}
+	TableData = {}
+	AuditingList = {}
+	AuditedList = {}
+	ApplyInfo = {}
 	--用户列表
 	local UserList = UserData:GetAllUsers()
 	local UserMap = {}
@@ -53,7 +60,7 @@ function ApplyList(self, ErrMsg)
 		UserMap[UserInfo.account] = UserInfo.name
 	end
 	--物品列表
-	local ItemStrList = {}
+	ItemStrList = {}
 	for ItemID, ItemName in pairs(ItemDataMap or {}) do
 		table.insert(ItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
 	end
@@ -61,7 +68,16 @@ function ApplyList(self, ErrMsg)
 	for BonusName, _ in pairs(CommonData.mBONUS_MAP) do
 		table.insert(ItemStrList, "'" .. BonusName .. "'")
 	end
-	
+	--1.0版本的物品列表
+	OldItemStrList = {}
+	for ItemID, ItemName in pairs(OldItemDataMap or {}) do
+		table.insert(OldItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
+	end
+	--钻石、绑钻、金钱都加入到物品列表里面来
+	for BonusName, _ in pairs(CommonData.mBONUS_MAP) do
+		table.insert(OldItemStrList, "'" .. BonusName .. "'")
+	end
+
 	for _, ApplyInfo in ipairs(ApplyList or {}) do
 		local Data = {}
 		Data.ID = ApplyInfo.ID
@@ -89,30 +105,16 @@ function ApplyList(self, ErrMsg)
 		else
 			table.insert(Data, ApplyInfo.AuditTime)
 			table.insert(Data, UserMap[ApplyInfo.Auditor] or ApplyInfo.Auditor)
-			table.insert(Data, ApplyInfo.Status == 2 and '<font color="blue">同意<font>' or '<font color="red">拒绝<font>')
+			local Status = StatusMap[ApplyInfo.Status]
+			table.insert(Data, ApplyInfo.Status%2 == 0 and '<font color="blue">'.. Status.. '<font>' or '<font color="red">'..Status..'<font>')
 			table.insert(AuditedList, Data)
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-		Users = Users,
-		ExtMsg = ExtMsg,
-		AuditingList = AuditingList,
-		AuditedList = AuditedList,
-		ApplyInfo = ApplyInfo,
-		ItemStrList = ItemStrList,
-	}
-	Viewer:View("template/game/item_apply_list.html", Params)
+	Viewer:View("template/game/item_apply_list.html")
 end
 
 function ApplyEdit(self)
@@ -147,7 +149,7 @@ function ApplyEdit(self)
 			Items[Item] = tonumber(Numbers) or 1
 		end
 		Args.Items = Serialize(Items)
-		local NowTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+		local NowTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 		Args.SubmitTime = NowTime
 		Args.LastUpdateTime = NowTime
 		ItemApplyData:Insert(Args)
@@ -166,13 +168,14 @@ function ApplyDelete(self)
 	end
 end
 
-function AuditList(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+--道具申请审核列表
+function JuniorAuditList(self)
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	Options.RoleName = Options.RoleName or ""
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--用户列表
 	local UserList = UserData:GetAllUsers()
 	local UserMap = {}
@@ -187,18 +190,17 @@ function AuditList(self)
 	end
 	ServerList = NewServers
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
 	}
 	--展示数据
-	local Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请人", "申请原因"}
+	Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请人", "申请原因"}
 	local ApplyList = ItemApplyData:Get(Options)
-	
-	local TableData = {}
-	local AuditingList = {}
-	local AuditedList = {}
+	TableData = {}
+	AuditingList = {}
+	AuditedList = {}
 	for _, ApplyInfo in ipairs(ApplyList or {}) do
 		local Data = {}
 		table.insert(Data, ApplyInfo.SubmitTime)
@@ -229,30 +231,91 @@ function AuditList(self)
 		else
 			table.insert(Data, ApplyInfo.AuditTime)
 			table.insert(Data, UserMap[ApplyInfo.Auditor] or ApplyInfo.Auditor)
-			table.insert(Data, ApplyInfo.Status == 2 and '<font color="blue">同意<font>' or '<font color="red">拒绝<font>')
+			local Status = StatusMap[ApplyInfo.Status]
+			table.insert(Data, ApplyInfo.Status%2 == 0 and '<font color="blue">'.. Status.. '<font>' or '<font color="red">'..Status..'<font>')
 			table.insert(AuditedList, Data)
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-		Users = Users,
-		ExtMsg = ExtMsg,
-		AuditingList = AuditingList,
-		AuditedList = AuditedList,
-		ApplyInfo = ApplyInfo,
-		ItemStrList = ItemStrList,
+	Viewer:View("template/game/item_junior_audit_list.html")
+end
+
+function AuditList(self)
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	Options.RoleName = Options.RoleName or ""
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	--用户列表
+	local UserList = UserData:GetAllUsers()
+	local UserMap = {}
+	for _, UserInfo in ipairs(UserList) do
+		UserMap[UserInfo.account] = UserInfo.name
+	end
+
+	local ServerList = ServerData:GetAllServers()
+	local NewServers = {}
+	for _, Server in ipairs(ServerList) do
+		NewServers[Server.hostid] = Server.name
+	end
+	ServerList = NewServers
+	--filter页面模板显示的参数
+	Filters = {
+		{["Type"] = "Platform",},
+		{["Type"] = "StartTime",},
+		{["Type"] = "EndTime",},
 	}
-	Viewer:View("template/game/item_audit_list.html", Params)
+	--展示数据
+	Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请人", "申请原因"}
+	Options.Verify = true --只获得已通过初审的列表
+	local ApplyList = ItemApplyData:Get(Options)
+	TableData = {}
+	AuditingList = {}
+	AuditedList = {}
+	for _, ApplyInfo in ipairs(ApplyList or {}) do
+		local Data = {}
+		table.insert(Data, ApplyInfo.SubmitTime)
+		Data.ID = ApplyInfo.ID
+		Data.LastUpdateTime = ApplyInfo.LastUpdateTime
+		table.insert(Data, ApplyInfo.PlatformID and Platforms[ApplyInfo.PlatformID] or "all") --平台
+		local HostIDs = string.split(ApplyInfo.HostIDs, ",")
+		local HostNames = {}
+		for _, HostID in ipairs(HostIDs) do
+			if ServerList[tonumber(HostID)] then
+				table.insert(HostNames, ServerList[tonumber(HostID)])
+			end
+		end
+		table.insert(Data, table.concat(HostNames, ","))
+		table.insert(Data, ApplyInfo.RoleNames)
+		local Rewards = self:GetRewards4Show(ApplyInfo)
+		table.insert(Data, Rewards)
+		table.insert(Data, UserMap[ApplyInfo.Applicant] or ApplyInfo.Applicant)
+		table.insert(Data, ApplyInfo.Reason)
+		
+		if ApplyInfo.Status == 2 then
+			local Url = '<input class="submit_btn" type="button" value="同意" onclick="acceptApply(\''
+				..ApplyInfo.ID .. '\',\'' .. (UserMap[ApplyInfo.Applicant] or ApplyInfo.Applicant) .. '\')">'
+				..'&nbsp;&nbsp;<input class="erro_btn" type="button" value="否决" onclick="rejectApply(\''
+				..ApplyInfo.ID .. '\',\'' .. (UserMap[ApplyInfo.Applicant] or ApplyInfo.Applicant) .. '\')">'
+			table.insert(Data, Url)
+			table.insert(AuditingList, Data)
+		else
+			table.insert(Data, ApplyInfo.AuditTime)
+			table.insert(Data, UserMap[ApplyInfo.Auditor] or ApplyInfo.Auditor)
+			local Status = StatusMap[ApplyInfo.Status]
+			table.insert(Data, ApplyInfo.Status%2 == 0 and '<font color="blue">'.. Status.. '<font>' or '<font color="red">'..Status..'<font>')
+			table.insert(AuditedList, Data)
+		end
+	end
+	DataTable = {
+		["ID"] = "logTable",
+		["NoDivPage"] = true,
+	}
+	Viewer:View("template/game/item_audit_list.html")
 end
 
 function ApplyAudit(self)
@@ -265,7 +328,7 @@ function ApplyAudit(self)
 				ngx.say("2")
 				return
 			end
-			local NowTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+			local NowTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 			local IDs = string.split(Args.ID, ",");
 			local UpdateTimes = string.split(Args.updateTime, ",");
 			for Index, ID in ipairs(IDs) do
@@ -278,18 +341,18 @@ function ApplyAudit(self)
 						return
 					end
 				end
-				if tonumber(Args.Status) == 2 then --同意申请，需要发送奖励
+				if tonumber(Args.Status) == 4 then --同意申请，需要发送奖励
 					local ApplyInfo = ItemApplyData:Get({ID = ID})
 					if ApplyInfo and ApplyInfo[1] then
 						--需要判断是否重复发送2次，在发送前需要检查状态是否已经在发送或者审核完成了
 						local Status = ApplyInfo[1].Status
-						if Status == 1 or Status == 4 then --未审核状态或者审核中
-							ItemApplyData:UpdateStatus(ID, 4) -- 修改状态为正在审核发送中
+						if Status == 2 then --必须是已通过初审状态才可发送奖励
+							ItemApplyData:UpdateStatus(ID, 0) -- 修改状态为正在审核发送中
 							local Flag = self:SendRewards(ApplyInfo[1])
 							if Flag then
 								ItemApplyData:VerifyApply(ID, UserAccount, NowTime, Args.Status)
 							else
-								ItemApplyData:UpdateStatus(ID, 1) --发放失败，重新修改回状态
+								ItemApplyData:UpdateStatus(ID, 2) --发放失败，重新修改回状态
 							end
 						end
 					end
@@ -309,26 +372,18 @@ function SendRewards(self, ApplyInfo)
 	--发送邮件
 	local OperationInfo = GMRuleData:Get({ID = SendAllItemID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Title = self:ReplaceStr(EmailTitle)
 	local Content = self:ReplaceStr(EmailContent)
 	--获得名单
-	local RoleNames = ApplyInfo.RoleNames
-	RoleNames = string.gsub(RoleNames, "；", ";") --替换中文的分号
-	RoleNames = string.split(RoleNames, ";")
-	local NewRoleNames = {}
-	for _, RoleName in ipairs(RoleNames) do
-		RoleName = string.strip(RoleName)
-		table.insert(NewRoleNames, RoleName)
-	end
-	
-	local LimitOptions = {["InNames"] = NewRoleNames}
+	LimitOptions = string.split(ApplyInfo.RoleNames, ";")
+	LimitOptions = table.concat(LimitOptions, ",")
+	LimitOptions = {["InNames"] = LimitOptions}
 	local OptionStr = Serialize(LimitOptions)
 	OptionStr = string.gsub(OptionStr, '"', "'")
 	local RewardStr = self:GetRewards(ApplyInfo)
-
 	--验证参数
-	local GMParams = {Title, Content, RewardStr, OptionStr} 
+	local GMParams = {MessageID, Title, Content, RewardStr, OptionStr} 
 	local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 	if not Flag then
 		ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -349,27 +404,22 @@ function GetRewards(self, ApplyInfo)
 	local Rewards = {}
 	if ApplyInfo.Items and ApplyInfo.Items ~= "" then
 		local Items = UnSerialize(ApplyInfo.Items)
-		Rewards[1] = 0
-		Rewards[2] = 0
 		for ItemName, Amount in pairs(Items) do
 			--判断是否是钻石绑钻之类
-			if CommonData.mBONUS_MAP[ItemName] == "金币" then
-				Rewards[1] = tonumber(Amount) or 1
-			elseif CommonData.mBONUS_MAP[ItemName] == "钻石" then
-				Rewards[2] = tonumber(Amount) or 1
+			if CommonData.mBONUS_MAP[ItemName] then
+				local ItemInfo = {Type=CommonData.mBONUS_MAP[ItemName], SubType=0, Amount=tonumber(Amount) or 1}
+				table.insert(Rewards, ItemInfo)
 			else --否则都是物品
 				local ItemNames = string.split(ItemName, "_")
 				if #ItemNames == 2 then
 					local ItemInfo = {Type=CommonData.mBONUS_ITEM, SubType=tonumber(ItemNames[2]), Amount=tonumber(Amount) or 1}
-					table.insert(Rewards, tonumber(ItemNames[2]))
-					table.insert(Rewards, tonumber(Amount) or 1)
+					table.insert(Rewards, ItemInfo)
 				end
 			end
 		end
 	end
---	local RewardStr = Serialize(Rewards)
---	RewardStr = string.gsub(RewardStr, '"', "'")
-	RewardStr = table.concat(Rewards, ",")
+	local RewardStr = Serialize(Rewards)
+	RewardStr = string.gsub(RewardStr, '"', "'")
 	return RewardStr
 end
 

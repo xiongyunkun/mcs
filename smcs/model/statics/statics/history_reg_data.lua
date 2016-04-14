@@ -7,6 +7,8 @@ CREATE TABLE `tblHistoryReg` (
   `HostID` int(11) NOT NULL DEFAULT '0' COMMENT '服ID',
   `Date` date NOT NULL DEFAULT '0000-00-00' COMMENT '统计日期',
   `RegNum` int(11) NOT NULL DEFAULT '0' COMMENT '当日注册人数',
+  `Male` int(11) NOT NULL DEFAULT '0' COMMENT '男角色注册人数',
+  `Female` int(11) NOT NULL DEFAULT '0' COMMENT '女角色注册人数',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
   `TotalRegNum` int(11) NOT NULL DEFAULT '0' COMMENT '总注册人数，开服到现在',
   PRIMARY KEY (`PlatformID`,`HostID`,`Date`)
@@ -26,10 +28,27 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.HostIDs and type(Options.HostIDs) == "table" then
-		Where = Where .. " and HostID in ('" .. table.concat(Options.HostIDs, "','") .. "')"
+		local HostIDs = Options.HostIDs
+		if not Options.NoMerge then
+			local NewHostIDs = {}
+			local THostMap = {}
+			for _, HostID in ipairs(HostIDs) do
+				HostID = CommonFunc.GetToHostID(HostID) --合服转换
+				if not THostMap[HostID] then
+					table.insert(NewHostIDs, HostID)
+					THostMap[HostID] = true
+				end
+			end
+			HostIDs = NewHostIDs
+		end
+		Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
 	end
 	if Options.Date and Options.Date ~= "" then
 		Where = Where .. " and Date = '" .. Options.Date .. "'"
@@ -70,6 +89,8 @@ function MergeData(self, Results, Res)
 			Results[Info.Date] = Info
 		else
 			Results[Info.Date].RegNum = Results[Info.Date].RegNum + Info.RegNum
+			Results[Info.Date].Male = Results[Info.Date].Male + Info.Male
+			Results[Info.Date].Female = Results[Info.Date].Female + Info.Female
 			Results[Info.Date].TotalRegNum = Results[Info.Date].TotalRegNum + Info.TotalRegNum
 		end
 	end
@@ -77,10 +98,11 @@ function MergeData(self, Results, Res)
 end
 
 
-function Insert(self, PlatformID, HostID, Date, RegNum, TotalRegNum)
-	local Sql = "insert into " .. PlatformID .. "_statics.tblHistoryReg(PlatformID, HostID, Date, RegNum, TotalRegNum) values('" 
-			.. PlatformID .. "','".. HostID .. "','" .. Date .. "','"  .. RegNum .. "','"  .. TotalRegNum 
-			.. "') on duplicate key update RegNum = '" .. RegNum .. "', TotalRegNum = '" .. TotalRegNum .. "'"
+function Insert(self, PlatformID, HostID, Date, RegNum, Male, Female, TotalRegNum)
+	local Sql = "insert into " .. PlatformID .. "_statics.tblHistoryReg(PlatformID, HostID, Date, RegNum, Male, Female, TotalRegNum)"
+			.. " values('" .. PlatformID .. "','".. HostID .. "','" .. Date .. "','"  .. RegNum .. "','" .. Male 
+			.. "','" .. Female .. "','" .. TotalRegNum .. "') on duplicate key update RegNum = '" .. RegNum 
+			.. "', Male = '" .. Male .. "', Female = '" .. Female .. "', TotalRegNum = '" .. TotalRegNum .. "'"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res

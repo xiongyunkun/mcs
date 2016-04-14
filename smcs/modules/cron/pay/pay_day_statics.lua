@@ -11,7 +11,7 @@ module(...,package.seeall)
 IndexName = "PayDayStatics"
 
 function CronStatics(self, PlatformID, HostID)
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local Day = os.date("%Y-%m-%d", NowTime - 3600) -- 统计前一个小时的
 	--从玩家日充值统计表中获得此次要统计的列表
 	local UserPayList = UserPayDayStaticsData:Get(PlatformID, {HostID=HostID, StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59"})

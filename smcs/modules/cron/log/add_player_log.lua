@@ -15,13 +15,13 @@ RequestType = "getlog"
 FileNames = {"key/addplayer.log"}
 
 --前面的HostID和后面的时间都不要在这里填
-local Cols = {"Uid", "Urs", "Sex", "PhoneInfo"}
+local Cols = {"Uid", "Urs", "Sex"}
 --区别判断重复的数据，用于统计时间点的数据比对
 local UniqueKey = "Urs"
 
 --构造请求参数
-function GenerateReqParams(self, HostID)
-	local StartDate = os.date("%Y-%m-%d",ngx.time()) 
+function GenerateReqParams(self, PlatformID, HostID)
+	local StartDate = os.date("%Y-%m-%d",os.time()) 
 	local StartTime = os.date("%Y-%m-%d %H:%M:%S",GetTimeStamp(StartDate .. " 00:00:00"))  --默认是当天的0点
 	local StartTimes = {}
 	for _, FileName in ipairs(FileNames) do
@@ -38,68 +38,55 @@ function GenerateReqParams(self, HostID)
 	}
 end
 
-
 --处理回调结果
-function HandleResponse(self, HostID, Response, ExecuteTime, LastSaticsTimes)
+function HandleResponse(self, PlatformID, HostID, Response, ExecuteTime, LastSaticsTimes)
 	if not CommonFunc.CheckLogErr(HostID, IndexName, Response) then
 		return false
 	end
 	
-	local TotalNum = 0
+	local TotalNum = 0 
+	local Male = 0
+	local Female = 0
 	for FileName, LogContent in pairs(Response) do
 		if LogContent ~= "" or LogContent ~= " " then
 			local LastSaticsTime = LastSaticsTimes[FileName]
+			--需要把上一次统计时间点的记录拿出来对比下看有没有
+			local SameTimeStatics = AddPlayerLogData:GetSameTimeStatics(PlatformID,{HostID=HostID,Time=LastSaticsTime})
 			local Results = {}
 			local Lines = string.split(LogContent, "\n")
 			local LastTime = nil
-			local PlatformIDs = {}
 			for _, Line in ipairs(Lines) do
 				if Line ~= "" and Line ~= " " then
-					local Result = {["HostID"] = HostID}
+					local Result = {HostID,}
+					local UniqueValue = nil
+					local Sex = 1 --默认是男
 					for _, Col in ipairs(Cols) do
-						Result[Col] = CommonFunc.GetLogValue(Line, Col)
+						local ColValue = CommonFunc.GetLogValue(Line, Col)
+						table.insert(Result, ColValue)
+						if Col ==  UniqueKey then
+							UniqueValue = ColValue
+						end
+						if Col == "Sex" then
+							Sex = ColValue
+						end
 					end
-					local PlatformID = CommonFunc.GetPlatformIDByUrs(Result["Urs"])
-					Result["PlatformID"] = PlatformID
-					PlatformIDs[PlatformID] = true --加入平台列表，便于过滤重复日志
-					--再提取时间
-					Result["Time"] = CommonFunc.GetLogTime(Line)
-					table.insert(Results, Result)
+					local RegTime = CommonFunc.GetLogTime(Line)
+					if SameTimeStatics[UniqueValue] ~= RegTime then
+						--没有重复数据的才添加
+						table.insert(Result, RegTime)
+						table.insert(Results, Result)
+						TotalNum = TotalNum + 1 --暂时先加1，后面再去分析时间统计
+						if tonumber(Sex) == 1 then
+							Male = Male + 1
+						else
+							Female = Female + 1
+						end
+						LastTime = RegTime -- 时间取最后一个
+					end
 				end
 			end
-			local SameTimeStatics = {}
-			for PlatformID, _ in pairs(PlatformIDs) do
-				SameTimeStatics[PlatformID] = AddPlayerLogData:GetSameTimeStatics(PlatformID,{HostID=HostID,Time=LastSaticsTime})
-			end
-			local PlatformResults = {}
-			local PlatformNums = {}
-			for _, Result in ipairs(Results) do
-				if Result["PlatformID"] and SameTimeStatics[Result["PlatformID"]] 
-					and SameTimeStatics[Result["PlatformID"]][Result[UniqueKey]] ~= Result["Time"] then
-					PlatformResults[Result["PlatformID"]] = PlatformResults[Result["PlatformID"]] or {}
-					table.insert(PlatformResults[Result["PlatformID"]], Result)
-					--同时还要计算人数
-					PlatformNums[Result["PlatformID"]] = PlatformNums[Result["PlatformID"]] or {Male = 0, Female = 0, TotalNum = 0}
-					if tonumber(Result["Sex"]) == 1 then
-						PlatformNums[Result["PlatformID"]].Male = PlatformNums[Result["PlatformID"]].Male + 1
-					else
-						PlatformNums[Result["PlatformID"]].Female = PlatformNums[Result["PlatformID"]].Female + 1
-					end
-					PlatformNums[Result["PlatformID"]].TotalNum = PlatformNums[Result["PlatformID"]].TotalNum + 1
-					LastTime = Result["Time"] -- 时间取最后一个
-				end
-			end
-			--分平台记录
-
-			for PlatformID, Results in pairs(PlatformResults) do
+			if #Results > 0 then
 				AddPlayerLogData:BatchInsert(PlatformID, Results)
-				--同时更新玩家信息表的注册时间
-				UserInfoData:UpdateRegTime(PlatformID, Results)
-				--再把实时注册人数记录入库
-				if PlatformNums[PlatformID].TotalNum ~= 0 then
-					AddPlayerData:Insert(PlatformID, HostID, PlatformNums[PlatformID].TotalNum, 
-						PlatformNums[PlatformID].Male, PlatformNums[PlatformID].Female, ExecuteTime)
-				end
 			end
 			-- 更新tblStaticsCfg表中统计时间记录
 			if table.size(SameTimeStatics) ~= 0 and not LastTime then
@@ -116,7 +103,12 @@ function HandleResponse(self, HostID, Response, ExecuteTime, LastSaticsTimes)
 				}
 				StaticsModuleData:Update(Params)
 			end
+			
 		end
+	end
+	--再把实时注册人数记录入库
+	if TotalNum ~= 0 then
+		AddPlayerData:Insert(PlatformID, HostID, TotalNum, Male, Female, ExecuteTime)
 	end
 	return true
 end

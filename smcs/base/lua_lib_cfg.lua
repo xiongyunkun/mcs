@@ -5,7 +5,7 @@ return {
 	HTTP_HEADERS = require("lua_lib.http.http_headers"),
 	HTTP = require("lua_lib.http.http"),
 	MYSQL = require("lua_lib.mysql.mysql"),
-	--SESSION = require("lua_lib.session.session"),
+	REDIS = require("lua_lib.redis.redis"),
 }
 
 

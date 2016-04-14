@@ -27,10 +27,27 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.HostIDs and type(Options.HostIDs) == "table" then
-		Where = Where .. " and HostID in ('" .. table.concat(Options.HostIDs, "','") .. "')"
+		local HostIDs = Options.HostIDs
+		if not Options.NoMerge then
+			local NewHostIDs = {}
+			local THostMap = {}
+			for _, HostID in ipairs(HostIDs) do
+				HostID = CommonFunc.GetToHostID(HostID) --合服转换
+				if not THostMap[HostID] then
+					table.insert(NewHostIDs, HostID)
+					THostMap[HostID] = true
+				end
+			end
+			HostIDs = NewHostIDs
+		end
+		Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
 	end
 	if Options.Date and Options.Date ~= "" then
 		Where = Where .. " and Date = '" .. Options.Date .. "'"
@@ -42,27 +59,110 @@ function Get(self, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblHistoryOnline " .. Where .. " order by HostID, Date"
+	--ngx.say(Sql)
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return {}, Err end
 	return Res
 end
 
 function GetStatics(self, Options)
-	--先判断有没有选择平台，如果没有，则是选择全部平台
 	local Results = {}
-	if not Options.PlatformID or Options.PlatformID == "" then
-		local PlatformMap = CommonFunc.GetPlatformList()
-		for PlatformID, _ in pairs(PlatformMap) do
-			Options.PlatformID = PlatformID
-			local Res = self:Get(Options)
-			Results = self:MergeData(Results, Res)
-		end
-		Options.PlatformID = nil
-	else
+	local NewOptions = {
+		PlatformID = Options.PlatformID,
+		HostID = Options.HostID,
+	}
+	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID 
+		and Options.HostID ~= "" then
 		local Res = self:Get(Options)
 		Results = self:MergeData(Results, Res)
+	else
+		local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
+		local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59")
+		local Today = os.date("%Y-%m-%d", os.time()) 
+		local PlatformMap = CommonFunc.GetPlatformList()
+		local PlatformIDs = {}
+		--如果选择了平台只获取该平台的，否则是全部有权限的平台
+		if Options.PlatformID and Options.PlatformID ~= "" then
+			table.insert(PlatformIDs, Options.PlatformID)
+		else
+			for PlatformID, _ in pairs(PlatformMap) do
+				table.insert(PlatformIDs, PlatformID)
+			end
+		end
+		
+		local MD5Str = nil
+		if #PlatformIDs > 0 then
+			table.sort(PlatformIDs)
+			MD5Str = ngx.md5(table.concat( PlatformIDs, ","))
+		end
+		while StartTime < EndTime do
+			local Date = os.date("%Y-%m-%d",StartTime)
+			if Date ~= Today and MD5Str then
+				--不是今天的数据，先看看全服统计库里面有没有数据
+				local TList = AllHistoryOnlineData:Get({MD5Str = MD5Str, Date = Date})
+				if TList and TList[1] then
+					Results[Date] = TList[1] 
+				end
+			end
+			if not Results[Date] or Results[Date].MaxOnline == 0 then
+				NewOptions.Time = Date
+				local OnlineRes = OnlineData:GetStatics(NewOptions)
+				local Period = self:GetPeriod(Date)
+				local MaxOnline, AveOnline, MinOnline = self:GetStaticsNum(OnlineRes, Period)
+				Results[Date] = {
+					MaxOnline = MaxOnline,
+					MinOnline = MinOnline,
+					AveOnline = AveOnline,
+				}
+				--同时记录入库,今天的数据不记录
+				if  Date ~= Today and MD5Str then
+					AllHistoryOnlineData:Insert(PlatformIDs, Date, MaxOnline, AveOnline, MinOnline)
+				end
+			end
+			StartTime = StartTime + 86400
+		end
 	end
-	return Results
+	return Results 
+end
+
+local MIN_NUM = 100000 --最低在线人数判断阀值
+--获得统计汇总时间内的最高在线和平均在线
+function GetStaticsNum(self, StaticsRes, Period)
+	local MaxNum = 0
+	local MinNum = MIN_NUM
+	local AveNum = 0
+	local TotalNum = 0
+	for Time, Num in pairs(StaticsRes) do
+		TotalNum = TotalNum + Num
+		if Num > MaxNum then
+			MaxNum = Num
+		end
+		if Num < MinNum then
+			MinNum = Num
+		end
+	end
+	if TotalNum ~= 0 then
+		AveNum = math.ceil(TotalNum/Period)
+	end
+	-- 如果还是等于MIN_NUM或者有区间段没有统计数据的话最低人数直接变为0
+	if MinNum == MIN_NUM or table.size(StaticsRes) ~= Period then
+		MinNum = 0 
+	end
+	return MaxNum, AveNum, MinNum
+end
+
+--获得时间周期次数(即经历过多少个5分钟)
+function GetPeriod(self, Day)
+	local StartTime = GetTimeStamp(Day .. " 00:00:00")
+	local NowTime = os.time()
+	local EndTime = StartTime + 86400 
+	EndTime = EndTime < NowTime and EndTime or NowTime
+	local Num = 0
+	while StartTime < EndTime do
+		StartTime = StartTime + 300 --5分钟统计一次的
+		Num = Num + 1
+	end
+	return Num
 end
 
 function MergeData(self, Results, Res)

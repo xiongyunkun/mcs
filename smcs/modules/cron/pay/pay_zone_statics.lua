@@ -11,7 +11,7 @@ module(...,package.seeall)
 IndexName = "PayZoneStatics"
 
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--从玩家充值统计表中获取数据进行统计
 	local UserPayRes = UserPayStaticsData:Get(PlatformID, {HostID=HostID,})
 	local Zones = self:ExtractZone()

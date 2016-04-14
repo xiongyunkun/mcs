@@ -5,47 +5,37 @@
 -- 禁言封号管理
 --
 --]]
-local BAN_ID = 8
-local UN_BAN_ID = 9
+local BAN_ID = 13
+local UN_BAN_ID = 14
 
 function ForbiddenShow(self, PlatformID, Results)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	Options.PlatformID = Options.PlatformID or PlatformID
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local OperationTypes = CommonData.BanOperationTypes
-	local ForbidTimes = {
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	OperationTypes = CommonData.BanOperationTypes
+	ForbidTimes = {
 		[60] = "1小时",
 		[180] = "3小时",
 		[300] = "5小时",
 		[86400] = "24小时",
-		[-1] = "永久",
+		[0] = "永久",
 	}
 	--展示数据
-	local Titles = {"平台", "服", "账号", "角色", "执行结果",}
+	Titles = {"平台", "服", "账号", "角色", "执行结果",}
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
-	local TableData = {}
+	TableData = {}
 	for _, Result in ipairs(Results or {}) do
 		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Result.Result or "执行失败"}
 		table.insert(TableData, CTable)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		OperationTypes = OperationTypes,
-		ForbidTimes = ForbidTimes,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/player/forbidden.html", Params)
+	Viewer:View("template/player/forbidden.html")
 end
 
 --玩家禁言提交
@@ -68,13 +58,13 @@ function DoForbidden(self)
 			UserList = UserInfoData:Get(UserOptions)
 			local OperationType = tonumber(Args.OperationType)
 			if OperationType == 1 then
-				self:Ban(Args, "Chat", UserList)
+				self:Ban(Args, "chat", UserList)
 			elseif OperationType == 2 then
-				self:UnBan(Args, "Chat", UserList)
+				self:UnBan(Args, "chat", UserList)
 			elseif OperationType == 3 then
-				self:Ban(Args, "Login", UserList)
+				self:Ban(Args, "login", UserList)
 			elseif OperationType == 4 then
-				self:UnBan(Args, "Login", UserList)
+				self:UnBan(Args, "login", UserList)
 			end
 			--记录日志
 			local Reason = Args.Reason
@@ -89,11 +79,11 @@ end
 function Ban(self, Options, BanType, UserList)
 	local OperationInfo = GMRuleData:Get({ID = BAN_ID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local BanTime = tonumber(Options.ForbidTime) or 0
 	BanTime = BanTime * 60
 	for _, UidInfo in ipairs(UserList) do
-		local GMParams = {UidInfo.Urs, BanType, BanTime}
+		local GMParams = {BanType, UidInfo.Uid, BanTime, "smcs_封禁"}
 		local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 		if not Flag then
 			ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -112,9 +102,9 @@ end
 function UnBan(self, Options, BanType, UserList)
 	local OperationInfo = GMRuleData:Get({ID = UN_BAN_ID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	for _, UidInfo in ipairs(UserList) do
-		local GMParams = {UidInfo.Urs, BanType}
+		local GMParams = {BanType, UidInfo.Uid, "smcs_解禁"}
 		local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 		if not Flag then
 			ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
@@ -132,7 +122,7 @@ end
 --记录封禁日志
 function Log(self, PlatformID, OperationType, BanTime, Reason, UserList)
 	local Results = {}
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local StartTime = os.date("%Y-%m-%d %H:%M:%S",NowTime)
 	local EndTime = NowTime + (tonumber(BanTime) * 60)
 	EndTime = os.date("%Y-%m-%d %H:%M:%S", EndTime)

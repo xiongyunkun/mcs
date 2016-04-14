@@ -11,7 +11,7 @@
 		<th>服ID</th>
 		<th>服名称</th>
 		<th>开服时间</th>
-		<th>7日留存数</th>
+		<th>7日平均在线</th>
 	</tr>
 	</thead>
 #if #ServerData == 0 then
@@ -19,9 +19,9 @@
 #else
 #for id, Server in ipairs(ServerData) do
 	<tr>
-		<td>$Server.HostID$</td>
+		<td>$Server.hostid$</td>
 		<td>$Server.name$</td>
-		<td>$os.date("%Y-%m-%d %X",Server.StartTime)$</td>
+		<td>$Server.startservertime$</td>
 		<td>$Server.Avg7Num$</td>
 	</tr>
 #end

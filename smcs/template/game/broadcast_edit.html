@@ -39,7 +39,7 @@
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">选择服：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
 		<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
-			<option value="">全部</option>
+			
 #for ID,ServerName in pairs(Servers) do
 			<option value="$ID$" 
 			$BroadcastInfo.HostIDs and ((BroadcastInfo.HostIDs==tostring(ID)) or (type(BroadcastInfo.HostIDs) == "table" and table.member_key(BroadcastInfo.HostIDs, tostring(ID)))) and "selected" or ""$>
@@ -85,6 +85,20 @@
 		<textarea name=Content cols="50" rows="3" id="Content">$BroadcastInfo.Content or ""$</textarea>
 	</td>
 </tr>
+#if table.size(BroadcastInfo) == 0 then
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">链接名称：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
+		<input type="text" value="" name="HrefName">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">链接地址：</td>
+	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
+		<input type="text" value="" name="Href" style = "width:600px;">
+	</td>
+</tr>
+#end
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注：</td>
 	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">

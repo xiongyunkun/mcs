@@ -38,13 +38,6 @@
 		<input type="text" name="MinLevel" value="">	
 		<label>创角时间：</label>
 		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="CreateTime">
-		<label>是否在线：</label>
-		<select name="IsOnline">
-			<option value="">不限</option>
-			<option value="1">在线</option>
-		</select>
-		<label>是否定时发送：</label>
-		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="IsLimitTime">
 	</span>
 	<span id="onlysend">
 		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
@@ -54,15 +47,17 @@
 	<br>
 	<span id="email">
 		<label>邮件标题：</label>
-		<input type="text" name="Title" value="">
+		<input type="text" name="Title" value="" id="title">
 	</span>
 	<br>
-	<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
+	<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;" id="content">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
 	<br>
 	<div id="addItems">
 		<div>
 			<label style="font-weight:normal;">钻石：</label>
 			<input type="text" name="Gold" value="" placeholder="钻石数量...">
+			<label style="font-weight:normal;">绑钻：</label>
+			<input type="text" name="CreditGold" value="" placeholder="绑钻数量...">
 			<label style="font-weight:normal;">金币：</label>
 			<input type="text" name="Money" value="" placeholder="金币数量...">
 		</div>
@@ -82,6 +77,13 @@
 		<br>	
 		<textarea class="span5" rows="3" cols="60" name="MinusRoleName" style="margin-left:10px;"></textarea>
 	</span>
+	<br>
+	<label>操作容器：</label>	
+	<select name="DeductItemType" class="chosen-select DeductItemType" tabindex="2" data-placeholder="选择操作容器">
+#for ID,Type in pairs(DeductItemTypes) do
+		<option value="$ID$">$Type$</option>
+#end
+	</select>
 	<br>
 	<label>道具：</label>
 	<input type="text" class="item" name="MinusItem" value="" placeholder="物品ID...">
@@ -104,6 +106,7 @@
  $(document).ready(function(){
 	$(".platformID").chosen({width:"100px",});
 	$(".OperationType").chosen({width:"100px",});
+	$(".DeductItemType").chosen({width:"100px",});
 	$(".hostID").chosen({
 		width:'500px',
 	});
@@ -119,6 +122,19 @@
 			$(".hostID").html(ServerStr);
 			$(".hostID").trigger("chosen:updated");
 		});
+	});
+	var availableTags = [$table.concat(ItemStrList, ",")$];
+	var oldAvailableTags = [$table.concat(OldItemStrList, ",")$];
+
+	$(".hostID").chosen().change(function(){
+		var hostID = $(this).val();
+		hostID = hostID + "";
+		var hostIDs = hostID.split(",");
+		var platformID = $(".platformID").val();
+		if(hostIDs[0] != "" && isOldVersion(platformID, parseInt(hostIDs[0]))){
+			availableTags = oldAvailableTags;
+			$(".item").autocomplete({source: availableTags,minLength: 2});
+		}
 	});
 	$(".OperationType").change(function(){
 		var ID = $(this).val();
@@ -137,7 +153,7 @@
 			$("#plus").hide();
 		}
 	});
-	var availableTags = [$table.concat(ItemStrList, ",")$];
+	
 	//添加道具
 	$(document).on('click', '.add_item', function() {
 		var itemDom = $(this).parent().clone();
@@ -171,8 +187,54 @@
 			alert("请选择平台！");
 			return false;
 		}
+		var title = $("#title").val();
+		if(title == ""){
+			alert("请填写邮件标题！");
+			return false;
+		}
+		var content = $("#content").val();
+		if(content == ""){
+			alert("请填写邮件内容！");
+			return false;
+		}
 	});
 })
+function isOldVersion(platformID, hostID){
+	var limitInfo = {
+		"kuwo":62001,
+		"hly":62501,
+		"8090":61008,
+		"53wan":61501,
+		"511wan":58522,
+		"7477":57003,
+		"360":10014,
+		"kuaiwan":51015,
+		"65wan":60001,
+		"pps":15002,
+		"sogou":20003,
+		"qidian" : 52009,
+		"7k7k" : 55003,
+		"v1game" : 59509,
+		"swjoy" : 50015,
+		"yaodou" : 53003,
+		"pptv" : 54006,
+		"renren" : 57510,
+		"37wan" : 45010,
+		"kugou" : 30001,
+		"baidu" : 25020,
+		"xiyou" : 59003,
+		"dw" : 1025,
+		"ainiwan" : 60501,
+		"ufojoy" : 63001,
+		"844a" : 58002,
+	};
+	var limit = limitInfo[platformID];
+	if(limit && limit >= hostID){
+		return true;  //1.0版本服
+	}else{
+		return false; //2.0版本服
+	}
+}
  </script>
 #include("include/datatables.html")
 

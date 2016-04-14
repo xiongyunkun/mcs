@@ -8,19 +8,19 @@
 
 --禁言封号日志操作面板展示
 function LogShow(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time() - 86400 * 7)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d %H:%M:%S",os.time() - 86400 * 7)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",os.time())
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--获得用户名列表
 	local UserInfo = UserData:GetAllUsers()
 	local Users = {}
 	for _, User in ipairs(UserInfo) do
 		Users[User.account] = User.name
 	end
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "label",["Text"] = "角色ID:"},
@@ -36,10 +36,10 @@ function LogShow(self)
 	}
 
 	--展示数据
-	local Titles = {'时间', "平台", "服", "角色ID", "角色名", "操作类型", '操作人', "封禁开始时间",
-		'封禁结束时间','封禁原因'}
+	Titles = {'时间', "平台", "服", "角色ID", "角色名", "操作类型", '操作人', "封禁开始时间",
+		'封禁结束时间','封禁原因', "其他信息"}
 	local OperationTypes = CommonData.BanOperationTypes
-	local TableData = {}
+	TableData = {}
 	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID and Options.HostID ~= "" then
 		local LogList = BanLogData:Get(Options.PlatformID, Options)
 		for _, Log in ipairs(LogList) do
@@ -62,6 +62,7 @@ function LogShow(self)
 			table.insert(Data, Log.BanStartTime)
 			table.insert(Data, Log.BanEndTime == Log.BanStartTime and '<font color="red">永久</font>' or Log.BanEndTime)
 			table.insert(Data, Log.Reason)
+			table.insert(Data, Log.ExtInfo)
 			table.insert(TableData, Data)
 		end
 		if Options.Submit == "导出" then
@@ -70,20 +71,11 @@ function LogShow(self)
 			return
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["DisplayLength"] = 50,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/log/ban_log_list.html", Params)
+	Viewer:View("template/log/ban_log_list.html")
 end
 
 

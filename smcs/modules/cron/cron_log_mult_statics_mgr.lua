@@ -6,37 +6,38 @@
 --
 --]]
 
+local REQUEST_URL = "/cron/cron_sub_log_statics?HostID="
 local MAX_THREAD_NUM = 30 --最多并发的线程数量
 
 -- 需要统计的指标以及对应的处理文件都放在这里
 local CronModule = {
 	["GoldLog"] = "modules.cron.log.gold_log", --钻石日志
-	["MoneyLog"] = "modules.cron.log.money_log", --金币日志
-	["AddPlayerLog"] = "modules.cron.log.add_player_log", --新增玩家日志
-	["Online"] = "modules.cron.gm_get.online", --在线人数
-	["LoginLog"] = "modules.cron.log.login_log", --登陆日志
+	["MoneyLog"] = "modules.cron.log.money_log", --金钱日志
+	["Online"] = "modules.cron.gm_get.online", --在线拉取数据
+	["AddPlayerLog"] = "modules.cron.log.add_player_log", --创角日志
+	["LoginLog"] = "modules.cron.log.login_log", --登录日志
 	["LogoutLog"] = "modules.cron.log.logout_log", --退出日志
 	["LevelUpLog"] = "modules.cron.log.level_up_log", --升级日志
-	["RenameLog"] = "modules.cron.log.rename_log", --改名日志
-	["ItemLog"] = "modules.cron.log.item_log", --物品日志
-	["MessageLog"] = "modules.cron.log.message_log",		-- 邮件
-	["InstanceLog"] = "modules.cron.log.instance_log",	-- 副本关卡
-	["TaskLog"] = "modules.cron.log.task_log", --任务日志
-	["ClientLoadLog"] = "modules.cron.log.clientload_log", --客户端登陆日志
-	["PowerLog"] = "modules.cron.log.power_log", --体力日志
-	["ShopBuyLog"] = "modules.cron.log.shop_buy_log", --商店购买日志
-	["ArenaLog"] = "modules.cron.log.arena_log", --竞技场日志
-	["PayActualTime"] = "modules.cron.pay.pay_actual_time", --充值实时统计
-	["LuckyDrawLog"] = "modules.cron.log.lucky_draw_log", --酒馆日志
-	["ChallengeLog"] = "modules.cron.log.challenge_log", --极限挑战
-	["CardLog"] = "modules.cron.log.card_log", --英雄日志
+	["ClientLoadLog"] = "modules.cron.log.clientload_log", --客户端登录过程日志
 	["ChatLog"] = "modules.cron.log.chat_log", --聊天日志
+	["TaskLog"] = "modules.cron.log.task_log", -- 任务日志
+	["ActLog"] = "modules.cron.log.act_log", --活动日志
+	["ShopBuyLog"] = "modules.cron.log.shop_buy_log", -- 商店日志
+	["RenameLog"] = "modules.cron.log.rename_log", -- 重命名日志
+	["MountLevelLog"] = "modules.cron.log.mount_level", -- 坐骑等阶日志
+	["ItemLog"] = "modules.cron.log.item_log", --物品日志
+	["InstanceLog"] = "modules.cron.log.instance_log", -- 副本日志
+	["MessageLog"] = "modules.cron.log.message_log", -- 消息日志
+	["PayActualTime"] = "modules.cron.pay.pay_actual_time", --充值实时统计
+	["ExpLog"] = "modules.cron.log.exp_log", --经验日志
+	["GodDoorLog"] = "modules.cron.log.god_door_log", --众神之门日志
+	["PetLog"] = "modules.cron.log.pet_log", --魔神日志
+	["BanLog"] = "modules.cron.log.ban_log", --封禁日志
 }
 local Env = getfenv()
 for Name, File in pairs(CronModule) do
 	Env[Name] = require(File)
 end
-
 --根据上一次的执行时间和执行频率，判断该模块此时是否应该执行
 function IsTimeUp(self, IndexName)
 	local IndexInfo = StaticsIndexData:Get({IndexName = IndexName})
@@ -47,7 +48,7 @@ function IsTimeUp(self, IndexName)
 	local LastTime = IndexInfo.LastTime
 	LastTime = GetTimeStamp(LastTime)
 	local Frequency = IndexInfo.Frequency * 60 --折算成秒
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	if LastTime + Frequency <= NowTime then 
 		--上一次执行时间加上执行频率已经小于现在时间了，表示可以执行
 		return true
@@ -103,7 +104,7 @@ function CronExecute(self)
 	--local SubRequestList = {} --子请求列表
 	local ThreadList = {} -- 线程列表
 	local ExecuteTimeMap = {} --记录执行时间列表，用于更新上一次操作时间
-	for HostID, _ in pairs(ServerPlatformMap) do
+	for HostID, PlatformID in pairs(ServerPlatformMap) do
 		--只统计服务器状态不为维护或者异常的服
 		if ServerStatusMap[HostID] ~= 0 and ServerStatusMap[HostID] ~= 5 then
 			for Name, File in pairs(CronModule) do
@@ -117,6 +118,7 @@ function CronExecute(self)
 							ExecuteTimeMap[Module.IndexName] = ExecuteTime
 						end
 						local ThreadParams = {
+							PlatformID = PlatformID,
 							HostID = HostID,
 							ModuleName = Name,
 							ExecuteTime = ExecuteTime,
@@ -140,7 +142,7 @@ function CronExecute(self)
 			SubThreadList = {} --清空
 			X = 0 --置为0
 		end
-		local Thread, Err = ngx.thread.spawn(ThreadExecute, self, ThreadParams["HostID"], ThreadParams["ModuleName"], ThreadParams["ExecuteTime"])
+		local Thread, Err = ngx.thread.spawn(ThreadExecute, self, ThreadParams["PlatformID"], ThreadParams["HostID"], ThreadParams["ModuleName"], ThreadParams["ExecuteTime"])
 		if Thread then
 			table.insert(SubThreadList, Thread)
 			X = X + 1
@@ -153,8 +155,9 @@ function CronExecute(self)
 end
 
 --线程执行
-function ThreadExecute(self, HostID, ModuleName, ExecuteTime)
-	if CommonFunc.IsStrEmpty(HostID) or CommonFunc.IsStrEmpty(ModuleName) or CommonFunc.IsStrEmpty(ExecuteTime) then
+function ThreadExecute(self, PlatformID, HostID, ModuleName, ExecuteTime)
+	if CommonFunc.IsStrEmpty(HostID) or CommonFunc.IsStrEmpty(PlatformID) or CommonFunc.IsStrEmpty(ModuleName)
+		or CommonFunc.IsStrEmpty(ExecuteTime) then
 		ngx.say("params empty!")
 		return
 	end
@@ -162,9 +165,9 @@ function ThreadExecute(self, HostID, ModuleName, ExecuteTime)
 	local Module = self[ModuleName]
 	if Module then 
 		if Module.IndexName == "PayActualTime" then --实时充值统计的不需要发送http请求
-			Module:CronExecute(HostID)
+			Module:CronExecute(PlatformID, HostID)
 		else
-			local Params = Module:GenerateReqParams(HostID)
+			local Params = Module:GenerateReqParams(PlatformID, HostID)
 			local Flag = nil
 			local Response = nil
 			local RequestType = Module.RequestType
@@ -180,7 +183,7 @@ function ThreadExecute(self, HostID, ModuleName, ExecuteTime)
 			-- 交给对应模块处理入库
 			Response  = UnSerialize(Response) 
 			if Response then
-				Module:HandleResponse(HostID, Response, ExecuteTime, StartTimes)
+				Module:HandleResponse(PlatformID, HostID, Response, ExecuteTime, StartTimes)
 			end
 		end
 	end

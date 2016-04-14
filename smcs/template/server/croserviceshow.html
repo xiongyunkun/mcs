@@ -25,7 +25,9 @@
 		<th>服务名称</th>
 		<th>默认自分组</th>
 		<th>接管模块</th>
-		<th>备注</th>
+		<th>绑定跨服专区</th>
+		<th>战区所需开服天数</th>
+		<th>共享战区服务名称</th>
 		<th>操作</th>
 	</tr>
 	</thead>
@@ -35,7 +37,9 @@
 		<td>$Service.ServiceName$</td>
 		<td>$Service.NeedSelfGroup$</td>
 		<td>$Service.Module$</td>
-		<td>$Service.Memo$</td>
+		<td>$Service.BindCroZone == 1 and "是" or "否"$</td>
+		<td>$Service.StartServerDays$</td>
+		<td>$Service.ShareServiceID == 0 and "无" or ServiceMap[Service.ShareServiceID]$</td>
 		<td>
 			<div class="visible-md visible-lg hidden-sm hidden-xs action-buttons">
 				<a class="green" href="/croservermgr/serviceedit?ID=$Service.ID$" title="编辑">

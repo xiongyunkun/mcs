@@ -37,11 +37,11 @@
 #local MaxCount = 0
 #for id, Server in ipairs(Servers) do
 #	MaxCount = MaxCount + 1
-#	SvrId = Server.HostID
+#	SvrId = Server.hostid
 #	local GroupNames = nil
-#	if InGroupServers[Server.HostID] then
+#	if InGroupServers[Server.hostid] then
 #		local NameTbl = {}
-#		for _, gid in ipairs(InGroupServers[Server.HostID] or {}) do
+#		for _, gid in ipairs(InGroupServers[Server.hostid] or {}) do
 #			table.insert(NameTbl,GroupMap[gid].name)
 #		end
 #		GroupNames = table.concat(NameTbl,",")
@@ -50,7 +50,7 @@
 	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
 #	end
 	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
-	<input type=radio name=cb_-1 value=$SvrId$><font color="$GroupNames and '#006400' or '#A00000'$">$ServerInfoMap[Server.HostID]$</font><font color="#008B8B">$GroupNames and ("["..GroupNames.."]") or ""$</font>
+	<input type=radio name=cb_-1 value=$SvrId$><font color="$GroupNames and '#006400' or '#A00000'$">$Server.name$</font><font color="#008B8B">$GroupNames and ("["..GroupNames.."]") or ""$</font>
 	</td>
 #	if (MaxCount)%5 == 0 then
 	</tr>
@@ -89,7 +89,7 @@
 	   	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
 #			end
 	   	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
-	   	$ServerInfoMap[Server.HostID]$
+	   	$Server.name$
 		&nbsp;
 		<a href="/servermgr/domodserverindex?gid=$Group.id$&svrid=$SvrId$&dir=up">&lt;&lt;</a>
 		|

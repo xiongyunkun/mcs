@@ -13,7 +13,7 @@ IndexName = "LevelStatics"
 
 --通过分析玩家信息表中的玩家等级获得玩家的等级分布
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--从玩家信息表中获取对应玩家的等级分布
 	local LevelList = {}
 	local UsersRes = UserInfoData:Get({PlatformID = PlatformID, HostID = HostID, MaxRegTime = Day .. " 23:59:59"})
@@ -78,14 +78,14 @@ function CronStatics(self, PlatformID, HostID)
 	
 	------------------再统计昨天的流失率---------------------------------------------
 	--获得昨天的活跃用户数
-	local Yesterday = os.date("%Y-%m-%d", ngx.time() - 3600 - 86400)
+	local Yesterday = os.date("%Y-%m-%d", os.time() - 3600 - 86400)
 	local LastLogoutRes = LogoutLogData:Get(PlatformID, {HostID = HostID, StartTime = Yesterday .. " 00:00:00", EndTime = Yesterday .. " 23:59:59"})
 	local LastLiveUids = {}  -- 记录玩家uid与在线时长的对应关系
 	local LastUidLevels = {} --记录玩家uid与等级的对应关系
 	for _, Info in ipairs(LastLogoutRes) do
 		local Uid = tonumber(Info.Uid)
 		LastLiveUids[Uid] = (LastLiveUids[Uid] or 0) + tonumber(Info.OnTime or 0)
-		LastUidLevels[Uid] = Info.Level
+		LastUidLevels[Uid] = Info.Lv
 	end
 	local LastLostLiveUids = {} --昨天的活跃用户流失数
 	local LastLostPayLevels = {} --昨天的付费用户流失数

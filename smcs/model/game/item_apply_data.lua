@@ -5,20 +5,21 @@
 CREATE TABLE `tblItemApply` (
   `ID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `PlatformID` varchar(32) NOT NULL DEFAULT '' COMMENT '平台ID',
-  `HostIDs` varchar(128) NOT NULL DEFAULT '' COMMENT '平台ID', 
-  `RoleNames` varchar(512) NOT NULL DEFAULT '' COMMENT '角色列表',  
-  `Reason` varchar(128) NOT NULL DEFAULT '' COMMENT '申请理由',  
+  `HostIDs` varchar(128) NOT NULL DEFAULT '' COMMENT '平台ID',
+  `RoleNames` varchar(512) NOT NULL DEFAULT '' COMMENT '角色列表',
+  `Reason` varchar(128) NOT NULL DEFAULT '' COMMENT '申请理由',
   `Items` varchar(256) NOT NULL DEFAULT '' COMMENT '道具',
   `Applicant` varchar(32) NOT NULL DEFAULT '' COMMENT '申请人',
   `SubmitTime` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
   `LastUpdateTime` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT '提交时间',
   `Auditor` varchar(32) NOT NULL DEFAULT '' COMMENT '审核人',
-  `AuditTime` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT '审核时间', 
-  `Status` tinyint NOT NULL DEFAULT '1' COMMENT '审核状态,1:未审核,2:通过,3:未通过,4:发送中', 
+  `AuditTime` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT '审核时间',
+  `Status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '审核状态,1:未审核,2:审核通过,3:审核未通过,4:已发放，5不发放',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
+  `SendTime` timestamp NULL DEFAULT '0000-00-00 00:00:00' COMMENT '发放时间',
+  `Sender` varchar(32) NOT NULL DEFAULT '' COMMENT '发放人',
   PRIMARY KEY (`ID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='返利道具申请表' 
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='返利道具申请表' 
 
 --]]
 module(...,package.seeall)
@@ -41,9 +42,12 @@ function Get(self, Options)
 	if Options.StartTime and Options.StartTime ~= "" then
         Where = Where .. " and SubmitTime >= '" .. Options.StartTime .. " 00:00:00'"
     end
-    if Options.EndTime and Options.EndTime ~= "" then
-        Where = Where .. " and SubmitTime <= '" .. Options.EndTime .. " 23:59:59'"
-    end
+  if Options.EndTime and Options.EndTime ~= "" then
+      Where = Where .. " and SubmitTime <= '" .. Options.EndTime .. " 23:59:59'"
+  end
+  if Options.Verify and Options.Verify ~= "" then --已经通过初审的
+    Where = Where .. "and Status >= '2' and Status != '3' "
+  end
 	local Sql = "select * from smcs.tblItemApply " .. Where .. " order by ID DESC"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
@@ -113,6 +117,13 @@ end
 --更改订单状态
 function UpdateStatus(self, ID, Status)
   local Sql = "update smcs.tblItemApply set Status = '" .. Status .. "' where ID = '" .. ID .. "'"
+  DB:ExeSql(Sql)
+end
+
+--变更道具发送时申请状态
+function SendUpdateApply(self, ID, Sender, SendTime, Status)
+  local Sql = "update smcs.tblItemApply set Sender = '" .. Sender .. "',SendTime = '" .. SendTime 
+        .. "',Status = '" .. Status .. "' where ID = '" .. ID .. "'"
   DB:ExeSql(Sql)
 end
 

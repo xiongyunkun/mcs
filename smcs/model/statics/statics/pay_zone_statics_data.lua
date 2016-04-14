@@ -103,10 +103,6 @@ function BatchInsert(self, PlatformID, HostID, Date, ZoneInfo)
 		local List = {PlatformID, HostID, Date, ZoneID, PayUserNum}
 		table.insert(Values, table.concat( List, "','"))
 	end
-	--更新之前要把这个服遮天之前的数据都清空
-	local DeleteSql = "delete from " .. PlatformID .. "_statics.tblPayZone where PlatformID = '" .. PlatformID
-		.. "' and HostID = '" .. HostID .. "' and Date = '" .. Date .. "'"
-	DB:ExeSql(DeleteSql)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblPayZone(PlatformID, HostID, Date, ZoneID, PayUserNum"
 			.. ") values('" .. table.concat( Values, "'),('") .. "') on duplicate key update PayUserNum = values(PayUserNum)"
 	local Res, Err = DB:ExeSql(Sql)

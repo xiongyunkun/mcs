@@ -40,13 +40,14 @@ function SimulateLogin(self)
 		if ServerInfo and ServerInfo[1] then
 			ServerMark = ServerInfo[1].servmark
 		end
-		local NowTime = ngx.time()
+		local NowTime = os.time()
 		--记录此次操作
 		self:InsertOperation(Args.PlatformID, Args.HostID, UserInfo[1].Urs, NowTime)
 		local Sign = self:GenerateSign(Args.PlatformID, UserInfo[1].Urs, NowTime)
 		--开始生成链接
 		local Strs = string.split(UserInfo[1].Urs, "_")
-		local NewUrs = Strs[#Strs]
+
+		local NewUrs = table.concat( Strs, "_", 2)
 		local UrsParams = {
 			"account=" .. NewUrs,
 			"gmtime=" .. NowTime,
@@ -54,8 +55,12 @@ function SimulateLogin(self)
 			"server=" .. Args.HostID,
 			"game=ZSZS",
 			"gmsign=" .. string.upper(Sign),
-			"dwservId=" .. ServerMark,
+			"pf=" .. Args.PlatformID,
+			"serverid=" .. ServerMark,
 		}
+		if Options.PlatformID == "dw" then
+			table.insert(UrsParams, "dwservId=" .. ServerMark)
+		end
 		if string.find(ClientUrl, "?") then --之前有?号所以直接拼接&
 			ClientUrl = ClientUrl .. "&" .. table.concat(UrsParams, "&")
 		else
@@ -68,27 +73,18 @@ function SimulateLogin(self)
 end
 
 function ShowView(self, ExtStr)
-	local ExtMsg = ExtStr
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	ExtMsg = ExtStr
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--展示数据
-	local Titles = {"ID", "平台", "服", }
-	local TableData = {}
-	local DataTable = {
+	Titles = {"ID", "平台", "服", }
+	TableData = {}
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		ExtMsg = ExtMsg,
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/game/simulate_login.html", Params)
+	Viewer:View("template/game/simulate_login.html")
 end
 
 function InsertOperation(self, PlatformID, HostID, Urs, Time)
@@ -109,6 +105,14 @@ end
 function GenerateSign(self, PlatformID, Urs, Time)
 	local Key = CommonFunc.GetInterfaceKey(PlatformID, "simulate_key")
 	local Str = Urs .. Time .. Key
+	local MD5Str = ngx.md5(Str)
+	return MD5Str 
+end
+
+--生成登陆密钥
+function GeneratePlatformSign(self, PlatformID, Urs, Time)
+	local Key = CommonFunc.GetInterfaceKey(PlatformID, "simulate_key")
+	local Str = PlatformID .. "_" .. Urs .. Time .. Key
 	local MD5Str = ngx.md5(Str)
 	return MD5Str 
 end
@@ -136,10 +140,10 @@ function VerifyServer(self)
 		if ServerInfo and ServerInfo[1] then
 			ServerMark = ServerInfo[1].servmark
 		end
-		local NowTime = ngx.time()
+		local NowTime = os.time()
 		--记录此次操作
 		self:InsertOperation(Args.PlatformID, Args.HostID, Urs, NowTime)
-		local Sign = self:GenerateSign(Args.PlatformID, Urs, NowTime)
+		local Sign = self:GeneratePlatformSign(Args.PlatformID, Urs, NowTime)
 		--开始生成链接
 		local UrsParams = {
 			"account=" .. Urs,
@@ -148,8 +152,12 @@ function VerifyServer(self)
 			"server=" .. Args.HostID,
 			"game=ZSZS",
 			"gmsign=" .. string.upper(Sign),
-			"dwservId=" .. ServerMark,
+			"pf=" .. Args.PlatformID,
+			"serverid=" .. ServerMark,
 		}
+		if Args.PlatformID == "dw" then
+			table.insert(UrsParams, "dwservId=" .. ServerMark)
+		end
 		if string.find(ClientUrl, "?") then --之前有?号所以直接拼接&
 			ClientUrl = ClientUrl .. "&" .. table.concat(UrsParams, "&")
 		else
@@ -162,26 +170,17 @@ function VerifyServer(self)
 end
 
 function ShowVerifyView(self, ExtStr)
-	local ExtMsg = ExtStr
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	ExtMsg = ExtStr
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--展示数据
-	local Titles = {"ID", "平台", "服", }
-	local TableData = {}
-	local DataTable = {
+	Titles = {"ID", "平台", "服", }
+	TableData = {}
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		ExtMsg = ExtMsg,
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/game/verify_server.html", Params)
+	Viewer:View("template/game/verify_server.html")
 end
 DoRequest()

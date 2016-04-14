@@ -1,5 +1,5 @@
 ----------------------------------------
---$Id: vip.lua 54731 2015-04-01 13:06:11Z xiongyunkun $
+--$Id: vip.lua 74695 2015-07-08 03:30:14Z xiongyunkun $
 ----------------------------------------
 --[[
 -- vip用户统计
@@ -13,9 +13,8 @@ module(...,package.seeall)
 IndexName = "VIP" 
 
 function CronStatics(self, PlatformID, HostID)
-	--先统计vip人数
 	local VipResults = {}
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	local Options = {
 		HostID = HostID, 
 		NoVipLevel = 0, --查询VipLevel不等于0
@@ -53,7 +52,6 @@ function StaticsLostNum(self, PlatformID, HostID, Date)
 	local Options = {
 		HostID = HostID, 
 		NoVipLevel = 0, --查询VipLevel不等于0
-		IsVip = 1,
 		StartTime = LastDate .. " 00:00:00",
 		EndTime = LastDate .. " 23:59:59",
 	}

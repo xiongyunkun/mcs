@@ -8,14 +8,14 @@
 
 --玩家查询
 function PlayerInfo(self)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local ServerTypes = CommonFunc.GetMulServerTypes()
-	local Radios = {"根据游戏Uid", "根据游戏角色名", "根据平台帐号名",}
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	ServerTypes = CommonFunc.GetMulServerTypes()
+	Radios = {"根据游戏帐号", "根据游戏角色名", "根据平台帐号名",}
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Select",["Label"] = "选择大区",["Name"] = "ServerType", ["Values"] = ServerTypes},
 		{["Type"] = "<br>",},
@@ -25,46 +25,37 @@ function PlayerInfo(self)
 		{["Type"] = "<br>",},
 		{["Type"] = "text", ["Name"] = "Account", ["Placeholder"] = "此处输入角色名或帐号...",},
 	}
-	local FilterStyles = {
+	FilterStyles = {
         ["hostID"] = {["width"] = "600px",}
     }
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local Sexes = {"男","女"}
 	--获得提交过来的值
 	--展示数据
-	local Titles = {"平台", "服", "Uid", "平台账号", 
-			"角色", "等级", "VIP等级", "战斗力",
-			"钻石", "金币", "最后登录","总在线时长"}
+	Titles = {"平台", "服", "游戏账号", "平台账号", 
+			"角色", "性别", "等级", "VIP等级",
+			"钻石", "金币", "封号","禁言",
+			"最后登录","总在线时长"}
 	local UserData = self:GetUserInfo(Options)
 	--封装成表格展示的格式
-	local TableData = {}
+	TableData = {}
+	local BanWord = '<font color="red">是</font>'
 	for _, Data in ipairs(UserData) do
-		local TotalGold = Data.Gold or 0
-		local LoginTime = os.date("%Y-%m-%d %H:%M:%S", tonumber(Data.LastLogin))
-		local Hours, Minutes = self:GetTotalOnlineTime(Data.TotalGameTime or 0)
-		local CTable = {PlatformStr, Servers[Data.HostID] or "", Data.Uid, Data.Account, Data.Name,
-		Data.Level, Data.VipLevel, Data.Fighting, TotalGold, Data.Money or 0, 
+		local VipLevel = Data.VipMgrObj.__init_args__.VipLevel or 0
+		local LoginTime = os.date("%Y-%m-%d %H:%M:%S", tonumber(Data.LoginTime))
+		local Hours, Minutes = self:GetTotalOnlineTime(Data.TotalGameTime)
+		local BanChat, BanLogin = self:CheckIfBan(Options.PlatformID, tonumber(Data.Uid))
+		local CTable = {PlatformStr, Servers[Data.HostID] or "", Data.Uid, Data.URS, Data.Name,Sexes[Data.Sex],
+		Data.Level, VipLevel, Data.Gold, Data.Money, BanLogin and BanWord or "否", BanChat and BanWord or "否", 
 		LoginTime, Hours .. "小时" .. Minutes .. "分"}
 		table.insert(TableData, CTable)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 		["NoResult"] = "没有该角色或者账号",
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		ServerTypes = ServerTypes,
-		Radios = Radios,
-		Filters = Filters,
-		FilterStyles = FilterStyles,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/player/playerInfo.html", Params)
+	Viewer:View("template/player/playerInfo.html")
 end
 
 function GetUserInfo(self, Options)
@@ -82,10 +73,8 @@ function GetUserInfo(self, Options)
 			HostIDs = table.concat(HostList, "','"),
 			[AccountType] = Options.Account
 		}
-		
 		local Res = UserInfoData:Get(UserOptions)
 		if #Res ~= 0 then
-			
 			for _, Info in ipairs(Res) do
 				local HostID = Info.HostID
 				local Uid = Info.Uid
@@ -93,8 +82,6 @@ function GetUserInfo(self, Options)
 				if Response.__init_args__ then
 					local Table = Response.__init_args__ 
 					Table.HostID = HostID --把HostID也记录进去
-					Table.Fighting = Info.Fighting
-					Table.VipLevel = Info.VipLevel or 0
 					table.insert(TableData, Table)
 				end
 			end
@@ -106,7 +93,6 @@ end
 function RequestUserInfo(self, HostID, Uid)
 	local RequestType = "getgamefile"
 	local FilePath = self:GenerateFilePath(Uid)
-
 	Params = {
 		HostID = HostID,
 		FilePaths = FilePath,
@@ -118,7 +104,6 @@ function RequestUserInfo(self, HostID, Uid)
 			break
 		end
 	end
-
 	if Response then
 		Response  = UnSerialize(Response) 
 		if Response and Response[FilePath] then
@@ -132,7 +117,7 @@ end
 --生成Uid对应的文件路径
 function GenerateFilePath(self, Uid)
 	local Uid = tonumber(Uid)
-	local UserDir = math.floor(Uid/10000%100)
+	local UserDir = math.floor(Uid/1000000%100)
 	UserDir = string.format("%02d",UserDir)
 	local Path = "logic/dat/user/" .. UserDir .."/" .. Uid .. ".dat"
 	return Path
@@ -191,7 +176,7 @@ function CheckIfBan(self, PlatformID, Uid)
 	end
 	local BanChat = false
 	local BanLogin = false
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	if BanChatEndTime then
 		BanChatEndTime = GetTimeStamp(BanChatEndTime)
 		if NowTime < BanChatEndTime then

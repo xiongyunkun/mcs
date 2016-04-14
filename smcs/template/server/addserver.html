@@ -30,14 +30,27 @@
 	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="hostid"></td>
 </tr>
 <tr>
-	<td width="20%" height="26" class="td_bg" style="text-align: center;">服务器名称:</td>
-	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="name"></td>
-</tr>
-<tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">版本:</td>
 	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="version"></td>
 </tr>
-
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="name"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服编号:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="servmark"></td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="platformid">
+#for id,name in pairs(Platforms) do
+			<option value="$id$">$name$</option> 
+#end 
+		</select>
+	</td>
+</tr>
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">地址:</td>
 	<td width="80%" height="26" style="text-align: left;" class="content">
@@ -54,6 +67,16 @@
 	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="crossport" id="crossport"></td>
 </tr>
 <tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">cmcs地址:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="cmcsip">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">cmcs端口:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="cmcsport" id="ports"></td>
+</tr>
+<tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">状态:</td>
 	<td width="80%" height="26" style="text-align: left;" class="content"><select name=status>
 #for id, value in pairs(Status) do
@@ -66,12 +89,8 @@
 	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="startservertime" id="startservertime"></td>
 </tr>
 <tr>
-	<td width="20%" height="26" class="td_bg" style="text-align: center;">优先级:</td>
-	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="priority" id="priority"></td>
-</tr>
-<tr>
-	<td width="20%" height="26" class="td_bg" style="text-align: center;">维护Tips:</td>
-	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="tips" id="tips"></td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">进程数:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content"><input type="text" name="gsnum" id="gsnum"></td>
 </tr>
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>

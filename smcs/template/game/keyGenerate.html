@@ -21,16 +21,20 @@
 	<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="StartTime">
 	<label>至：</label>
 	<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="EndTime">
+	<label>是否立即生成：</label>	
+	<select name="IsGenerate">
+#for ID,Type in pairs(GenerateTypes) do
+		<option value="$ID$">$Type$</option>
+#end
+	</select>
 	<br>
 	<label>奖励列表：</label>
 	<br>
 	<div>
 		<label style="font-weight:normal;">钻石：</label>
 		<input type="text" name="Gold" value="" placeholder="钻石数量...">
-	<!--
 		<label style="font-weight:normal;">绑钻：</label>
 		<input type="text" name="CreditGold" value="" placeholder="绑钻数量...">
-	-->
 		<label style="font-weight:normal;">金币：</label>
 		<input type="text" name="Money" value="" placeholder="金币数量...">
 	</div>

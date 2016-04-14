@@ -41,8 +41,8 @@ end
 
 function ReqGetServerFile(self)
 	Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time() - 86400)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d %H:%M:%S",os.time() - 86400)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d %H:%M:%S",os.time())
 	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
 	Servers = CommonFunc.GetServers(Options.PlatformID)

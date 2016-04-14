@@ -1,5 +1,5 @@
 ----------------------------------------
---$Id: servermgr.lua 66905 2015-05-25 06:06:37Z xiongyunkun $
+--$Id: servermgr.lua 111809 2016-03-31 11:40:48Z xiongyunkun $
 ----------------------------------------
 --[[
 -- server list manager
@@ -25,28 +25,60 @@ Status = {
 	[3] = "繁忙",
 	[4] = "爆满",
 	[5] = "异常",
-	[6] = "新服",
 }
 
 function ReqServerList(self, Msg)
-	PlatformID = GetQueryArg("platformid")
-	Servers = ServerData:GetAllServers()
-	if PlatformID and PlatformID ~= "" then
-		local NewServers = {}
-		for _, Server in ipairs(Servers) do
-			if Server.platformid == PlatformID then
-				table.insert(NewServers, Server)
-			end
+	Options = GetQueryArgs()
+	local NewOptions = {
+		["platformid"] = Options.PlatformID,
+		["hostid"] = Options.HostID,
+		["min_start_server_time"] = Options.StartTime,
+		["max_start_server_time"] = Options.EndTime,
+	}
+	ServerInfoList = ServerData:GetServer(NewOptions)
+	local NowTime = os.time()
+	Options.StartTime = Options.StartTime or ""
+	Options.EndTime = Options.EndTime or ""
+	
+	Platforms = CommonFunc.GetPlatformList()
+	--获得服务器列表
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	Filters = {
+		{["Type"] = "Platform",},
+		{["Type"] = "Host",},
+		{["Type"] = "StartTime",["Format"] = "yyyy-MM-dd HH:mm:ss",["Label"] = "起始开服时间",},
+		{["Type"] = "EndTime", ["Format"] = "yyyy-MM-dd HH:mm:ss", ["Label"] = "截止开服时间",},
+		{["Type"] = "Export",},
+	}
+	
+	ServerMap = {}
+	for _, Server in ipairs(ServerInfoList) do
+		ServerMap[Server.hostid] = Server.name
+	end
+	if Options.Submit == "导出" then
+		local Titles = {"区服代号","域名","RS IP:PORT","类型","备注"}
+		local TableData = {}
+		for _, Server in ipairs(ServerInfoList) do
+			local Data1 = {}
+			table.insert(Data1, Server.name)
+			table.insert(Data1, Server.cmcsip or "")
+			table.insert(Data1, Server.address .. ":" .. Server.ports)
+			table.insert(Data1, "tcp")
+			table.insert(Data1, Server.name)
+			local Data2 = {}
+			table.insert(Data2, Server.name)
+			table.insert(Data2, Server.cmcsip or "")
+			table.insert(Data2, Server.address .. ":7633")
+			table.insert(Data2, "http")
+			table.insert(Data2, Server.name)
+			table.insert(TableData, Data1)
+			table.insert(TableData, Data2)
 		end
-		Servers = NewServers
+		local ExcelStr = CommonFunc.ExportExcel("服务器列表.xls", Titles, TableData)
+		ngx.say(ExcelStr)
+		return
 	end
 	ExtMsg = Msg
-	--获得平台列表
-	PlatformList = PlatformData:GetPlatform()
-	Platforms = {}
-	for _, Platform in ipairs(PlatformList) do
-		Platforms[Platform.PlatformID] = Platform.PlatformName
-	end
 	Viewer:View("template/server/serverlist.html")
 end
 
@@ -54,7 +86,7 @@ function DoAddServer(self)
 	local Args = GetPostArgs()
 	local Servers = ServerData:GetAllServers()
 	-- 不允许为空的字段
-	local SvrCol = {"hostid","name","address","ports","version","crossport","startservertime"}
+	local SvrCol = {"hostid","name","address","ports","version","crossport","startservertime","gsnum"}
 	for _, ArgName in ipairs(SvrCol) do
 		if not Args[ArgName] or Args[ArgName] == "" then
 			self:ReqServerList(MsgList[3])
@@ -66,9 +98,22 @@ function DoAddServer(self)
 			self:ReqServerList(MsgList[2])
 			return
 		end
+		--[[
+		if Server.address == Args.address then
+			self:ReqServerList(string.format(MsgList[1],Server.name))	
+			return
+		end
+		]]
+	end
+	local CheckFlag = CheckServerID(Args.platformid,Args.hostid)
+	if not CheckFlag then
+		self:ReqServerList(MsgList[10])
+		return
 	end
 	local Ret, Err = ServerData:AddServer(Args)
 	self:UpdateServerConfFile(Args.hostid)
+	CommonFunc.ExportCroZone() --生成跨服文件
+	--self:NoticeYY(Args)
 	self:ReqServerList(Err)
 end
 
@@ -82,14 +127,32 @@ function DoModifyServer(self)
 				self:ReqServerList(MsgList[2])
 				return
 			end
+			--[[
+			if Server.address == Args.address then
+				self:ReqServerList(string.format(MsgList[1],Server.name))	
+				return
+			end		
+			]]
 		end
+	end
+	local CheckFlag = CheckServerID(Args.platformid,ServerId)
+	if not CheckFlag then
+		self:ReqServerList(MsgList[10])
+		return
 	end
 	local Ret, Err = ServerData:ModifyServer(ServerId, Args)
 	self:UpdateServerConfFile(ServerId)
-	local FileNameList = self:UpdateServerList(ServerId)
-	if not Err then
-		Err = "服务器列表:" .. table.concat( FileNameList, "&nbsp;&nbsp;")
+	CommonFunc.ExportCroZone() --生成跨服文件
+	--判断是否是更新还是第一次推送
+	local IsUpdate = false --默认不是更新
+	for _, Server in pairs(Servers) do
+		if Server.hostid == ServerId then
+			if Server.address and Server.address ~= "" then
+				IsUpdate = true
+			end
+		end
 	end
+	self:NoticeYY(Args, IsUpdate)
 	self:ReqServerList(Err)
 end
 
@@ -128,7 +191,10 @@ function UpdateServerConfFile(self, svrid)
 			table.insert(ConfTbl,"ip="..Server.address)
 			table.insert(ConfTbl,"netdport="..string.gsub(Server.ports,"^(%d+).*","%1"))
 			table.insert(ConfTbl,"newservertime="..GetTimeStamp(Server.startservertime))
-			table.insert(ConfTbl,"mergeservertime="..GetTimeStamp(Server.mergeservertime))
+			local MergeServerTime = math.max(GetTimeStamp(Server.mergeservertime), 0)
+			MergeServerTime = MergeServerTime == 1 and 0 or MergeServerTime
+			table.insert(ConfTbl,"mergeservertime="..MergeServerTime)
+			table.insert(ConfTbl,"gsnum=".. Server.gsnum)
 			local fo = io.open(GetBasePath().."/../gservice/interfacedata/conf"..ServerId..".conf","w")
 			assert(fo,GetBasePath().."/../gservice/interfacedata/conf"..ServerId..".conf")
 			fo:write(table.concat(ConfTbl,"\n"))
@@ -137,33 +203,6 @@ function UpdateServerConfFile(self, svrid)
 			return
 		end
 	end		
-end
-
--- 更新各服务器列表
-function UpdateServerList(self, svrid)
-	local Res, Err = ServerData:GetServerSDKInfoById(svrid)
-	local FileNameList  = {}
-	for i, SvrSdkInfo in pairs(Res) do
-		local SdkName = SvrSdkInfo.sdkname
-		local ServerUrls = ServerData:GetEnvUrl2SDK(SdkName)
-		for _, ServerUrlInfo in pairs(ServerUrls) do
-			local envname = ServerUrlInfo.envname
-			local ServList = CommonFunc.GetServerListByFileName(SdkName) 
-			local ServListStr = "return " .. Serialize(ServList)
-			
-	--		Serverlisturl = SDKCfg.UrlList[envname].ServerListUrl .. "env_mgr.php?func=WriteServerList"
-	--		ReqOutUrl(Serverlisturl, {filename=SdkName .. ".txt", filecontent=ServListStr})
-	
-			local FileName = SdkName .. ".txt"
-			local Writer = io.open(GetBasePath().."/../gservice/interfacedata/serverinfo/serverlist/"..FileName,"w")
-			assert(Writer,"/../gservice/interfacedata/serverinfo/serverlist/"..FileName)
-			Writer:write(ServListStr)
-			Writer:flush()
-			Writer:close()
-			table.insert(FileNameList, FileName)
-		end
-	end
-	return FileNameList
 end
 
 function DoDelServer(self)
@@ -230,7 +269,7 @@ function DoModifyGroup(self)
 ngx.say(Args.flag)
 	local Ret,Err = ServerData:ModifyGroup(Args.gid, Args.name, Args.weight, Args.flag)
 	ngx.say(Err or "===")
---	ngx.say(Ret)
+	ngx.say(Ret)
 	self:ReqGroupList(Err)
 end
 
@@ -268,41 +307,23 @@ function ReqServerGroupInfo(self, Msg)
 		end
 		table.insert(GroupServers[Group.groupid], Group.serverid)
 	end
-	--获得各个服务器HostID和name的映射关系
-	local ServerInfoList = ServerData:GetAllServers()
-	ServerInfoMap = {}
-	for _, Info in ipairs(ServerInfoList) do
-		ServerInfoMap[Info.hostid] = Info.name
-	end
-	Servers = MixServerData:Get({})
-	local NewServers = {}
+	Servers = ServerData:GetAllServers()
 	--过滤筛选平台
 	if PlatformID and PlatformID ~= "" then
+		local NewServers = {}
 		for _, Server in ipairs(Servers) do
-			if Server.PlatformID == PlatformID then
+			if Server.platformid == PlatformID then
 				table.insert(NewServers,Server)
 			end
 		end
-	else --因为有混服，需要去重
-		local SelectedMap = {}
-		for _, Server in ipairs(Servers) do
-			if not SelectedMap[Server.HostID] then
-				SelectedMap[Server.HostID] = true
-				table.insert(NewServers, Server)
-			end
-		end
+		Servers = NewServers
 	end
-	Servers = NewServers
-	local SelectedServerMap = {}
 	ServerMap = {}
 	NoGroupServers = {}
 	for _, Server in pairs(Servers) do
-		if not SelectedServerMap[Server.HostID] then
-			ServerMap[Server.HostID] = Server
-			SelectedServerMap[Server.HostID] = true
-			if not InGroupServers[Server.HostID] then
-				table.insert(NoGroupServers, Server.HostID)
-			end
+		ServerMap[Server.hostid] = Server
+		if not InGroupServers[Server.hostid] then
+			table.insert(NoGroupServers, Server.hostid)
 		end
 	end
 	--获得平台列表
@@ -466,18 +487,12 @@ end
 function ShowSvrTagList(self)
 	PlatformID = GetQueryArg("platformid")
 	TagList = ServerData:GetGroupClass()
-	local Servers = MixServerData:Get({})
-	--获得各个服务器HostID和name的映射关系
-	local ServerInfoList = ServerData:GetAllServers()
-	ServerInfoMap = {}
-	for _, Info in ipairs(ServerInfoList) do
-		ServerInfoMap[Info.hostid] = Info.name
-	end
+	local Servers = ServerData:GetAllServers()
 	--过滤筛选平台
 	if PlatformID and PlatformID ~= "" then
 		local NewServers = {}
 		for _, Server in ipairs(Servers) do
-			if Server.PlatformID == PlatformID then
+			if Server.platformid == PlatformID then
 				table.insert(NewServers,Server)
 			end
 		end
@@ -493,17 +508,13 @@ function ShowSvrTagList(self)
 		end
 		table.insert(TagServers[SvrInTag.tagid], SvrInTag.svrid)
 	end
-	local SelectedServerMap = {}
 	ServerMap = {}
 	NoTagServers = {}
 	for _, Server in pairs(Servers) do
-		if not SelectedServerMap[Server.HostID] then
-			ServerMap[Server.HostID] = Server
-			SelectedServerMap[Server.HostID] = true
-			if not InTagServerMap[Server.HostID] then
-				table.insert(NoTagServers,Server)
-			end	
-		end	
+		ServerMap[Server.hostid] = Server
+		if not InTagServerMap[Server.hostid] then
+			table.insert(NoTagServers,Server)
+		end		
 	end
 	--获得平台列表
 	local PlatformList = PlatformData:GetPlatform()
@@ -614,6 +625,39 @@ function UpdateIPList(self)
 		return
 	end
 	ngx.say(1)
+end
+
+--通知多玩独代平台开服信息
+function NoticeYY(self, Results, IsUpdate)
+	local Url = "http://config.gop.yy.com/api/openservice/index.do"
+	--获得OrderID
+	local OrderRes = StartServerInfoData:Get({HostID = Results.hostid or Results.svrid})
+	if not OrderRes or #OrderRes == 0 then
+		return --没有的话就不通知
+	end
+	local OrderID = OrderRes[1].OrderID
+	local Data = {
+		isCloud = 1,
+		domain = Results.cmcsip,
+		cname = Results.cname,
+		isUpdate = IsUpdate and 1 or 0,
+		outerSn = Results.hostid or Results.svrid,
+		slaveType = 1,
+	}
+	local Args = {
+		order_id = OrderID,
+		ip = "mysql2.zszs.game.yy.com", --数据库IP
+		port = "10093",
+		encoding = "UTF-8",
+		data = json.encode(Data),
+	}
+	--生成Sign
+	local Key = CommonFunc.GetInterfaceKey("dw", "start_server_key") --开服信息key
+	local Sign = ngx.md5(Args.order_id .. Args.ip .. Args.port .. Args.data .. Key)
+	Args.sign = Sign
+	--发送数据
+	local Flag, Res = ReqOutUrl(Url, Args)
+	ngx.say(Res)
 end
 
 DoRequest()

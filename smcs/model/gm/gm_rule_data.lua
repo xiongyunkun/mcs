@@ -5,7 +5,7 @@
 CREATE TABLE `tblGMCmdRules` (
   `ID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `Name` varchar(32) NOT NULL DEFAULT '' COMMENT '指令名称',
-  `Rule` varchar(128) NOT NULL DEFAULT '' COMMENT '指令规则',
+  `Rule` varchar(256) NOT NULL DEFAULT '' COMMENT '指令规则',
   `Memo` varchar(256) NOT NULL DEFAULT '' COMMENT '备注',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
   `OssFlag` int(11) DEFAULT '0' COMMENT '是否保留给运营操作，0：否，1：是',
@@ -29,7 +29,6 @@ function Get(self, Options)
 		Where = Where .. " and OssFlag = '" .. Options.OssFlag .. "' "
 	end
 	local Sql = "select * from smcs.tblGMCmdRules where Flag = 'true'" .. Where .. ""
-
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res
@@ -48,7 +47,6 @@ function Insert(self, RuleInfo)
 	end
 	local ValueStr = table.concat(Values, ",")
 	Sql = Sql .. ValueStr .. ")"
-
 	local Res, Err = DB:ExeSql(Sql)
 	return Res, Err 
 end
@@ -63,7 +61,6 @@ function Update(self, RuleInfo)
 	end
 	local ValueStr = table.concat(Values, ",")
 	Sql = Sql .. ValueStr .. " where ID = '" .. RuleInfo.ID .. "'"
-
 	local Res, Err = DB:ExeSql(Sql)
 	return Res, Err 
 end

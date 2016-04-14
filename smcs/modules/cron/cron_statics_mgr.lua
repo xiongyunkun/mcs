@@ -8,39 +8,26 @@
 
 -- 需要统计的指标以及对应的处理文件都放在这里
 local CronModule = {
-	["Retention"] = "modules.cron.statics.retention",
-	["OnlineTime"] = "modules.cron.statics.online_time",
-	["Gold"] = "modules.cron.statics.gold",
-	["Money"] = "modules.cron.statics.money",
-	["HistoryOnline"] = "modules.cron.statics.history_online",
-	["HistoryReg"] = "modules.cron.statics.history_reg",
-	["LevelStatics"] = "modules.cron.statics.level_statics",
-	["LoginStatics"] = "modules.cron.statics.login_statics",-- 登录分析
-	["PhoneStatics"] = "modules.cron.statics.phone_statics",
-	["VIP"] = "modules.cron.statics.vip",
-	["PhoneRetention"] = "modules.cron.statics.phone_retention",
-	["UserPayDayStatics"] = "modules.cron.pay.user_pay_day_statics",
-	["PayDayStatics"] = "modules.cron.pay.pay_day_statics",
-	["PayZoneStatics"] = "modules.cron.pay.pay_zone_statics",
-	["Challenge"] = "modules.cron.statics.playways.challenge", --极限挑战
-	["Instance"] = "modules.cron.statics.playways.instance", --关卡统计
+	{"Retention", "modules.cron.statics.retention"},
+	{"OnlineTime", "modules.cron.statics.online_time"},
+	{"Gold", "modules.cron.statics.gold"},
+	{"VIP", "modules.cron.statics.vip"},
+	{"FigtingRank", "modules.cron.statics.fighting_rank"},
+	{"HistoryOnline", "modules.cron.statics.history_online"},
+	{"HistoryReg", "modules.cron.statics.history_reg"},
+	{"LevelStatics", "modules.cron.statics.level_statics"},
+	{"LoginStatics", "modules.cron.statics.login_statics"},
+	--{"MountLevelStatics", "modules.cron.statics.playways.mount_level_statics"},
+	{"UserPayDayStatics", "modules.cron.pay.user_pay_day_statics"},
+	{"PayDayStatics", "modules.cron.pay.pay_day_statics"},
+	{"PayZoneStatics", "modules.cron.pay.pay_zone_statics"},
+	{"InstanceStatics", "modules.cron.statics.playways.instance_statics"},
+	--{"PetStatics", "modules.cron.statics.pet_statics"},
 }
 local Env = getfenv()
-for Name, File in pairs(CronModule) do
+for _, Conf in ipairs(CronModule) do
+	local Name, File = unpack(Conf)
 	Env[Name] = require(File)
-end
-
-local pairs = pairs
-local ipairs = ipairs
-
---获得服务器状态列表
-function GetServerStatusMap(self)
-	local AllServers = ServerData:GetAllServers()
-	local StatusMap = {}
-	for _, ServerInfo in ipairs(AllServers) do
-		StatusMap[ServerInfo.hostid] = ServerInfo.status
-	end
-	return StatusMap
 end
 
 --根据上一次的执行时间和执行频率，判断该模块此时是否应该执行
@@ -53,7 +40,7 @@ function IsTimeUp(self, IndexName)
 	local LastTime = IndexInfo.LastTime
 	LastTime = GetTimeStamp(LastTime)
 	local Frequency = IndexInfo.Frequency * 60 --折算成秒
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	if LastTime + Frequency <= NowTime then 
 		--上一次执行时间加上执行频率已经小于现在时间了，表示可以执行
 		return true
@@ -78,24 +65,11 @@ function GetFrequency(self, IndexName)
 	return Frequency
 end
 
---获得HostID列表
-function GetPlatformHostIDs(self, PlatformIDs)
-	local PlatformIDs = string.split(PlatformIDs, ",")
-	local HostRes = MixServerData:Get({PlatformIDs = table.concat(PlatformIDs, "','")})
-	local HostIDs = {}
-	for _, Info in ipairs(HostRes) do
-		HostIDs[Info.HostID] = Info.PlatformID
-	end
-	return HostIDs
-end
 
 function CronExecute(self)
-	local Args = GetPostArgs()
-	local PlatformIDs = Args.PlatformID or ""
-	local HostIDs = self:GetPlatformHostIDs(PlatformIDs)
-	local StaticsServers = ServerData:GetStaticsServers()
-	local ServerStatusMap = self:GetServerStatusMap()
-	for Name, File in pairs(CronModule) do
+	local ServerPlatformMap = ServerData:GetStaticsServers()
+	for _, Conf in ipairs(CronModule) do
+		local Name, File = unpack(Conf)
 		local Module = self[Name]
 		if Module then
 			--if self:IsTimeUp(Module.IndexName) then --执行时间到了
@@ -103,23 +77,17 @@ function CronExecute(self)
 				local ExecuteTime = CommonFunc.GetCorrectTime(Frequency)
 				ExecuteTime = os.date("%Y-%m-%d %H:%M:%S", ExecuteTime)
 				self:UpdateExecuteTime(Module.IndexName, ExecuteTime) --更新时间
-				local PlatformIDs = {} --记录下哪些平台需要统计
-				for HostID, _ in pairs(StaticsServers) do
-					local PlatformID = HostIDs[HostID]
-					if PlatformID and ServerStatusMap[HostID] ~= 0 and ServerStatusMap[HostID] ~= 5 then
-						Module:CronStatics(PlatformID, HostID)
-						PlatformIDs[PlatformID] = true
-					end
+				for HostID, PlatformID in pairs(ServerPlatformMap) do
+					Module:CronStatics(PlatformID, HostID)
 				end
 				-- 判断如果需要全平台统计执行的函数则执行
-				if Module.CronTotalStatics then
-					for PlatformID, _ in pairs(PlatformIDs) do
-						Module:CronTotalStatics(PlatformID)
-					end
-				end
+				--[[if Module.CronTotalStatics then
+					Module:CronTotalStatics(ServerPlatformMap)
+				end]]
 			--end
 		end
 	end
+	collectgarbage("collect")
 	ngx.say("ok")
 end
 

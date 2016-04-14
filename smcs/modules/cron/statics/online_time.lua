@@ -36,7 +36,7 @@ local TimeIndex = {
 }
 
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--从今天的玩家退出日志中读取数据在线时长
 	local LogoutRes = LogoutLogData:Get(PlatformID, {HostID = HostID, StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59"})
 	local NewPlayerResults = {} --新玩家统计结果

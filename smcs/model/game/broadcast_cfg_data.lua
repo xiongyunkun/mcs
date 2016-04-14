@@ -36,6 +36,13 @@ function Get(self, Options)
 	end
 	if Options.PlatformID and Options.PlatformID ~= "" then
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
+	else
+		local Platforms = CommonFunc.GetPlatformList()
+		local PlatformIDs = {}
+		for PlatformID, _ in pairs(Platforms) do
+			table.insert(PlatformIDs, PlatformID)
+		end
+		Where = Where .. " and PlatformID in ('" .. table.concat( PlatformIDs, "','") .. "')"
 	end
 	if Options.HostIDs and Options.HostIDs ~= "" then
 		Where = Where .. " and HostIDs like '" .. Options.HostIDs .. "'"
@@ -111,7 +118,7 @@ end
 
 --更新执行结果
 function UpdateResult(self, ID, Result)
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Sql = "update smcs.tblBroadcastCfg set Status = '2',Result='" .. Result .. "',LastOperationTime='"
 			.. OperationTime .. "',NowOperationNum = NowOperationNum + 1 where ID = '" .. ID .. "'"
 	DB:ExeSql(Sql)

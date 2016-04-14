@@ -21,6 +21,7 @@ function delete_confirm(id, name) {
 			<td>分类名称</td>
 			<td>分类说明</td>
 			<td>客户端地址</td>
+			<td>CDN地址</td>
 			<td>操作</td>
 		</tr>
 	</thead>
@@ -31,7 +32,8 @@ function delete_confirm(id, name) {
 			<td><input type=hidden name=id value=$GC.id$>$GC.id$</td>
 			<td><input type=text name=name value=$GC.name$></td>
 			<td><input type=text name=descinfo value=$GC.descinfo$></td>
-			<td><input type=text name="clienturl" value="$GC.clienturl$" style="width:350px;"></td>
+			<td><input type=text name="clienturl" value="$GC.clienturl$" style="width:250px;"></td>
+			<td><input type=text name="cdn" value="$GC.cdn$" style="width:250px;"></td>
 			<td>
 				<input type="submit" class="submit_btn" name=mod value="修改">
 				<input type="button" class="submit_btn" onclick="delete_confirm('$GC.id$','$GC.name$')" value="删除">

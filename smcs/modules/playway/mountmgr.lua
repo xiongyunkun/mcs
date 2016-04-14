@@ -10,7 +10,7 @@ local MaxLevel = 10 --最大等阶
 
 function MountLevelShow(self)
 	Options = GetQueryArgs()
-	Options.Time = Options.Time or os.date("%Y-%m-%d",ngx.time())
+	Options.Time = Options.Time or os.date("%Y-%m-%d",os.time())
 	Options.DayOnline = Options.DayOnline or "0"
 	Options.NotDayReg = Options.NotDayReg or "0"
 	Platforms = CommonFunc.GetPlatformList()

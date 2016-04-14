@@ -1,6 +1,7 @@
-<form class="search-box form-inline" method="post" action="/playermgr/email_apply_edit">
-	<input type="hidden" name="ID" value="" id="ID">
-	<label>平台名称：</label>
+<html>
+#include("include/inc_header_datatable.html")
+<form class="search-box form-inline" method="post" action="/playermgr/dosendemail">
+	<label>平台名称：</label>	
 	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
 		<option value="">全部</option>
 #for ID,Platform in pairs(Platforms) do
@@ -8,7 +9,7 @@
 #end
 	</select>
 	<label>选择大区：</label>	
-	<select name="ServerType" class="serverType">
+	<select name="ServerType">
 #for ID,Value in pairs(ServerTypes) do
 		<option value="$ID$">$Value$</option>
 #end
@@ -33,21 +34,57 @@
 	<br>
 	<span id="multisend" style="display:none;">
 		<label>最低等级：</label>
-		<input type="text" name="MinLevel" class="minLevel" value="">	
+		<input type="text" name="MinLevel" value="">	
 		<label>创角时间：</label>
-		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="CreateRoleTime" class="createRoleTime">
+		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="CreateTime">
 	</span>
 	<span id="onlysend">
-		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色 </span>
+		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
 		<br>	
-		<textarea class="span5 RoleNames" rows="3" cols="60" name="RoleNames" style="margin-left:10px;"></textarea>
+		<textarea class="span5" rows="3" cols="60" name="RoleName" style="margin-left:10px;"></textarea>
 	</span>
 <br>
-<label>邮件标题：</label><input type="text" name="Title" value="" class="title">
+<label>邮件标题：</label><input type="text" name="Title" value="">
 <br>
-<textarea class="span5 content" rows="3" cols="60" name="Content" style="margin-left:10px;">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
+<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
 <br>	
 <div style="margin:10px 0 0 300px;">
 	<input type="submit" class="submit_btn" value="提交"> 
 </div>
 </form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".platformID").chosen({width:"100px",});
+	$(".OperationType").chosen({width:"100px",});
+	$(".ForbidTime").chosen({width:"100px",});
+	$(".hostID").chosen({
+		width:'500px',
+	});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+	$(".OperationType").change(function(){
+		var ID = $(this).val();
+		if(ID == 1){ //单独发送
+			$("#multisend").hide();
+			$("#onlysend").show();
+		}else{
+			$("#multisend").show();
+			$("#onlysend").hide();
+		}
+	});
+})
+ </script>
+#include("include/datatables.html")
+
+</body>
+</html>

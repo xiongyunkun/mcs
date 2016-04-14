@@ -6,8 +6,8 @@
 --
 --]]
 local PublishTypes = {
-	["Saved"] = 1,
-	["Published"] = 2,
+	["Saved"] = 0,
+	["Published"] = 1,
 }
 
 local StatusTypes = {
@@ -17,81 +17,62 @@ local StatusTypes = {
 	["TheEnd"] = "活动已结束",
 }
 
---先暂时写死几个活动，后面再删除
-local ActivityList = {"丰财聚宝", "星语心愿", "幸运转盘"}
+local OPEN_GM_ID = 24 --开启活动GM的ID
+local CLOSE_GM_ID = 25 --关闭活动GM的ID
 
 function ActivityShow(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	
-	local ServerTypes = CommonFunc.GetMulServerTypes()
+	ActivityMap = CommonData.ActivityList
+	Platforms = CommonFunc.GetPlatformList()
+
 	local ServerList = ServerData:GetAllServers()
 	local NewServers = {}
 	for _, Server in ipairs(ServerList) do
 		NewServers[Server.hostid] = Server.name
 	end
 	ServerList = NewServers
+	ServerTypes = CommonFunc.GetMulServerTypes()
 	--操作人员列表
 	local UserInfo = UserData:Get()
-	local Users = {}
+	Users = {}
 	for _, User in ipairs(UserInfo) do
 		Users[User.account] = User.name
 	end
-	--filter页面模板显示的参数
-	local Filters = {
-		{["Type"] = "Platform",},
-		{["Type"] = "Host"},
-		{["Type"] = "<br>",},
-		{["Type"] = "StartTime",},
-		{["Type"] = "EndTime",},
-	}
 	--展示数据
-	local Titles = {"ID", "平台", "服类型", "服", "开始时间", "结束时间",  "操作人", "状态", "操作"}
+	Titles = {"ID", "平台", "服类型", "服", "活动名称", "开始时间", "结束时间",  "操作人", 
+		"状态", "操作"}
 	--数据库中获取数据
-	local TableData = {}
-	local Results = ActivityData:Get(Options) or {}
+	TableData = {}
+	local Results = ActivityData:Get({}) or {}
 	for _, Result in ipairs(Results) do
 		--按行重新封装数据
 		local Data = {} 
-		table.insert(Data, Result.ID)
-		table.insert(Data, Platforms[Result.PlatformID] or "all")
-		table.insert(Data, ServerTypes[Result.ServerType])
+		Data["ID"] = Result.ID
+		Data["PlatformID"] = Result.PlatformID
+		Data["PlatformName"] = Platforms[Result.PlatformID] or "all"
+		Data["ServerType"] = Result.ServerType
 		local ServerIDs = string.split(Result.HostIDs, ",")
 		local ServerNames = {}
 		for _, ServerID in ipairs(ServerIDs) do
 			table.insert(ServerNames, ServerList[tonumber(ServerID)])
 		end
 		ServerNames = #ServerNames == 0 and "all" or table.concat(ServerNames, ",")
-		table.insert(Data, ServerNames)
-		table.insert(Data, Result.StartTime)
-		table.insert(Data, Result.EndTime)
-		table.insert(Data, Users[Result.Operator] or "")
+		Data["HostIDs"] = Result.HostIDs
+		Data["ServerNames"] = ServerNames
+		Data["ActivityID"] = Result.ActivityID
+		Data["StartTime"] = Result.StartTime
+		Data["EndTime"] = Result.EndTime
+		Data["Operator"] = Users[Result.Operator] or ""
 		local Status = self:GetStatus(Result.StartTime, Result.EndTime, Result.Status)
-		table.insert(Data, Status)
-		local Href = '<a href="/gamemgr/activityedit?ID='..Result.ID
-			..'">编辑</a>&nbsp;&nbsp;<a onclick="publishActivity(\''..Result.ID .. '\',\'' .. Status
-			..'\')" href="#">发布</a>&nbsp;&nbsp;<a onclick="deleteActivity('..Result.ID..')" href="#">删除</a>'
-		table.insert(Data, Href)
+		Data["Status"] = Status
+		local Href = '<a onclick="deleteActivity('..Result.ID..')" href="#">删除</a>'
+		Data["Href"] = Href
 		table.insert(TableData, Data)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-		Users = Users,
-	}
-	Viewer:View("template/game/activity_show.html", Params)
+	Viewer:View("template/game/activity_show.html")
 end
 
 --根据活动开始时间和结束时间判断活动状态
@@ -99,7 +80,7 @@ function GetStatus(self, StartTime, EndTime, Status)
 	if tonumber(Status) == PublishTypes.Saved then
 		return StatusTypes.NoPublished
 	end
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local StartTime = GetTimeStamp(StartTime)
 	local EndTime = GetTimeStamp(EndTime)
 	if NowTime < StartTime then
@@ -112,7 +93,7 @@ function GetStatus(self, StartTime, EndTime, Status)
 end
 
 function ActivityEdit(self)
-	local ID = GetQueryArg("ID")
+	ID = GetQueryArg("ID")
 	if ngx.var.request_method == "POST" then
 		local Args = GetPostArgs()
 		Args.HostIDs = type(Args.HostIDs) == "table" and table.concat(Args.HostIDs, ",") or Args.HostIDs
@@ -121,12 +102,15 @@ function ActivityEdit(self)
 		if Args.ID and Args.ID ~= "" then
 			ActivityData:Update(Args)
 		else
-			ActivityData:Insert(Args)
+			Args.ID = ActivityData:Insert(Args)
 		end
+		--发布活动
+		local Results = self:SendGM("open", Args.ID)
+		ActivityData:UpdateStatus(Args.ID, 1)
 		self:ActivityShow()
 		return
 	end
-	local ActivityInfo = {}
+	ActivityInfo = {}
 	if ID and ID ~= "" then
 		ActivityInfo = ActivityData:Get({ID = ID})
 		if ActivityInfo then
@@ -135,20 +119,11 @@ function ActivityEdit(self)
 			ActivityInfo.HostIDs = HostIDs
 		end
 	end
-	local ActivityMap = ActivityList
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(ActivityInfo.PlatformID or "")
-	local ServerTypes = CommonFunc.GetMulServerTypes()
-	local Params = {
-		ID = ID,
-		ActivityInfo = ActivityInfo,
-		Platforms = Platforms,
-		Servers = Servers,
-		ActivityMap = ActivityMap,
-		TableData = TableData,
-		ServerTypes = ServerTypes,
-	}
-	Viewer:View("template/game/activity_edit.html", Params)
+	ActivityMap = CommonData.ActivityList
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(ActivityInfo.PlatformID or "")
+	ServerTypes = CommonFunc.GetMulServerTypes()
+	Viewer:View("template/game/activity_edit.html")
 end
 
 --活动发布
@@ -157,7 +132,8 @@ function ActivityPbulish(self)
 	if ngx.var.request_method == "POST" then
 		local Args = GetPostArgs()
 		local ID = Args.ID
-		--TODO:后面对接活动发布
+		local Results = self:SendGM("open", ID)
+		ActivityData:UpdateStatus(ID, 1)
 		Result = "1"
 	end
 	ngx.say(Result)
@@ -170,11 +146,55 @@ function ActivityDelete(self)
 		local Args = GetPostArgs()
 		local ID = Args.ID
 		if ID and ID ~= "" then
+			local Results = self:SendGM("close", ID)
 			ActivityData:Delete(ID)
 			Result = "1"
 		end
 	end
 	ngx.say(Result)
+end
+
+--发送GM指令
+function SendGM(self, Type, ActivityID)
+	local Results = {}
+	local ActivityInfo = ActivityData:Get({ID = ActivityID})
+	if not ActivityInfo or not ActivityInfo[1] then
+		return Results
+	end
+	ActivityInfo = ActivityInfo[1]
+	local ActivityName = CommonData.ActivityList[ActivityInfo.ActivityID] or ""
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
+	local HostList = ServerData:GetServerList(ActivityInfo.ServerType, 
+		string.split(ActivityInfo.HostIDs, ","), ActivityInfo.PlatformID)
+	local Args = {
+		PlatformID = ActivityInfo.PlatformID,
+	}
+	if Type == "open" then
+		local GMInfo = GMRuleData:Get({ID = OPEN_GM_ID})
+		local GMRule = GMInfo[1].Rule
+		local StartTime = string.gsub(ActivityInfo.StartTime, " ", "+") -- +号需要做urlencode
+		local EndTime = string.gsub(ActivityInfo.EndTime, " ", "+")
+		local Flag, GMCMD = CommonFunc.VerifyGMParms(GMRule, {ActivityName, ActivityID,
+			StartTime, EndTime})
+
+		if Flag then
+			for _, HostID in ipairs(HostList) do
+				Args.HostID = HostID
+				Results[HostID] = CommonFunc.ExecuteGM(Args, OPEN_GM_ID, GMCMD, OperationTime)
+			end
+		end
+	elseif Type == "close" then
+		local GMInfo = GMRuleData:Get({ID = CLOSE_GM_ID})
+		local GMRule = GMInfo[1].Rule
+		local Flag, GMCMD = CommonFunc.VerifyGMParms(GMRule, {ActivityName, ActivityID})
+		if Flag then
+			for _, HostID in ipairs(HostList) do
+				Args.HostID = HostID
+				Results[HostID] = CommonFunc.ExecuteGM(Args, OPEN_GM_ID, GMCMD, OperationTime)
+			end
+		end
+	end
+	return Results
 end
 
 DoRequest()

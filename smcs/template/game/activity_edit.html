@@ -1,28 +1,22 @@
-<html>
-#include("include/inc_header_datatable.html")
-<body>
 
-<div class="page-header">
-	<h3>活动编辑</h3>
-</div>
 <form action="/gamemgr/activityedit" method="post" id="postForm">
-<input type="hidden" name="ID" value="$ID or ""$">
-<table class="table table-striped table-bordered table-hover" style="width:80%;margin-left:15px;">
+<input type="hidden" name="ID" id="ID" value="$ID or ""$">
+<table class="table table-striped table-bordered table-hover" style="width:100%;" id="postForm">
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">平台名称：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
 		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
 			<option value="">全部</option>
 #for PID,Platform in pairs(Platforms) do
-			<option value="$PID$" $ActivityInfo.PlatformID and ActivityInfo.PlatformID==PID and "selected" or ""$>$Platform$</option>
+			<option value="$PID$">$Platform$</option>
 #end
 		</select>
 	</td>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">活动名称：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<select name="ActivityID">
+		<select name="ActivityID" class="ActivityID">
 #for ID,Value in pairs(ActivityMap) do
-		<option value="$ID$" $ActivityInfo.ActivityID and ActivityInfo.ActivityID == ID and "selected" or ""$>$Value$</option>
+		<option value="$ID$">$Value$</option>
 #end
 		</select>
 	</td>
@@ -30,9 +24,9 @@
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">选择大区：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<select name="ServerType">
+		<select name="ServerType" class="ServerType">
 #for ID,Value in pairs(ServerTypes) do
-			<option value="$ID$" $ActivityInfo.ServerType == ID and "selected" or ""$>$Value$</option>
+			<option value="$ID$">$Value$</option>
 #end
 		</select>
 	</td>
@@ -40,30 +34,17 @@
 	<td width="30%" height="26" style="text-align: left;" class="content">
 		<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
 			<option value="">全部</option>
-#for ID,ServerName in pairs(Servers) do
-			<option value="$ID$" 
-			$ActivityInfo.HostIDs and ((ActivityInfo.HostIDs==tostring(ID)) or (type(ActivityInfo.HostIDs) == "table" and table.member_key(ActivityInfo.HostIDs, tostring(ID)))) and "selected" or ""$>
-			$ServerName$
-			</option>
-#end
 		</select>
 	</td>
 </tr>
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">开始时间：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<input type="text" id="StartTime" value="$ActivityInfo.StartTime or ''$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="StartTime">
+		<input type="text" id="StartTime" value="" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="StartTime">
 	</td>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">结束时间：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<input type="text" id="EndTime" value="$ActivityInfo.EndTime or ''$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="EndTime">
-	</td>
-</tr>
-
-<tr>
-	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注：</td>
-	<td width="80%" height="26" style="text-align: left;" class="content" colspan="3">
-		<textarea name=Memo cols="50" rows="3">$ActivityInfo.Memo or ""$</textarea>
+		<input type="text" id="EndTime" value="" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd HH:mm:ss', maxDate:'2050-12'})" name="EndTime">
 	</td>
 </tr>
 <tr>
@@ -119,5 +100,4 @@ function js_strto_time(str_time){
     return strtotime = datum.getTime()/1000;
 }
  </script>
-</body>
-</html>
+

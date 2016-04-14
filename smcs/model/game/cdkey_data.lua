@@ -44,7 +44,8 @@ end
 
 --插入数据
 function Insert(self, Args)
-	local Sql = "insert into smcs.tblCDKey(CDKey, ActivityID) values('" ..Args.CDKey .. "','" .. Args.ActivityID .. "')"
+	local Sql = "insert into smcs.tblCDKey(CDKey, ActivityID) values('" ..Args.CDKey .. "','" 
+			.. Args.ActivityID .. "')"
 	DB:ExeSql(Sql)
 end
 
@@ -61,9 +62,21 @@ function AbortKey(self, Args)
 		Where = Where .. " and `CDKey` = '" .. Args.CDKey .. "'"
 	end
 	if not RunFlag then return end -- 没有查询条件直接退出
-	local Time = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local Time = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Sql = "update smcs.tblCDKey set IsValid = '0',ExpireTime='" .. Time .. "' ".. Where
 	DB:ExeSql(Sql)
+end
+
+--获得激活码数量
+function GetNum(self, ActivityID, ValidFlag)
+	local Where = " where ActivityID ='" .. ActivityID .. "' "
+	if ValidFlag then
+		Where = Where .. " and IsValid = '" .. ValidFlag .. "'"
+	end
+	local Sql = "select count(*) as TotalNum from smcs.tblCDKey " .. Where
+	local Res, Err = DB:ExeSql(Sql)
+	if not Res or not Res[1] then return 0 end
+	return Res[1]["TotalNum"]
 end
 
 

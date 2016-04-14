@@ -8,12 +8,12 @@
 local GMID = 15 --公告GMID
 --公告管理
 function BroadcastShow(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",NowTime-7*24*3600)
 	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",NowTime)
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	local ServerTypes = CommonFunc.GetMulServerTypes()
 	local BroadTypes = CommonFunc.GetBroadcastTypes()
 	local OperationTypes = CommonFunc.GetOperationType()
@@ -25,12 +25,12 @@ function BroadcastShow(self)
 	ServerList = NewServers
 	--操作人员列表
 	local UserInfo = UserData:Get()
-	local Users = {}
+	Users = {}
 	for _, User in ipairs(UserInfo) do
 		Users[User.account] = User.name
 	end
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host"},
 		{["Type"] = "<br>",},
@@ -38,10 +38,10 @@ function BroadcastShow(self)
 		{["Type"] = "EndTime",},
 	}
 	--展示数据
-	local Titles = {"ID", "平台", "服类型", "服", "操作类型", "开始时间", "结束时间", "时间间隔", "最大次数", 
+	Titles = {"ID", "平台", "服类型", "服", "操作类型", "开始时间", "结束时间", "时间间隔", "最大次数", 
 	"公告类型", "公告内容", "操作"}
 	--数据库中获取数据
-	local TableData = {}
+	TableData = {}
 	local Results = BroadcastData:Get(Options) or {}
 	for _, Result in ipairs(Results) do
 		--按行重新封装数据
@@ -57,7 +57,8 @@ function BroadcastShow(self)
 		ServerNames = #ServerNames == 0 and "all" or table.concat(ServerNames, ",")
 		table.insert(Data, ServerNames)
 		table.insert(Data, OperationTypes[Result.OperateType] or "立即执行")
-		table.insert(Data, Result.StartTime or "")
+		local StartTime = Result.StartTime ~= "0000-00-00 00:00:00" and Result.StartTime or Result.SubmitTime
+		table.insert(Data, StartTime)
 		table.insert(Data, Result.EndTime or "")
 		table.insert(Data, Result.SendInterval)
 		table.insert(Data, Result.SendNum)
@@ -71,21 +72,11 @@ function BroadcastShow(self)
 		
 		table.insert(TableData, Data)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-		Users = Users,
-	}
-	Viewer:View("template/game/broadcast_show.html", Params)
+	Viewer:View("template/game/broadcast_show.html")
 end
 
 function BroadcastEdit(self)
@@ -96,22 +87,22 @@ function BroadcastEdit(self)
 		Args.HostIDs = Args.HostIDs or ""
 		local User = UserData:GetUserById(GetSession("UserId"))
 		Args.Operator = User and User["account"] or ""
+		--如果有链接需要将链接加入公告内容
+		if Args.Href and Args.HrefName and Args.HrefName ~= "" and Args.Href ~= "" then
+			Args.Content = self:ReplaceHref(Args.Content, Args.HrefName, Args.Href)
+		end
 		if Args.ID and Args.ID ~= "" then
 			BroadcastData:Update(Args)
 		else
 			--开始时间和结束时间取当前时间
-			Args.StartTime = Args.StartTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time())
-			Args.EndTime = Args.EndTime or os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+			Args.StartTime = Args.StartTime or os.date("%Y-%m-%d %H:%M:%S",os.time())
+			Args.EndTime = Args.EndTime or os.date("%Y-%m-%d %H:%M:%S",os.time())
 			Args.ID = BroadcastData:Insert(Args)
 		end
 		--如果是立即执行则开始执行GM指令
 		if Args.OperateType == "1" then
 			local HostIDs = string.split(Args.HostIDs, ",")
-			local NHostIDs = {}
-			for _, HostID in ipairs(HostIDs) do
-				table.insert(NHostIDs, tonumber(HostID))
-			end
-			local HostList = ServerData:GetServerList(Args.ServerType, NHostIDs, Args.PlatformID)
+			local HostList = ServerData:GetServerList(Args.ServerType, HostIDs, Args.PlatformID)
 			local Results = self:ExecuteGM(Args.PlatformID, HostList, GMID, Args.BroadType, Args.Content)
 			BroadcastData:UpdateResult(Args.ID, Serialize(Results))
 		end
@@ -133,16 +124,7 @@ function BroadcastEdit(self)
 	ServerTypes = CommonFunc.GetMulServerTypes()
 	BroadTypes = CommonFunc.GetBroadcastTypes()
 	OperationTypes = CommonFunc.GetOperationType()
-	local Params = {
-		ID = ID,
-		Platforms = Platforms,
-		Servers = Servers,
-		BroadcastInfo = BroadcastInfo,
-		ServerTypes = ServerTypes,
-		BroadTypes = BroadTypes,
-		OperationTypes = OperationTypes,
-	}
-	Viewer:View("template/game/broadcast_edit.html", Params)
+	Viewer:View("template/game/broadcast_edit.html")
 end
 
 function BroadcastDelete(self)
@@ -164,7 +146,7 @@ function ExecuteGM(self, PlatformID, HostList, GMID, BroadType, Content)
 	--获得GM指令
 	local OperationInfo = GMRuleData:Get({ID = GMID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local BroadcastID = CommonData.BroadcastList[tonumber(BroadType)]
 	if not BroadcastID then
 		return
@@ -189,7 +171,7 @@ end
 
 --判断该公告是否过期
 function IsOver(self, Result)
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	if Result.OperateType == 2 then
 		if GetTimeStamp(Result.EndTime) > NowTime then --结束时间必须大于当前时间
 			if Result.SendNum == 0 then
@@ -219,13 +201,13 @@ function BroadcastResult(self)
 	-- 将换行符替换成<br>
 	Result = string.gsub(Result,"\n","<br>")
 	Result = string.gsub(Result,"\r","<br>")
-	local Params = {
-		ID = ID,
-		Platforms = Platforms,
-		Servers = Servers,
-		Result = Result,
-	}
-	Viewer:View("template/gm/operation_result.html", Params)
+	Viewer:View("template/gm/operation_result.html")
+end
+
+--替换公告链接
+function ReplaceHref(self, Content, HrefName, Href)
+	Href = string.gsub(Href, "%%", "%%%%")
+	return string.gsub(Content, HrefName, "#u#a6," .. Href .. "#" .. HrefName .. "#n")
 end
 
 

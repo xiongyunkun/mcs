@@ -3,8 +3,10 @@ local Env = getfenv()
 Viewer = require("base.viewer")
 iconv = require("iconv")
 json = require("base.json")
+json_decoder = require('base.json_decoder').new()
 utf2gbk = iconv.new("gbk","utf8")
 DB = require("base.database")
+RedisDB = require("base.redis")
 CommonData = require("base.common_const")
 CommonFunc = require("base.common_func")
 --加载DB数据库模块
@@ -28,7 +30,9 @@ local FuncMap = require("base.global_func")
 for Name, Func in pairs(FuncMap) do
 	Env[Name] = Func
 end
+--设置random seed
+math.randomseed(tonumber(tostring(os.time()):reverse():sub(1,6)))
 
---初始化随机数种子
-math.randomseed(ngx.time()+17423987)
+
+
 

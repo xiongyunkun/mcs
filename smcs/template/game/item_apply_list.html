@@ -85,8 +85,22 @@ $(document).ready(function(){
 			$(".hostID").trigger("chosen:updated");
 		});
 	});
-
 	var availableTags = [$table.concat(ItemStrList, ",")$];
+	
+	var oldAvailableTags = [$table.concat(OldItemStrList, ",")$];
+
+	$(".hostID").chosen().change(function(){
+		var hostID = $(this).val();
+		hostID = hostID + "";
+		var hostIDs = hostID.split(",");
+		var platformID = $(".platformID").val();
+		if(hostIDs[0] != "" && isOldVersion(platformID, parseInt(hostIDs[0]))){
+			availableTags = oldAvailableTags;
+			$(".item").autocomplete({source: availableTags,minLength: 2});
+		}
+	});
+
+	
 	//添加道具
 	$(document).on('click', '.add_item', function() {
 		var itemDom = $(this).parent().clone();
@@ -197,12 +211,49 @@ $(document).ready(function(){
 
 //构造道具输入框字符串
 function generateItemStr(itemName, number){
-	var str = '<div><label style=&quotfont-weight:normal;&quot>道具：</label>' +
-			'<input type=&quottext&quot name=&quotItem&quot class=&quotitem&quot value=&quot' + itemName + '&quot placeholder="物品ID...&quot>' +
-			'<input type=&quottext&quot name=&quotNumbers&quot class=&quotnumber"&quot value=&quot' + number + '&quot placeholder="个数...&quot>' +
-			'<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>' +
-			'<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/></div>'
+	var str = '<div><label style="font-weight:normal;">道具：</label>'
+			+'<input type="text" name="Item" class="item" value="' + itemName + '" placeholder="物品ID...">'
+			+'<input type="text" name="Numbers" class="number" value="' + number + '" placeholder="个数...">'
+			+'<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>'
+			+'<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/></div>'
 	return str
+}
+
+function isOldVersion(platformID, hostID){
+	var limitInfo = {
+		"kuwo":62001,
+		"hly":62501,
+		"8090":61008,
+		"53wan":61501,
+		"511wan":58522,
+		"7477":57003,
+		"360":10014,
+		"kuaiwan":51015,
+		"65wan":60001,
+		"pps":15002,
+		"sogou":20003,
+		"qidian" : 52009,
+		"7k7k" : 55003,
+		"v1game" : 59509,
+		"swjoy" : 50015,
+		"yaodou" : 53003,
+		"pptv" : 54006,
+		"renren" : 57510,
+		"37wan" : 45010,
+		"kugou" : 30001,
+		"baidu" : 25020,
+		"xiyou" : 59003,
+		"dw" : 1025,
+		"ainiwan" : 60501,
+		"ufojoy" : 63001,
+		"844a" : 58002,
+	};
+	var limit = limitInfo[platformID];
+	if(limit && limit >= hostID){
+		return true;  //1.0版本服
+	}else{
+		return false; //2.0版本服
+	}
 }
 
 </script>

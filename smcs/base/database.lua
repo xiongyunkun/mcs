@@ -17,8 +17,8 @@ function ExeSql(self, Sql)
         host = "127.0.0.1",
         port = 3306,
         database = "smcs",
-        user = "sysmcs",
-        password = "SYsmcsdb",
+        user = "smcs",
+        password = "smcsdb",
         max_packet_size = 10240 * 10240 
     }
 

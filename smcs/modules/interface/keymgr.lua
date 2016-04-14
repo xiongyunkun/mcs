@@ -7,11 +7,11 @@
 --]]
 
 function KeyShow(self)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "label", ["Text"] = "索引名:",},
 		{["Type"] = "text", ["Name"] = "IndexName", ["Placeholder"] = "请输入索引名"},
@@ -19,15 +19,15 @@ function KeyShow(self)
 		{["Type"] = "text", ["Name"] = "KeyName", ["Placeholder"] = "请输入密钥名称"},
 	}
 	--展示数据
-	local Titles = {"平台", "索引", "密钥名称", "密钥", "操作人", "操作时间", "操作"}
+	Titles = {"平台", "索引", "密钥名称", "密钥", "操作人", "操作时间", "操作"}
 	local Channels = CommonData.ChatChannels
 	--操作人员列表
 	local UserInfo = UserData:Get()
-	local Users = {}
+	Users = {}
 	for _, User in ipairs(UserInfo) do
 		Users[User.account] = User.name
 	end
-	local TableData = {}
+	TableData = {}
 	local KeyList = InterfaceKeyData:Get(Options)
 	for _, KeyInfo in ipairs(KeyList) do 
 		local Data = {}
@@ -48,15 +48,7 @@ function KeyShow(self)
 		["ID"] = "logTable",
 		["NoDivPage"] = false,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Filters = Filters,
-		Titles = Titles,
-		Users = Users,
-		TableData = TableData,
-	}
-	Viewer:View("template/interface/key_show.html", Params)
+	Viewer:View("template/interface/key_show.html")
 end
 
 function KeyEdit(self)
@@ -80,11 +72,7 @@ function KeyEdit(self)
 			KeyInfo = KeyInfo[1]
 		end
 		Platforms = CommonFunc.GetPlatformList()
-		local Params = {
-			KeyInfo = KeyInfo,
-			Platforms = Platforms,
-		}
-		Viewer:View("template/interface/key_edit.html", Params)
+		Viewer:View("template/interface/key_edit.html")
 	end
 end
 

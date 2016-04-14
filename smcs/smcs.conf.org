@@ -1,13 +1,13 @@
 #database config
 upstream smcs {
 	drizzle_server 127.0.0.1:3306 dbname=smcs
-		password=SYsmcsdb user=sysmcs charset=utf8 protocol=mysql;
+		password=smcsdb user=smcs charset=utf8 protocol=mysql;
 }
 
 lua_package_path "$workpath$/?.lua;;";
 lua_package_cpath "$workpath$/lib/?.so;;";
 lua_shared_dict sessions 10m;
-lua_shared_dict sdkid_platform_map 1m;
+lua_shared_dict merge_host_map 5m;
 init_by_lua_file $workpath$/base/init.lua;
 
 server {

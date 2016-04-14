@@ -1,5 +1,5 @@
 -----------------------------------------
---$Id: usermgr.lua 62306 2015-05-05 08:46:31Z xiongyunkun $
+--$Id: usermgr.lua 82744 2015-08-14 02:48:14Z xiongyunkun $
 ----------------------------------------
 --[[
 -- manage the users
@@ -169,15 +169,7 @@ function DoSetPerm(self)
 			RoleMap[RoleInfo.id] = RoleInfo.name
 		end
 		--获得平台列表
-		-- PlatformList = CommonFunc.GetPlatformList()
-
-		local Platforms = PlatformData:GetPlatform()
-		PlatformList = {}
-		for _, Platform in ipairs(Platforms) do
-			PlatformList[Platform.PlatformID] = Platform.PlatformName
-		end
-
-
+		PlatformList = CommonFunc.GetPlatformList(true)
 		local SelectedPlatformList = UserPlatformData:Get({UserID = UserID})
 		SelectedPlatformMap = {}
 		for _, PlatformInfo in ipairs(SelectedPlatformList) do

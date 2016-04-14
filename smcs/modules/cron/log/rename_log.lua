@@ -15,13 +15,13 @@ RequestType = "getlog"
 FileNames = {"key/rename.log"}
 
 --前面的HostID和后面的时间都不要在这里填
-local Cols = {"Uid", "Urs", "OldName", "NewName", "NameChangedTime","Time"}
+local Cols = {"Uid", "Urs", "Name", "Time"}
 --区别判断重复的数据，用于统计时间点的数据比对
 local UniqueKey = "Uid"
 
 --构造请求参数
-function GenerateReqParams(self, HostID)
-	local StartDate = os.date("%Y-%m-%d",ngx.time()) 
+function GenerateReqParams(self, PlatformID, HostID)
+	local StartDate = os.date("%Y-%m-%d",os.time()) 
 	local StartTime = os.date("%Y-%m-%d %H:%M:%S",GetTimeStamp(StartDate .. " 00:00:00"))  --默认是当天的0点
 	local StartTimes = {}
 	for _, FileName in ipairs(FileNames) do
@@ -39,18 +39,20 @@ function GenerateReqParams(self, HostID)
 end
 
 --处理回调结果
-function HandleResponse(self, HostID, Response, ExecuteTime, LastSaticsTimes)
+function HandleResponse(self, PlatformID, HostID, Response, ExecuteTime, LastSaticsTimes)
 	if not CommonFunc.CheckLogErr(HostID, IndexName, Response) then
 		return false
 	end
 	
+	local TotalNum = 0 
 	for FileName, LogContent in pairs(Response) do
 		if LogContent ~= "" or LogContent ~= " " then
 			local LastSaticsTime = LastSaticsTimes[FileName]
+			--需要把上一次统计时间点的记录拿出来对比下看有没有
+			local SameTimeStatics = RenameLogData:GetSameTimeStatics(PlatformID,{HostID=HostID,Time=LastSaticsTime})
 			local Results = {}
 			local Lines = string.split(LogContent, "\n")
 			local LastTime = nil
-			local PlatformIDs = {}
 			for _, Line in ipairs(Lines) do
 				if Line ~= "" and Line ~= " " then
 					local Result = {["HostID"] = HostID}
@@ -58,35 +60,23 @@ function HandleResponse(self, HostID, Response, ExecuteTime, LastSaticsTimes)
 					for _, Col in ipairs(Cols) do
 						local ColValue = CommonFunc.GetLogValue(Line, Col)
 						Result[Col] = ColValue
+						if Col ==  UniqueKey then
+							UniqueValue = tonumber(ColValue)
+						end
 					end
-					local PlatformID = CommonFunc.GetPlatformIDByUrs(Result["Urs"])
-					Result["PlatformID"] = PlatformID
-					PlatformIDs[PlatformID] = true --加入平台列表，便于过滤重复日志
 					--再提取时间
-					Result["Time"] = CommonFunc.GetLogTime(Line)
-					table.insert(Results, Result)
+					local RegTime = CommonFunc.GetLogTime(Line)
+					if SameTimeStatics[UniqueValue] ~= RegTime then
+						--没有重复数据的才添加
+						Result["Time"] = RegTime 
+						table.insert(Results, Result)
+						LastTime = RegTime -- 时间取最后一个
+					end
 				end
 			end
-			local SameTimeStatics = {}
-			for PlatformID, _ in pairs(PlatformIDs) do
-				SameTimeStatics[PlatformID] = RenameLogData:GetSameTimeStatics(PlatformID,{HostID=HostID,Time=LastSaticsTime})
-			end
-			local PlatformResults = {}
-			for _, Result in ipairs(Results) do
-				if Result["PlatformID"] and SameTimeStatics[Result["PlatformID"]] 
-					and SameTimeStatics[Result["PlatformID"]][tonumber(Result[UniqueKey])] ~= Result["Time"] then
-					PlatformResults[Result["PlatformID"]] = PlatformResults[Result["PlatformID"]] or {}
-					table.insert(PlatformResults[Result["PlatformID"]], Result)
-					LastTime = Result["Time"] -- 时间取最后一个
-				end
-			end
-			--分平台记录
-			for PlatformID, Results in pairs(PlatformResults) do
+			if #Results > 0 then
 				RenameLogData:BatchInsert(PlatformID, Results)
 				--同时更新人物信息表中的名字
-				for Idx, Result in pairs(Results) do
-					Results[Idx]["Name"] = Result["NewName"]
-				end
 				UserInfoData:BatchUpdateName(PlatformID, Results)
 			end
 			-- 更新tblStaticsCfg表中统计时间记录

@@ -13,12 +13,35 @@ IndexName = "HistoryOnline"
 local MIN_NUM = 100000 --最低在线人数判断阀值
 
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--把今天的在线数据都读取出来
 	local OnlineRes = OnlineData:Get({PlatformID = PlatformID, HostID = HostID, StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59"})
 	local Period = self:GetPeriod(Day)
 	local MaxNum, AveNum, MinNum = self:GetNum(OnlineRes, Period)
 	HistoryOnlineData:Insert(PlatformID, HostID, Day, MaxNum, AveNum, MinNum)
+	return true
+end
+
+function CronTotalStatics(self, ServerPlatformMap)
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
+	local Period = self:GetPeriod(Day)
+	local Options = {StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59", StaticsType="all"}
+	local OnlineRes = OnlineData:GetStatics(Options)
+	local MaxNum, AveNum, MinNum = self:GetStaticsNum(OnlineRes, Period) 
+	HistoryOnlineData:Insert("all", 0, Day, MaxNum, AveNum, MinNum)
+	--再计算各个平台的
+	local PlatformList = {}
+	for HostID, PlatformID in pairs(ServerPlatformMap) do
+		if not PlatformList[PlatformID] then
+			PlatformList[PlatformID] = true
+		end
+	end
+	for PlatformID, _ in pairs(PlatformList) do
+		Options.PlatformID = PlatformID
+		OnlineRes = OnlineData:GetStatics(Options)
+		MaxNum, AveNum, MinNum = self:GetStaticsNum(OnlineRes, Period) 
+		HistoryOnlineData:Insert(PlatformID, 0, Day, MaxNum, AveNum, MinNum)
+	end
 	return true
 end
 
@@ -75,7 +98,7 @@ end
 --获得时间周期次数(即经历过多少个5分钟)
 function GetPeriod(self, Day)
 	local StartTime = GetTimeStamp(Day .. " 00:00:00")
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local EndTime = StartTime + 86400 
 	EndTime = EndTime < NowTime and EndTime or NowTime
 	local Num = 0
@@ -85,6 +108,7 @@ function GetPeriod(self, Day)
 	end
 	return Num
 end
+
 
 
 

@@ -4,18 +4,8 @@
 #include("include/inc_position.html")
 <script type="text/javascript">
 $(document).ready(function(){
-	$(".updateZone").click(function(){
-		var hostID = $(this).parent().parent().attr("id");
-		var server = $(this).parent().parent().find(".targetserver").val();
-		var zone = $(this).parent().parent().find(".zone").val();
-		$.post("/croservermgr/updatezone",{hostID:hostID,server:server,zone:zone},function(result){
-			if(result){
-				alert("修改成功！");
-			}
-		});
-	});
 	$("#export").click(function(){
-		var serviceID = $("#serviceid").val();
+		var serviceID = $(".serviceid").val();
 		$.post("/croservermgr/exportzone",{serviceID:serviceID},function(result){
 			if(result && parseInt(result) == 1){
 				alert("生成成功！");
@@ -23,6 +13,21 @@ $(document).ready(function(){
 			}
 		});
 	});
+	$(".deleteHost").click(function(){
+		//删除服
+		var pDom = $(this).parent().parent();
+		var hostID = pDom.find(".hostID").val();
+		var serviceID = pDom.find(".serviceid").val();
+		var serverName = pDom.find(".servername").html();
+		if(confirm("你确定要删除"+serverName+"的跨服分区吗？")){
+			$.post("/croservermgr/deleteZoneHost",{serviceID:serviceID,hostID:hostID},function(result){
+				if(result && parseInt(result) == 1){
+					pDom.remove();
+				}
+			});
+		}
+		return false;
+	})
 })
 </script>
 <div class="page-header">
@@ -35,7 +40,6 @@ $(document).ready(function(){
 		<th>平台</th> 
 		<th>服务器</th>
 		<th>开服时间</th>
-		<th>7日在线峰值</th>
 		<th>目标服</th>
 		<th>操作</th>
 	</tr>
@@ -44,29 +48,31 @@ $(document).ready(function(){
 #for ZoneName, Servers in pairs(CroList) do
 #for id, Server in ipairs(Servers) do
 	<tr id="$Server.HostID$">
+		<form action="/croservermgr/updatezone" method="post">
+			<input type="hidden" name="hostID" class="hostID" value="$Server.HostID$" />
+			<input type=hidden name="serviceid" class="serviceid" value="$ServiceID$">
 			<td>
-				<select name="zoneid" class="zone">
+				<select name="zone" class="zone">
 #for _, Zone in ipairs(ZoneList) do
 					<option value="$Zone$" $ZoneName == Zone and "selected" or ""$>$Zone$</option>
 #end
 			</td>
 
 			<td>$PlatformMap[Server.platformid]$</td>
-			<td>$Server.name$</td>
-			<td>$os.date("%Y-%m-%d %X",(Server.StartTime or ngx.time()))$</td>
-			<td>$(Server.Avg7Num or 0)$</td>
+			<td class="servername">$Server.name$</td>
+			<td>$Server.m_startservertime ~= "0000-00-00 00:00:00" and Server.m_startservertime or Server.startservertime$</td>
 			<td>
-				<select name="targetserverid" class="targetserver">
+				<select name="server" class="targetserver">
 #for _, TargetServer in ipairs(TargetServers) do
-#if (TargetServer.tagid or 0) == (Server.tagid or 0) then
 				<option value="$TargetServer.hostid$" $TargetServer.hostid == Server.TargetServer and "selected" or ""$>$TargetServer.name$</option>
-#end
 #end
 				</select>
 			</td>
 			<td>
-				<button type="button" class="updateZone submit_btn" id="$ZoneName$">修改</button>
+				<button type="sbumit" class="updateZone submit_btn" id="$ZoneName$">修改</button>
+				<button type="sbumit" class="deleteHost erro_btn" id="$ZoneName$">删除</button>
 			</td>
+		</form>
 	</tr>
 #end
 #end
@@ -77,9 +83,6 @@ $(document).ready(function(){
 	</tr>
 	</tbody>
 </table>
-</div>
-<div>
-	<input type=hidden name="serviceid" id="serviceid" value="$ServiceID$">
 </div>
 </body>
 </html>

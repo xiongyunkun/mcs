@@ -10,32 +10,33 @@ local CDKEY_NUM = 10
 
 --cd key生成页面
 function KeyGenShow(self)
-	local Options = GetQueryArgs()
-	local ActivityMap = CDKeyActivityData:GetActivityMap()
+	Options = GetQueryArgs()
+	ActivityMap = CDKeyActivityData:GetActivityMap()
 	local Platforms = CommonFunc.GetPlatformList()
 	local KeyTypes = CommonData.KeyTypes
 	local ActivityList = CDKeyActivityData:Get({ID = Options.ActivityID})
-	local Titles = {"生成时间", "活动名称", "平台", "使用类型", "生成数量", "有效期", "奖励列表", }
+	Titles = {"生成时间", "活动名称", "平台", "使用类型", "生成数量", "有效期", "奖励列表", }
 	if Options.Submit ~= "导出" then
 		table.insert(Titles, "激活码")
 	end
-	local TitleTips = {}
-	TitleTips[5] = "总数(有效/无效)"
-	local TableData = {}
+	TitleTips = {}
+	--TitleTips[5] = "总数(有效/无效)"
+	TableData = {}
 	for _, ActivityData in ipairs(ActivityList) do
 		local Data = {}
 		table.insert(Data, ActivityData.SubmitTime)
 		table.insert(Data, ActivityData.Name)
 		table.insert(Data, Platforms[ActivityData.PlatformID] or "全部")
 		table.insert(Data, KeyTypes[ActivityData.KeyType])
-		local ValidNum, UnValidNum = self:GetKeyNumInfo(ActivityData.ID)
+		--local ValidNum, UnValidNum = self:GetKeyNumInfo(ActivityData.ID, ActivityData.KeyNum)
 		local NumStr = ""
-		if Options.Submit ~= "导出" then
+		--[[if Options.Submit ~= "导出" then
 			NumStr = ActivityData.KeyNum .. "(<font color='green'>" .. ValidNum 
 				.. "</font>/<font color='red'>" .. UnValidNum .. "</font>)"
 		else
 			NumStr = ActivityData.KeyNum .. "(" .. ValidNum .. "/" .. UnValidNum .. ")"
-		end
+		end]]
+		NumStr = ActivityData.KeyNum
 		table.insert(Data, NumStr)
 		table.insert(Data, ActivityData.StartTime .. "至" .. ActivityData.EndTime)
 		local RewardStr = self:GetKeyReward(ActivityData.Rewards)
@@ -52,22 +53,11 @@ function KeyGenShow(self)
 		ngx.say(ExcelStr)
 		return
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["DisplayLength"] = 50,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-		ActivityMap = ActivityMap,
-		TitleTips = TitleTips,
-	}
-	Viewer:View("template/game/keyGenShow.html", Params)
+	Viewer:View("template/game/keyGenShow.html")
 end
 
 --cd key生成界面提交
@@ -81,28 +71,24 @@ function DoKeygen(self)
 		--序列号奖励信息
 		Args.Rewards = self:SerializeRewards(Args)
 		ActivityID = CDKeyActivityData:Insert(Args) --将激活码活动信息记录入库
-		if ActivityID then
+		if ActivityID and tonumber(Args.IsGenerate) == 1 then
 			--生成激活码
-			local KeyMap = self:GenerateKeys(ActivityID, Args.KeyNum)
+			local KeyMap = self:GenerateKeys(Args.KeyNum)
 			for CDKey, _ in pairs(KeyMap) do
 				CDKeyData:Insert({ActivityID=ActivityID,CDKey=CDKey})
 			end
 		end
 		self:KeyGenShow(ActivityID)
 	else
-		local Platforms = CommonFunc.GetPlatformList()
+		Platforms = CommonFunc.GetPlatformList()
 		--使用类型
-		local KeyTypes = CommonData.KeyTypes
-		local ItemStrList = {}
+		KeyTypes = CommonData.KeyTypes
+		ItemStrList = {}
+		GenerateTypes = {"立即生成","后端脚本生成"}
 		for ItemID, ItemName in pairs(ItemDataMap or {}) do
 			table.insert(ItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
 		end
-		local Params = {
-			Platforms = Platforms,
-			KeyTypes = KeyTypes,
-			ItemStrList = ItemStrList,
-		}
-		Viewer:View("template/game/keyGenerate.html", Params)
+		Viewer:View("template/game/keyGenerate.html")
 	end
 	
 end
@@ -110,7 +96,7 @@ end
 --序列化奖励消息
 function SerializeRewards(self, Args)
 	local Gold = tonumber(Args.Gold) or 0
---	local CreditGold = tonumber(Args.CreditGold) or 0
+	local CreditGold = tonumber(Args.CreditGold) or 0
 	local Money = tonumber(Args.Money) or 0
 	--获得道具
 	local Items = Args.Item
@@ -135,7 +121,7 @@ function SerializeRewards(self, Args)
 	local ItemStr = table.concat(ItemList, ",")
 	local Rewards = {
 		Gold = Gold,
---		CreditGold = CreditGold,
+		CreditGold = CreditGold,
 		Money = Money,
 		Item = ItemStr,
 	}
@@ -153,45 +139,43 @@ function GetItemID(self, ItemStr)
 end
 
 --生成数量为KeyNum的激活码
-function GenerateKeys(self, ActivityID, KeyNum)
-	--先根据ActivityID生成激活码的前2位
-	local ActivityID = tonumber(ActivityID)
-	
+function GenerateKeys(self, KeyNum)
+	--先将之前的激活码都获取出来,不能生成与之前重复的激活码
+	local KeyList = CDKeyData:Get({})
+	local KeyMap = {}
+	for _, KeyInfo in ipairs(KeyList) do
+		if KeyInfo.CDKey ~= "" then
+			KeyMap[KeyInfo.CDKey] = true
+		end
+	end
 	local NewKeyMap = {}
 	local X = 1
-	local Pre2Key = self:GetPre2Key(ActivityID)	
-	while X <= tonumber(KeyNum) do
+	KeyNum = tonumber(KeyNum)
+	while true do
 		local Key = self:GenerateKey()
-		Key = Pre2Key .. Key
 		--不能与之前的重复，同时也不能与这一批生成的重复
-		if not NewKeyMap[Key] then
+		if not KeyMap[Key] and not NewKeyMap[Key] then
 			NewKeyMap[Key] = true
 			X = X + 1
+		end
+		if X > KeyNum then
+			break
 		end
 	end
 	return NewKeyMap
 end
 
-local Chars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-	'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L','M', 'N', 'O',
-	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y','Z'}
-
---生成激活码的前2位
-function GetPre2Key(self, ActivityID)
-	local ActivityID = tonumber(ActivityID)
-	local Len = #Chars
-	local Floor1 = math.floor(ActivityID/Len)
-	local Pre1 = Chars[Floor1+1] --十位上的值
-	local Prefix = ActivityID%Len
-	local Pre2 = Chars[Prefix+1]
-	return Pre1 .. Pre2
-end
-
 --生成激活码
 function GenerateKey(self)
+	local Chars = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+		'i', 'j', 'k', 'l','m', 'n', 'o', 'p', 'q', 'r', 's',
+		't', 'u', 'v', 'w', 'x', 'y','z', 'A', 'B', 'C', 'D',
+		'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L','M', 'N', 'O',
+		'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y','Z',
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
 	local Len = #Chars
 	local Key = ""
-	for X = 1, CDKEY_NUM-2 do
+	for X = 1, CDKEY_NUM do
 		local Index = math.random(1, Len)
 		Key = Key .. Chars[Index]
 	end
@@ -227,26 +211,20 @@ function GetKeyReward(self, RewardStr)
 end
 
 --获得激活码数量详细信息(有效：M个，无效:N个)
-function GetKeyNumInfo(self, ActivityID)
-	local CDKeyList = CDKeyData:Get({ActivityID = ActivityID})
+function GetKeyNumInfo(self, ActivityID, TotalNum)
+	--local TotalNum = CDKeyData:GetNum(ActivityID)
 	--还要判断有效时间是否已经失效
 	local ActivityInfo = CDKeyActivityData:Get({ID = ActivityID})
 	if ActivityInfo and ActivityInfo[1] then
-		local NowTime = ngx.time()
+		local NowTime = os.time()
 		if GetTimeStamp(ActivityInfo[1].EndTime) < NowTime or GetTimeStamp(ActivityInfo[1].StartTime) > NowTime then
 			--已经过期
-			return 0, #CDKeyList
+			return 0, TotalNum
 		end
 	end
-	local ValidNum = 0
-	local UnValidNum = 0
-	for _, CDKEYInfo in ipairs(CDKeyList) do
-		if CDKEYInfo.IsValid == 1 then --未兑换，有效
-			ValidNum = ValidNum + 1
-		else
-			UnValidNum = UnValidNum + 1
-		end
-	end
+	local ValidNum = CDKeyData:GetNum(ActivityID, 1) --有效
+	--local UnValidNum = CDKeyData:GetNum(ActivityID, 0) --无效
+	local UnValidNum = math.max(TotalNum - ValidNum, 0)
 	return ValidNum, UnValidNum
 end
 
@@ -261,7 +239,7 @@ function KeyExport(self)
 		local ActivityInfo = CDKeyActivityData:Get({ID = ActivityID})
 		local ExpireFlag = false
 		if ActivityInfo and ActivityInfo[1] then
-			local NowTime = ngx.time()
+			local NowTime = os.time()
 			if GetTimeStamp(ActivityInfo[1].EndTime) < NowTime or GetTimeStamp(ActivityInfo[1].StartTime) > NowTime then
 				--已经过期
 				ExpireFlag = true
@@ -299,12 +277,12 @@ end
 
 --cd key查询
 function KeySelect(self)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	--展示数据
-	local Titles = {"CDKEY", "状态", "所属活动", "有效时间", "奖励内容", "兑换人角色ID", "兑换人账号", 
+	Titles = {"CDKEY", "状态", "所属活动", "有效时间", "奖励内容", "兑换人角色ID", "兑换人账号", 
 			"兑换人所在平台", "兑换人所在服", "兑换时间"}
-	local TableData = {}
+	TableData = {}
 	if self:IsnotEmpty(Options.CDKey) or self:IsnotEmpty(Options.Uid) then
 		local Platforms = CommonFunc.GetPlatformList()
 		local ServerPlatformMap = ServerData:GetServerPlatformMap()
@@ -318,11 +296,7 @@ function KeySelect(self)
 			--获得活动名称
 			local ActivityInfo = CDKeyActivityData:Get({ID = CDKeyInfo.ActivityID})
 			if ActivityInfo and ActivityInfo[1] then
-			   local NowTime = ngx.time()
-			    if GetTimeStamp(ActivityInfo[1].EndTime) < NowTime or GetTimeStamp(ActivityInfo[1].StartTime) > NowTime then
-			            CDKeyInfo.IsValid = 0
-			    end
-			    ActivityInfo = ActivityInfo[1]
+				ActivityInfo = ActivityInfo[1]
 			end
 			local Data = {}
 			table.insert(Data, CDKeyInfo.CDKey)
@@ -345,18 +319,11 @@ function KeySelect(self)
 			table.insert(TableData, Data)
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/game/keySelect.html", Params)
+	Viewer:View("template/game/keySelect.html")
 end
 
 function IsnotEmpty(self, Arg)

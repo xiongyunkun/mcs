@@ -5,43 +5,32 @@
 -- 钻石金币操作
 --
 --]]
-local Type1 = CommonData.CURRENCY_TYPE.GOLD
-local Type2 = CommonData.CURRENCY_TYPE.MONEY
 
-local TypeMap = {Type1,Type2,Type1,Type2,}
-local AddTypes = {"","","-","-"}
-local GMID = 22
+local TypeMap = {"Gold","CreditGold","Money","Gold","CreditGold","Money",}
+local AddTypes = {"","","","-","-","-"}
+local GMID = 3
 
 --钻石金币操作面板展示
 function GoldOperationShow(self, PlatformID, Results)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local OperationTypes = {"加钻石", "加金币","扣钻石", "扣金币"}
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	OperationTypes = {"加钻石","加绑钻", "加金币","扣钻石","扣绑钻","扣金币"}
 	--展示数据
-	local Titles = {"平台", "服", "账号", "角色", "执行结果", }
+	Titles = {"平台", "服", "账号", "角色", "执行结果", }
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
-	local TableData = {}
+	TableData = {}
 	for _, Result in ipairs(Results or {}) do
 		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Result.Result or "执行失败"}
 		table.insert(TableData, CTable)
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		OperationTypes = OperationTypes,
-		Titles = Titles,
-		TableData = TableData,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/player/goldOperation.html", Params)
+	Viewer:View("template/player/goldOperation.html")
 end
 
 function DoGoldOperation(self)
@@ -49,11 +38,11 @@ function DoGoldOperation(self)
 	if ngx.var.request_method == "POST" then
 		local Args = GetPostArgs()
 		local RoleName = Args.RoleName
-		local OperationInfo = GMRuleData:Get({ID = GMID})
+		local OperationInfo = GMRuleData:Get({ID = 3})
 		local Rule = OperationInfo[1].Rule
 		local OperationType = Args.OperationType
 		OperationType = tonumber(OperationType)
-		local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+		local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 		if Args.RoleName and Args.RoleName ~= "" then
 			--这里执行需要输入角色的GM指令
 			Results = self:GetUserInfo(Args)

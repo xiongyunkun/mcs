@@ -1,4692 +1,18750 @@
 return 
 {
-	["APIInfo"] = {
-		["人物等级"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"人物等级缺少参数") return User:GetLevel()>=Args[1]
-end,
-		["关卡群S数量"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"配置表关卡群S数量缺少参数1:关卡群名字") assert(Args[2] and type(Args[2])=="number","配置表关卡群S数量缺少参数2:S的数量") local StageGroupCfg = setting:Get("setting/stage_cfg.lua").MapCfg local StageGroup = assert(StageGroupCfg[Args[1]], "没找到该关卡群"..Args[1]) local SCount = 0 for I,StageId in ipairs(StageGroup.StageList) do     local StageData = task.InstMgr():GetStageById(StageId)     if StageData:GetScore() and StageData:GetScore()>=3 then         SCount = SCount + 1     end end return SCount>=Args[2]
-end,
-		["卡牌升星"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"卡牌升星缺少参数") local AchieveMgr = User:GetAchieveMgr() local CardUid = AchieveMgr.__CheckParam__ if CardUid then     local CardObj = (User:GetAllCards() or {})[CardUid]     if CardObj and (CardObj:GetQuality()or 0)>=Args[1] then       return true     end end return false 
-end,
-		["卡牌升级"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"卡牌升级缺少参数") local AllCards = User:GetAllCards() for CardUid,CardObj in pairs(AllCards or {}) do     if CardObj:GetLevel()>=Args[1] then         return true     end end return false
-end,
-		["卡牌进化颜色"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"卡牌进化颜色缺少参数") local AllCards = User:GetAllCards() for CardUid,CardObj in pairs(AllCards or {}) do     if (CardObj:GetWakeupLv() or 0)>=Args[1] then         return true     end end return false 
-end,
-		["多人竞赛等级"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"多人竞赛等级缺少参数") return User:GetMpvpLevel()>=Args[1]
-end,
-		["多张卡牌进化颜色"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"卡牌进化颜色缺少参数") assert(Args[2],"卡牌张数") local Count = 0 local AllCards = User:GetAllCards() for CardUid,CardObj in pairs(AllCards or {}) do     if (CardObj:GetWakeupLv() or 0)>=Args[1] then         Count = Count + 1     end     if Count >= Args[2] then        return true     end end return false 
-end,
-		["得到星级卡牌"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"得到星级卡牌缺少参数1:星级") assert(Args[2],"得到星级卡牌缺少参数2:数量") local AllCards = User:GetAllCards() local Num=0 for CardUid,CardObj in pairs(AllCards or {}) do     if CardObj:GetQuality()>=Args[1] then         Num = Num+1     end end return Num>=Args[2] 
-end,
-		["无"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} return true
-end,
-		["有月卡"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...}  local LeftTime = VIP_MGR:GetMonthCardLeftTime(User) if LeftTime <=0 then     return false end return true
-end,
-		["有至尊卡"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} local VipInfo = User:GetVipInfo() or {} if not (VipInfo and VipInfo[2]) then     return false end return true
-end,
-		["竞技场排名"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"竞技场等级缺少参数") local TopListData = User:GetTopListData() or {} local MaxRank = TopListData.MaxRank or 999999 return MaxRank<=Args[1]
-end,
-		["竞技场积分达到"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"确实积分参数") local ArenaCredit = User:GetCounterMgr():GetCount("竞技场积分", "获得") return ArenaCredit >= Args[1] 
-end,
-		["符文强化"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"符文强化到缺少参数") local AllCards = User:GetAllCards() for CardUid,CardObj in pairs(AllCards or {}) do     local RuneList = CardObj:GetRunesList()     for Idx,Item in pairs(RuneList or {}) do        if (Item:GetEnchantlvl()or 0)>=Args[1] then return true end     end end return false
-end,
-		["英雄升级"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"英雄升级缺少英雄个数参数") assert(Args[2],"英雄升级缺少等级参数") local AllCards = User:GetAllCards() local Count = 0 for CardUid,CardObj in pairs(AllCards or {}) do     if CardObj:GetLevel()>= Args[2] then         Count = Count + 1         if Count >= Args[1] then              return true,Count         end     end end return false,Count
-end,
-		["装备符文"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} local AllCards = User:GetAllCards() for CardUid,CardObj in pairs(AllCards or {}) do     local RuneList = CardObj:GetRunesList()     if RuneList and table.size(RuneList)>0 then         return true     end end return false
-end,
-		["计数数据达成"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"计数数据达成缺少参数") local Type, Data = User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam) if Data and Data >= Args[1] then     return true,User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam) end return false,User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam)
-end,
-		["计数达成"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"计数达成缺少参数") if User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam) >=Args[1] then return true,User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam) end return false,User:GetCounterMgr():GetCount(AchieveItemCfg.CounterType,AchieveItemCfg.CounterParam)
-end,
-		["领取竞技场积分次数"] = function (API, User, AchieveItemCfg, ...)
-	local Args = {...} assert(Args[1],"确实次数参数") local CREDITBONUS_CFG = ALLSETTING.ArenaCfg.CreditBonusCfg local Count = 0 for Id, Cfg in pairs(CREDITBONUS_CFG.Cfg) do     local Count1 = User:GetCounterMgr():GetCount(Cfg.Type, Cfg.Param)     if Count1 > 0 then         Count = Count + 1     end end if Count >= Args[1] then     return true end return false 
-end,
+	[10010] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["X"] = 1765,
+				["Y"] = 634,
+				["朝向"] = 307,
+				["编号"] = 5200,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10010,
+		["Level"] = 1,
+		["Name"] = "审判",
+		["Next"] = 10030,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["SubmitChat"] = "诸神已死，剩下的我们，是消灭#cffdd00魔神#n的最后希望！",
+		["SubmitNpc"] = 2017,
+		["TrackTarget"] = {
+			["Data"] = 2017,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 121002,
+			["Trigger"] = 5200,
+			["Type"] = 2,
+		},
+		["Type"] = 1,
 	},
-	["BaseCfg"] = {
-		[10001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 5)
-end,
-			},
-			["CounterMax"] = 5,
-			["Desc"] = "战队等级提升到5",
-			["Level"] = 1,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升1",
-			["NextAchieve"] = 10002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "200000,30",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[10002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 10)
-end,
-			},
-			["CounterMax"] = 10,
-			["Desc"] = "战队等级提升到10",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升2",
-			["NextAchieve"] = 10003,
-			["PreAchieve"] = 10001,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "200000,20",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[10003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 15)
-end,
-			},
-			["CounterMax"] = 15,
-			["Desc"] = "战队等级提升到15",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升3",
-			["NextAchieve"] = 10004,
-			["PreAchieve"] = 10002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "200000,20",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[10004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 18)
-end,
-			},
-			["CounterMax"] = 18,
-			["Desc"] = "战队等级提升到18",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升4",
-			["NextAchieve"] = 10005,
-			["PreAchieve"] = 10003,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "200000,20",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[10005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 20)
-end,
-			},
-			["CounterMax"] = 20,
-			["Desc"] = "战队等级提升到20",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升5",
-			["NextAchieve"] = 10006,
-			["PreAchieve"] = 10004,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 22)
-end,
-			},
-			["CounterMax"] = 22,
-			["Desc"] = "战队等级提升到22",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升6",
-			["NextAchieve"] = 10007,
-			["PreAchieve"] = 10005,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10007] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 24)
-end,
-			},
-			["CounterMax"] = 24,
-			["Desc"] = "战队等级提升到24",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升7",
-			["NextAchieve"] = 10008,
-			["PreAchieve"] = 10006,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10008] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 26)
-end,
-			},
-			["CounterMax"] = 26,
-			["Desc"] = "战队等级提升到26",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升8",
-			["NextAchieve"] = 10009,
-			["PreAchieve"] = 10007,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10009] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 28)
-end,
-			},
-			["CounterMax"] = 28,
-			["Desc"] = "战队等级提升到28",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升9",
-			["NextAchieve"] = 10010,
-			["PreAchieve"] = 10008,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10010] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 30)
-end,
-			},
-			["CounterMax"] = 30,
-			["Desc"] = "战队等级提升到30",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升10",
-			["NextAchieve"] = 10011,
-			["PreAchieve"] = 10009,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10011] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 32)
-end,
-			},
-			["CounterMax"] = 32,
-			["Desc"] = "战队等级提升到32",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升11",
-			["NextAchieve"] = 10012,
-			["PreAchieve"] = 10010,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10012] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 34)
-end,
-			},
-			["CounterMax"] = 34,
-			["Desc"] = "战队等级提升到34",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升12",
-			["NextAchieve"] = 10013,
-			["PreAchieve"] = 10011,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10013] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 36)
-end,
-			},
-			["CounterMax"] = 36,
-			["Desc"] = "战队等级提升到36",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升13",
-			["NextAchieve"] = 10014,
-			["PreAchieve"] = 10012,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10014] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 38)
-end,
-			},
-			["CounterMax"] = 38,
-			["Desc"] = "战队等级提升到38",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升14",
-			["NextAchieve"] = 10015,
-			["PreAchieve"] = 10013,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10015] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 40)
-end,
-			},
-			["CounterMax"] = 40,
-			["Desc"] = "战队等级提升到40",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升15",
-			["NextAchieve"] = 10016,
-			["PreAchieve"] = 10014,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10016] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 42)
-end,
-			},
-			["CounterMax"] = 42,
-			["Desc"] = "战队等级提升到42",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升16",
-			["NextAchieve"] = 10017,
-			["PreAchieve"] = 10015,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10017] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 44)
-end,
-			},
-			["CounterMax"] = 44,
-			["Desc"] = "战队等级提升到44",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升17",
-			["NextAchieve"] = 10018,
-			["PreAchieve"] = 10016,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10018] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 46)
-end,
-			},
-			["CounterMax"] = 46,
-			["Desc"] = "战队等级提升到46",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升18",
-			["NextAchieve"] = 10019,
-			["PreAchieve"] = 10017,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10019] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 48)
-end,
-			},
-			["CounterMax"] = 48,
-			["Desc"] = "战队等级提升到48",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升19",
-			["NextAchieve"] = 10020,
-			["PreAchieve"] = 10018,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10020] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 50)
-end,
-			},
-			["CounterMax"] = 50,
-			["Desc"] = "战队等级提升到50",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升20",
-			["NextAchieve"] = 10021,
-			["PreAchieve"] = 10019,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10021] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 52)
-end,
-			},
-			["CounterMax"] = 52,
-			["Desc"] = "战队等级提升到52",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升21",
-			["NextAchieve"] = 10022,
-			["PreAchieve"] = 10020,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10022] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 54)
-end,
-			},
-			["CounterMax"] = 54,
-			["Desc"] = "战队等级提升到54",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升22",
-			["NextAchieve"] = 10023,
-			["PreAchieve"] = 10021,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10023] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 56)
-end,
-			},
-			["CounterMax"] = 56,
-			["Desc"] = "战队等级提升到56",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升23",
-			["NextAchieve"] = 10024,
-			["PreAchieve"] = 10022,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10024] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 58)
-end,
-			},
-			["CounterMax"] = 58,
-			["Desc"] = "战队等级提升到58",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升24",
-			["NextAchieve"] = 10025,
-			["PreAchieve"] = 10023,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10025] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 60)
-end,
-			},
-			["CounterMax"] = 60,
-			["Desc"] = "战队等级提升到60",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升25",
-			["NextAchieve"] = 10026,
-			["PreAchieve"] = 10024,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10026] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 62)
-end,
-			},
-			["CounterMax"] = 62,
-			["Desc"] = "战队等级提升到62",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升26",
-			["NextAchieve"] = 10027,
-			["PreAchieve"] = 10025,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10027] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 64)
-end,
-			},
-			["CounterMax"] = 64,
-			["Desc"] = "战队等级提升到64",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升27",
-			["NextAchieve"] = 10028,
-			["PreAchieve"] = 10026,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10028] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 66)
-end,
-			},
-			["CounterMax"] = 66,
-			["Desc"] = "战队等级提升到66",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升28",
-			["NextAchieve"] = 10029,
-			["PreAchieve"] = 10027,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10029] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 68)
-end,
-			},
-			["CounterMax"] = 68,
-			["Desc"] = "战队等级提升到68",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升29",
-			["NextAchieve"] = 10030,
-			["PreAchieve"] = 10028,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10030] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 70)
-end,
-			},
-			["CounterMax"] = 70,
-			["Desc"] = "战队等级提升到70",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升30",
-			["NextAchieve"] = 10031,
-			["PreAchieve"] = 10029,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10031] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 72)
-end,
-			},
-			["CounterMax"] = 72,
-			["Desc"] = "战队等级提升到72",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升31",
-			["NextAchieve"] = 10032,
-			["PreAchieve"] = 10030,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10032] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 74)
-end,
-			},
-			["CounterMax"] = 74,
-			["Desc"] = "战队等级提升到74",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升32",
-			["NextAchieve"] = 10033,
-			["PreAchieve"] = 10031,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10033] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 76)
-end,
-			},
-			["CounterMax"] = 76,
-			["Desc"] = "战队等级提升到76",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升33",
-			["NextAchieve"] = 10034,
-			["PreAchieve"] = 10032,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10034] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 78)
-end,
-			},
-			["CounterMax"] = 78,
-			["Desc"] = "战队等级提升到78",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升34",
-			["NextAchieve"] = 10035,
-			["PreAchieve"] = 10033,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10035] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 80)
-end,
-			},
-			["CounterMax"] = 80,
-			["Desc"] = "战队等级提升到80",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升35",
-			["NextAchieve"] = 10036,
-			["PreAchieve"] = 10034,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10036] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 82)
-end,
-			},
-			["CounterMax"] = 82,
-			["Desc"] = "战队等级提升到82",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升36",
-			["NextAchieve"] = 10037,
-			["PreAchieve"] = 10035,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10037] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 84)
-end,
-			},
-			["CounterMax"] = 84,
-			["Desc"] = "战队等级提升到84",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升37",
-			["NextAchieve"] = 10038,
-			["PreAchieve"] = 10036,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10038] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 86)
-end,
-			},
-			["CounterMax"] = 86,
-			["Desc"] = "战队等级提升到86",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升38",
-			["NextAchieve"] = 10039,
-			["PreAchieve"] = 10037,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10039] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 88)
-end,
-			},
-			["CounterMax"] = 88,
-			["Desc"] = "战队等级提升到88",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升39",
-			["NextAchieve"] = 10040,
-			["PreAchieve"] = 10038,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10040] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 90)
-end,
-			},
-			["CounterMax"] = 90,
-			["Desc"] = "战队等级提升到90",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升40",
-			["NextAchieve"] = 10041,
-			["PreAchieve"] = 10039,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10041] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 92)
-end,
-			},
-			["CounterMax"] = 92,
-			["Desc"] = "战队等级提升到92",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升41",
-			["NextAchieve"] = 10042,
-			["PreAchieve"] = 10040,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10042] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 94)
-end,
-			},
-			["CounterMax"] = 94,
-			["Desc"] = "战队等级提升到94",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升42",
-			["NextAchieve"] = 10043,
-			["PreAchieve"] = 10041,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10043] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 96)
-end,
-			},
-			["CounterMax"] = 96,
-			["Desc"] = "战队等级提升到96",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升43",
-			["NextAchieve"] = 10044,
-			["PreAchieve"] = 10042,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10044] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["人物等级"](API, User, AchieveItemCfg , 98)
-end,
-			},
-			["CounterMax"] = 98,
-			["Desc"] = "战队等级提升到98",
-			["Level"] = 0,
-			["ModuleType"] = "人物升级",
-			["Name"] = "战队提升44",
-			["PreAchieve"] = 10043,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010101] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10101",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-圣城郊区",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "圣城郊区",
-			["NextAchieve"] = 1101010,
-			["PreAchieve"] = 1101003,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010102] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10102",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-爆炸事件",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "爆炸事件",
-			["NextAchieve"] = 1010103,
-			["PreAchieve"] = 1101010,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010103] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10103",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-吕布",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "吕布",
-			["NextAchieve"] = 1101030,
-			["PreAchieve"] = 1010102,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010104] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10104",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-追踪卷轴",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "追踪卷轴",
-			["NextAchieve"] = 1010105,
-			["PreAchieve"] = 1101030,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010105] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10105",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-关银屏",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "关银屏",
-			["NextAchieve"] = 1010106,
-			["PreAchieve"] = 1010104,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010106] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10106",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-交易",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "交易",
-			["NextAchieve"] = 1010107,
-			["PreAchieve"] = 1010105,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010107] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10107",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-洛基",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "洛基",
-			["NextAchieve"] = 1010108,
-			["PreAchieve"] = 1010106,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010108] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10108",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-关羽",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "关羽",
-			["NextAchieve"] = 1010201,
-			["PreAchieve"] = 1010107,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010201] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10201",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-腐坏的森林",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "腐坏的森林",
-			["NextAchieve"] = 1010202,
-			["PreAchieve"] = 1010108,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010202] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10202",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-雅典娜",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "雅典娜",
-			["NextAchieve"] = 1010203,
-			["PreAchieve"] = 1010201,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010203] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10203",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精灵古道",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精灵古道",
-			["NextAchieve"] = 1010204,
-			["PreAchieve"] = 1010202,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010204] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10204",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-强尼",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "强尼",
-			["NextAchieve"] = 1010205,
-			["PreAchieve"] = 1010203,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010205] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10205",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-前行",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "前行",
-			["NextAchieve"] = 1010206,
-			["PreAchieve"] = 1010204,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010206] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10206",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-沙拉曼",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "沙拉曼",
-			["NextAchieve"] = 1010207,
-			["PreAchieve"] = 1010205,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010207] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10207",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-出发",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "出发",
-			["NextAchieve"] = 1010208,
-			["PreAchieve"] = 1010206,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010208] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10208",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-尼克斯",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "尼克斯",
-			["NextAchieve"] = 1010209,
-			["PreAchieve"] = 1010207,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010209] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10209",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-前行",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "前行",
-			["NextAchieve"] = 1010210,
-			["PreAchieve"] = 1010208,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010210] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10210",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-寻找精灵王",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "寻找精灵王",
-			["NextAchieve"] = 1010211,
-			["PreAchieve"] = 1010209,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010211] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10211",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精灵王出现",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精灵王出现",
-			["NextAchieve"] = 1010212,
-			["PreAchieve"] = 1010210,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010212] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10212",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精灵女王",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精灵女王",
-			["NextAchieve"] = 1010301,
-			["PreAchieve"] = 1010211,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010301] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10301",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-初入神庙",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "初入神庙",
-			["NextAchieve"] = 1010302,
-			["PreAchieve"] = 1010212,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010302] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10302",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-拉琪亚",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "拉琪亚",
-			["NextAchieve"] = 1010303,
-			["PreAchieve"] = 1010301,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010303] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10303",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-亚瑟族人",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "亚瑟族人",
-			["NextAchieve"] = 1010304,
-			["PreAchieve"] = 1010302,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010304] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10304",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-潜入",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "潜入",
-			["NextAchieve"] = 1010305,
-			["PreAchieve"] = 1010303,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010305] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10305",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-神庙内部",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "神庙内部",
-			["NextAchieve"] = 1010306,
-			["PreAchieve"] = 1010304,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010306] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10306",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-陷阱",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "陷阱",
-			["NextAchieve"] = 1010307,
-			["PreAchieve"] = 1010305,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010307] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10307",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-旧殿地宫",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "旧殿地宫",
-			["NextAchieve"] = 1010308,
-			["PreAchieve"] = 1010306,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010308] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10308",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-窃贼斯德尼",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "窃贼斯德尼",
-			["NextAchieve"] = 1010309,
-			["PreAchieve"] = 1010307,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010309] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10309",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-地牢",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "地牢",
-			["NextAchieve"] = 1010310,
-			["PreAchieve"] = 1010308,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010310] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10310",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-阿瑞斯",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "阿瑞斯",
-			["NextAchieve"] = 1010311,
-			["PreAchieve"] = 1010309,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010311] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10311",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-拦路者",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "拦路者",
-			["NextAchieve"] = 1010312,
-			["PreAchieve"] = 1010310,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010312] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10312",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-夏侯惇",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "夏侯惇",
-			["NextAchieve"] = 1010401,
-			["PreAchieve"] = 1010311,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010401] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10401",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-初入巢穴",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "初入巢穴",
-			["NextAchieve"] = 1010402,
-			["PreAchieve"] = 1010312,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010402] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10402",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-初入巢穴II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "初入巢穴II",
-			["NextAchieve"] = 1010403,
-			["PreAchieve"] = 1010401,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010403] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10403",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-初入巢穴III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "初入巢穴III",
-			["NextAchieve"] = 1010404,
-			["PreAchieve"] = 1010402,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010404] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10404",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-失去宁静I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "失去宁静I",
-			["NextAchieve"] = 1010405,
-			["PreAchieve"] = 1010403,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010405] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10405",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-失去宁静II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "失去宁静II",
-			["NextAchieve"] = 1010406,
-			["PreAchieve"] = 1010404,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010406] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10406",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-失去宁静III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "失去宁静III",
-			["NextAchieve"] = 1104061,
-			["PreAchieve"] = 1010405,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010407] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10407",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-斑斓I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "斑斓I",
-			["NextAchieve"] = 1010408,
-			["PreAchieve"] = 1104061,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010408] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10408",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-斑斓II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "斑斓II",
-			["NextAchieve"] = 1010409,
-			["PreAchieve"] = 1010407,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010409] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10409",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-斑斓III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "斑斓III",
-			["NextAchieve"] = 1010410,
-			["PreAchieve"] = 1010408,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010410] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10410",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-深入圣巢I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "深入圣巢I",
-			["NextAchieve"] = 1010411,
-			["PreAchieve"] = 1010409,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010411] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10411",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-深入圣巢II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "深入圣巢II",
-			["NextAchieve"] = 1010412,
-			["PreAchieve"] = 1010410,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010412] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10412",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-深入圣巢III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "深入圣巢III",
-			["NextAchieve"] = 1104121,
-			["PreAchieve"] = 1010411,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010413] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10413",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-塞拉祭坛I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "塞拉祭坛I",
-			["NextAchieve"] = 1010414,
-			["PreAchieve"] = 1104121,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010414] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10414",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-塞拉祭坛II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "塞拉祭坛II",
-			["NextAchieve"] = 1010415,
-			["PreAchieve"] = 1010413,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010415] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10415",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-塞拉祭坛III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "塞拉祭坛III",
-			["NextAchieve"] = 1010416,
-			["PreAchieve"] = 1010414,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010416] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10416",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-绿叶崖I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "绿叶崖I",
-			["NextAchieve"] = 1010417,
-			["PreAchieve"] = 1010415,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010417] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10417",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-绿叶崖II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "绿叶崖II",
-			["NextAchieve"] = 1010418,
-			["PreAchieve"] = 1010416,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010418] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10418",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-绿叶崖III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "绿叶崖III",
-			["NextAchieve"] = 1104181,
-			["PreAchieve"] = 1010417,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010501] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10501",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原少女I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原少女I",
-			["NextAchieve"] = 1010502,
-			["PreAchieve"] = 1104181,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010502] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10502",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原少女II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原少女II",
-			["NextAchieve"] = 1010503,
-			["PreAchieve"] = 1010501,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010503] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10503",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原少女III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原少女III",
-			["NextAchieve"] = 1010504,
-			["PreAchieve"] = 1010502,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010504] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10504",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原I",
-			["NextAchieve"] = 1010505,
-			["PreAchieve"] = 1010503,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010505] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10505",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原II",
-			["NextAchieve"] = 1010506,
-			["PreAchieve"] = 1010504,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010506] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10506",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-荒原III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "荒原III",
-			["NextAchieve"] = 1105061,
-			["PreAchieve"] = 1010505,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010507] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10507",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-巨魔山脉I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "巨魔山脉I",
-			["NextAchieve"] = 1010508,
-			["PreAchieve"] = 1105061,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010508] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10508",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-巨魔山脉II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "巨魔山脉II",
-			["NextAchieve"] = 1010509,
-			["PreAchieve"] = 1010507,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010509] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10509",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-巨魔山脉III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "巨魔山脉III",
-			["NextAchieve"] = 1010510,
-			["PreAchieve"] = 1010508,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010510] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10510",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-要塞爆炸I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "要塞爆炸I",
-			["NextAchieve"] = 1010511,
-			["PreAchieve"] = 1010509,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010511] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10511",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-要塞爆炸II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "要塞爆炸II",
-			["NextAchieve"] = 1010512,
-			["PreAchieve"] = 1010510,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010512] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10512",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-要塞爆炸III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "要塞爆炸III",
-			["NextAchieve"] = 1105121,
-			["PreAchieve"] = 1010511,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010513] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10513",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-蒲英小镇I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "蒲英小镇I",
-			["NextAchieve"] = 1010514,
-			["PreAchieve"] = 1105121,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010514] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10514",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-蒲英小镇II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "蒲英小镇II",
-			["NextAchieve"] = 1010515,
-			["PreAchieve"] = 1010513,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010515] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10515",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-蒲英小镇III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "蒲英小镇III",
-			["NextAchieve"] = 1010516,
-			["PreAchieve"] = 1010514,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010516] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10516",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-鲁夫I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "鲁夫I",
-			["NextAchieve"] = 1010517,
-			["PreAchieve"] = 1010515,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010517] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10517",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-鲁夫II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "鲁夫II",
-			["NextAchieve"] = 1010518,
-			["PreAchieve"] = 1010516,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1010518] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "10518",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-鲁夫III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "鲁夫III",
-			["NextAchieve"] = 1105181,
-			["PreAchieve"] = 1010517,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020101] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20101",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-厄尔湾",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-厄尔湾",
-			["NextAchieve"] = 1020102,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020102] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20102",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-无垠滩",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-无垠滩",
-			["NextAchieve"] = 1020103,
-			["PreAchieve"] = 1020101,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020103] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20103",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-琅琊沟",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-琅琊沟",
-			["NextAchieve"] = 1020104,
-			["PreAchieve"] = 1020102,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020104] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20104",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-彩虹域",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-彩虹域",
-			["NextAchieve"] = 1020105,
-			["PreAchieve"] = 1020103,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020105] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20105",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-悼亡境",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-悼亡境",
-			["NextAchieve"] = 1020106,
-			["PreAchieve"] = 1020104,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020106] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20106",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-精英-魔龙岭",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-魔龙岭",
-			["NextAchieve"] = 1020201,
-			["PreAchieve"] = 1020105,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020201] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20201",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-上淤泽",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-上淤泽",
-			["NextAchieve"] = 1020202,
-			["PreAchieve"] = 1020106,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020202] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20202",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-海问滩",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-海问滩",
-			["NextAchieve"] = 1020203,
-			["PreAchieve"] = 1020201,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020203] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20203",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-雷临池",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-雷临池",
-			["NextAchieve"] = 1020204,
-			["PreAchieve"] = 1020202,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020204] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20204",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-化灵林",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-化灵林",
-			["NextAchieve"] = 1020205,
-			["PreAchieve"] = 1020203,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020205] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20205",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-迷雾岛",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-迷雾岛",
-			["NextAchieve"] = 1020206,
-			["PreAchieve"] = 1020204,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020206] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20206",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关2.精灵沼泽-精英-东崖廷",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-东崖廷",
-			["NextAchieve"] = 1020301,
-			["PreAchieve"] = 1020205,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020301] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20301",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-冥魇渊",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-冥魇渊",
-			["NextAchieve"] = 1020302,
-			["PreAchieve"] = 1020206,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020302] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20302",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-狱火境",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-狱火境",
-			["NextAchieve"] = 1020303,
-			["PreAchieve"] = 1020301,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020303] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20303",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-蛇盘道",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-蛇盘道",
-			["NextAchieve"] = 1020304,
-			["PreAchieve"] = 1020302,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020304] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20304",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-喀斯径",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-喀斯径",
-			["NextAchieve"] = 1020305,
-			["PreAchieve"] = 1020303,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020305] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20305",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-钟乳峰",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-钟乳峰",
-			["NextAchieve"] = 1020306,
-			["PreAchieve"] = 1020304,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020306] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20306",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关3.帕雅神庙-精英-圣灵巅",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-圣灵巅",
-			["NextAchieve"] = 1020401,
-			["PreAchieve"] = 1020305,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020401] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20401",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-涡藻坎",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-涡藻坎",
-			["NextAchieve"] = 1020402,
-			["PreAchieve"] = 1020306,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020402] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20402",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-月轮壁",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-月轮壁",
-			["NextAchieve"] = 1020403,
-			["PreAchieve"] = 1020401,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020403] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20403",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-渔网地",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-渔网地",
-			["NextAchieve"] = 1020404,
-			["PreAchieve"] = 1020402,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020404] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20404",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-伯莱湖",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-伯莱湖",
-			["NextAchieve"] = 1020405,
-			["PreAchieve"] = 1020403,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020405] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20405",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-圣甲巢",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-圣甲巢",
-			["NextAchieve"] = 1020406,
-			["PreAchieve"] = 1020404,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020406] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20406",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-精英-巫魔井",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-巫魔井",
-			["NextAchieve"] = 1020501,
-			["PreAchieve"] = 1020405,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020501] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20501",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-神魔沼",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-神魔沼",
-			["NextAchieve"] = 1020502,
-			["PreAchieve"] = 1020406,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020502] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20502",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-蝴蝶谷",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-蝴蝶谷",
-			["NextAchieve"] = 1020503,
-			["PreAchieve"] = 1020501,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020503] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20503",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-迷人丘",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-迷人丘",
-			["NextAchieve"] = 1020504,
-			["PreAchieve"] = 1020502,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020504] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20504",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-浮屠山",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-浮屠山",
-			["NextAchieve"] = 1020505,
-			["PreAchieve"] = 1020503,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020505] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20505",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-幻魔峡",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-幻魔峡",
-			["NextAchieve"] = 1020506,
-			["PreAchieve"] = 1020504,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1020506] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "20506",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-精英-魔蛇窟",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英-魔蛇窟",
-			["PreAchieve"] = 1020505,
-			["RewardParam1"] = "5000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[10601] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 3)
-end,
-			},
-			["CounterMax"] = 3,
-			["CounterParam"] = "无",
-			["CounterType"] = "卡牌技能升级",
-			["Desc"] = "升级英雄技能3次",
-			["IsDaily"] = true,
-			["Level"] = 9,
-			["ModuleType"] = "英雄技能",
-			["Name"] = "技能升级",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[10901] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["卡牌升星"](API, User, AchieveItemCfg , 3)
-end,
-			},
-			["Desc"] = "任意一个英雄升到3星",
-			["Level"] = 22,
-			["ModuleType"] = "卡牌升星",
-			["Name"] = "三星英雄",
-			["RewardParam1"] = "20000",
-			["RewardType1"] = "金币",
-			["Type"] = "成就",
-		},
-		[1101001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "101001",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-普攻，连击",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "普攻，连击",
-			["NextAchieve"] = 1101002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1101002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "101002",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-连击，奥义",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "连击，奥义",
-			["NextAchieve"] = 1101003,
-			["PreAchieve"] = 1101001,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1101003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "101003",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-BOSS战",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "BOSS战",
-			["NextAchieve"] = 1010101,
-			["PreAchieve"] = 1101002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1101010] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "101010",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-罗宾奥义",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "罗宾奥义",
-			["NextAchieve"] = 1010102,
-			["PreAchieve"] = 1010101,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1101030] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "101030",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关1.珊瑚曲境-西鲁芙奥义",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "西鲁芙奥义",
-			["NextAchieve"] = 1010104,
-			["PreAchieve"] = 1010103,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1104061] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "104061",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-奖励关卡I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡I",
-			["NextAchieve"] = 1010407,
-			["PreAchieve"] = 1010406,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1104121] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "104121",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-奖励关卡II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡II",
-			["NextAchieve"] = 1010413,
-			["PreAchieve"] = 1010412,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1104181] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "104181",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关4.圣光之巢-奖励关卡III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡III",
-			["NextAchieve"] = 1010501,
-			["PreAchieve"] = 1010418,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1105061] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "105061",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-奖励关卡I",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡I",
-			["NextAchieve"] = 1010507,
-			["PreAchieve"] = 1010506,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1105121] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "105121",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-奖励关卡II",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡II",
-			["NextAchieve"] = 1010513,
-			["PreAchieve"] = 1010512,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[1105181] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "105181",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "通关5.蒲英魔都-奖励关卡III",
-			["Level"] = 0,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "奖励关卡III",
-			["PreAchieve"] = 1010518,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[11101] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["竞技场排名"](API, User, AchieveItemCfg , 1000)
-end,
-			},
-			["Desc"] = "竞技场排名达到1000",
-			["Level"] = 20,
-			["ModuleType"] = "竞技场排名",
-			["Name"] = "竞技王者",
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[11102] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["领取竞技场积分次数"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterParam"] = "领取",
-			["CounterType"] = "竞技场积分",
-			["Desc"] = "领取1次竞技场积分奖励",
-			["Level"] = 20,
-			["ModuleType"] = "领取竞技场积分次数",
-			["Name"] = "竞技积分",
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[11201] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "极限挑战",
-			["Desc"] = "完成一次极限挑战",
-			["Level"] = 18,
-			["ModuleType"] = "极限挑战",
-			["Name"] = "极限挑战",
-			["RewardParam1"] = "500004,5",
-			["RewardType1"] = "物品",
-			["Type"] = "成就",
-		},
-		[11401] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "完成街霸",
-			["Desc"] = "挑战街霸里1个对手",
-			["IsDaily"] = true,
-			["Level"] = 23,
-			["ModuleType"] = "完成街霸",
-			["Name"] = "街头霸王",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10510,
-			["Type"] = "日常",
-		},
-		[12001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,5)
-end,
-			},
-			["Desc"] = "召唤5个英雄",
-			["Level"] = 20,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集1",
-			["NextAchieve"] = 12002,
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,7)
-end,
-			},
-			["Desc"] = "召唤7个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集2",
-			["NextAchieve"] = 12003,
-			["PreAchieve"] = 12001,
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,9)
-end,
-			},
-			["Desc"] = "召唤9个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集3",
-			["NextAchieve"] = 12004,
-			["PreAchieve"] = 12002,
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,11)
-end,
-			},
-			["Desc"] = "召唤11个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集4",
-			["NextAchieve"] = 12005,
-			["PreAchieve"] = 12003,
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,13)
-end,
-			},
-			["Desc"] = "召唤13个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集5",
-			["NextAchieve"] = 12006,
-			["PreAchieve"] = 12004,
-			["RewardParam1"] = "200012,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,15)
-end,
-			},
-			["Desc"] = "召唤15个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集6",
-			["NextAchieve"] = 12007,
-			["PreAchieve"] = 12005,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12007] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,17)
-end,
-			},
-			["Desc"] = "召唤17个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集7",
-			["NextAchieve"] = 12008,
-			["PreAchieve"] = 12006,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12008] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,19)
-end,
-			},
-			["Desc"] = "召唤19个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集8",
-			["NextAchieve"] = 12009,
-			["PreAchieve"] = 12007,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12009] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,21)
-end,
-			},
-			["Desc"] = "召唤21个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集9",
-			["NextAchieve"] = 12010,
-			["PreAchieve"] = 12008,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12010] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,23)
-end,
-			},
-			["Desc"] = "召唤23个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集10",
-			["NextAchieve"] = 12011,
-			["PreAchieve"] = 12009,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12011] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,25)
-end,
-			},
-			["Desc"] = "召唤25个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集11",
-			["NextAchieve"] = 12012,
-			["PreAchieve"] = 12010,
-			["RewardParam1"] = "200013,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12012] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,27)
-end,
-			},
-			["Desc"] = "召唤27个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集12",
-			["NextAchieve"] = 12013,
-			["PreAchieve"] = 12011,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12013] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,29)
-end,
-			},
-			["Desc"] = "召唤29个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集13",
-			["NextAchieve"] = 12014,
-			["PreAchieve"] = 12012,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12014] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,31)
-end,
-			},
-			["Desc"] = "召唤31个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集14",
-			["NextAchieve"] = 12015,
-			["PreAchieve"] = 12013,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12015] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,33)
-end,
-			},
-			["Desc"] = "召唤33个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集15",
-			["NextAchieve"] = 12016,
-			["PreAchieve"] = 12014,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12016] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,35)
-end,
-			},
-			["Desc"] = "召唤35个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集16",
-			["NextAchieve"] = 12017,
-			["PreAchieve"] = 12015,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12017] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,37)
-end,
-			},
-			["Desc"] = "召唤37个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集17",
-			["NextAchieve"] = 12018,
-			["PreAchieve"] = 12016,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12018] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,39)
-end,
-			},
-			["Desc"] = "召唤39个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集18",
-			["NextAchieve"] = 12019,
-			["PreAchieve"] = 12017,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[12019] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["得到星级卡牌"](API, User, AchieveItemCfg , 1,41)
-end,
-			},
-			["Desc"] = "召唤41个英雄",
-			["Level"] = 0,
-			["ModuleType"] = "获得星级卡牌",
-			["Name"] = "英雄召集19",
-			["PreAchieve"] = 12018,
-			["RewardParam1"] = "200014,5",
-			["RewardParam2"] = "20000",
-			["RewardType1"] = "物品",
-			["RewardType2"] = "金币",
-			["Type"] = "成就",
-		},
-		[20101] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 3)
-end,
-			},
-			["CounterMax"] = 3,
-			["CounterParam"] = "精英",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "完成3次精英关卡",
-			["IsDaily"] = true,
-			["Level"] = 10,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "精英关卡",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10304,
-			["Type"] = "日常",
-		},
-		[20201] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 10)
-end,
-			},
-			["CounterMax"] = 10,
-			["CounterParam"] = "普通",
-			["CounterType"] = "完成关卡",
-			["Desc"] = "完成10次普通关卡",
-			["IsDaily"] = true,
-			["Level"] = 5,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "普通关卡",
-			["RewardParam1"] = "100",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[20301] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 3)
-end,
-			},
-			["CounterMax"] = 3,
-			["CounterParam"] = "无",
-			["CounterType"] = "完成竞技场",
-			["Desc"] = "完成竞技场比赛",
-			["IsDaily"] = true,
-			["Level"] = 12,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "竞技场",
-			["RewardParam1"] = "100",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10311,
-			["Type"] = "日常",
-		},
-		[20501] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 2)
-end,
-			},
-			["CounterMax"] = 2,
-			["CounterParam"] = "无",
-			["CounterType"] = "完成试炼",
-			["Desc"] = "完成2次试炼",
-			["IsDaily"] = true,
-			["Level"] = 17,
-			["ModuleType"] = "完成关卡",
-			["Name"] = "强者试炼",
-			["RewardParam1"] = "70",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10403,
-			["Type"] = "日常",
-		},
-		[20701] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "抽卡",
-			["Desc"] = "酒馆喝酒1次",
-			["IsDaily"] = true,
-			["Level"] = 5,
-			["ModuleType"] = "抽卡",
-			["Name"] = "喝一杯",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10202,
-			["Type"] = "日常",
-		},
-		[20801] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "完成探索",
-			["Desc"] = "开始一次探索",
-			["IsDaily"] = true,
-			["Level"] = 16,
-			["ModuleType"] = "完成探索",
-			["Name"] = "前往探索",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10503,
-			["Type"] = "日常",
-		},
-		[21001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "古物鉴定",
-			["Desc"] = "古董店鉴定古物1次",
-			["IsDaily"] = true,
-			["Level"] = 10,
-			["ModuleType"] = "古物鉴定",
-			["Name"] = "古董店寻宝",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10302,
-			["Type"] = "日常",
-		},
-		[30000] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取5张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V1]",
-			["RewardParam1"] = "200000,5",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 1,
-		},
-		[30001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取10张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V2]",
-			["RewardParam1"] = "200000,10",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 2,
-		},
-		[30002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取10张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V3]",
-			["RewardParam1"] = "200000,10",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 3,
-		},
-		[30003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取15张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V4]",
-			["RewardParam1"] = "200000,15",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 4,
-		},
-		[30004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取15张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V5]",
-			["RewardParam1"] = "200000,15",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 5,
-		},
-		[30005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取20张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V6]",
-			["RewardParam1"] = "200000,20",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 6,
-		},
-		[30006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取20张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V7]",
-			["RewardParam1"] = "200000,20",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 7,
-		},
-		[30007] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取25张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V8]",
-			["RewardParam1"] = "200000,25",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 8,
-		},
-		[30008] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取25张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V9]",
-			["RewardParam1"] = "200000,25",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 9,
-		},
-		[30009] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取30张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V10]",
-			["RewardParam1"] = "200000,30",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 10,
-		},
-		[30010] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取40张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V11]",
-			["RewardParam1"] = "200000,40",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 11,
-		},
-		[30011] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取50张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V12]",
-			["RewardParam1"] = "200000,50",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 12,
-		},
-		[30012] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取60张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V13]",
-			["RewardParam1"] = "200000,60",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 13,
-		},
-		[30013] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取70张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V14]",
-			["RewardParam1"] = "200000,70",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 14,
-		},
-		[30014] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["无"](API, User, AchieveItemCfg )
-end,
-			},
-			["Desc"] = "领取80张扫荡券",
-			["IsDaily"] = true,
-			["Level"] = 0,
-			["ModuleType"] = "VIP福利",
-			["Name"] = "扫荡券[V15]",
-			["RewardParam1"] = "200000,80",
-			["RewardType1"] = "物品",
-			["Type"] = "日常",
-			["VipLv"] = 15,
-		},
-		[40001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "购买体力",
-			["Desc"] = "购买体力1次",
-			["IsDaily"] = true,
-			["Level"] = 16,
-			["ModuleType"] = "购买体力",
-			["Name"] = "购买体力",
-			["RewardParam1"] = "50",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[40002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "点金手",
-			["Desc"] = "使用点金手1次",
-			["IsDaily"] = true,
-			["Level"] = 15,
-			["ModuleType"] = "点金手",
-			["Name"] = "点金手",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[40003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "商店购买",
-			["Desc"] = "购买商品1次",
-			["IsDaily"] = true,
-			["Level"] = 12,
-			["ModuleType"] = "商店购买",
-			["Name"] = "商店购买",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10307,
-			["Type"] = "日常",
-		},
-		[40004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "装备洗练",
-			["Desc"] = "装备洗炼1次",
-			["IsDaily"] = true,
-			["Level"] = 26,
-			["ModuleType"] = "装备洗练",
-			["Name"] = "装备洗炼",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10305,
-			["Type"] = "日常",
-		},
-		[40005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 5)
-end,
-			},
-			["CounterMax"] = 5,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹探险",
-			["Desc"] = "挖到宝贝5个",
-			["IsDaily"] = true,
-			["Level"] = 15,
-			["ModuleType"] = "遗迹探险",
-			["Name"] = "遗迹探险",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["StageId"] = 10309,
-			["Type"] = "日常",
-		},
-		[40006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 3)
-end,
-			},
-			["CounterMax"] = 3,
-			["CounterParam"] = "无",
-			["CounterType"] = "英雄累计升级",
-			["Desc"] = "任意英雄升级3次",
-			["IsDaily"] = true,
-			["Level"] = 10,
-			["ModuleType"] = "英雄累计升级",
-			["Name"] = "英雄升级",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[40007] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "无",
-			["CounterType"] = "英雄累计升品",
-			["Desc"] = "任意英雄觉醒1次",
-			["IsDaily"] = true,
-			["Level"] = 16,
-			["ModuleType"] = "英雄累计升品",
-			["Name"] = "英雄觉醒",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[40008] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["有月卡"](API, User, AchieveItemCfg )
-end,
-			},
-			["CounterParam"] = "1",
-			["CounterType"] = "Vip充值",
-			["Desc"] = "每天可领取100钻石",
-			["IsDaily"] = true,
-			["Level"] = 1,
-			["ModuleType"] = "月卡返利",
-			["Name"] = "月卡福利",
-			["Resident"] = true,
-			["RewardParam1"] = "100",
-			["RewardType1"] = "钻石",
-			["Type"] = "日常",
-		},
-		[40009] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["有至尊卡"](API, User, AchieveItemCfg )
-end,
-			},
-			["CounterParam"] = "2",
-			["CounterType"] = "Vip充值",
-			["Desc"] = "每天可领取100钻石",
-			["IsDaily"] = true,
-			["Level"] = 1,
-			["ModuleType"] = "至尊卡返利",
-			["Name"] = "至尊福利",
-			["Resident"] = true,
-			["RewardParam1"] = "100",
-			["RewardType1"] = "钻石",
-			["Type"] = "日常",
-		},
-		[40010] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 300)
-end,
-			},
-			["CounterMax"] = 300,
-			["CounterParam"] = "钻石",
-			["CounterType"] = "消耗",
-			["Desc"] = "消耗300钻石",
-			["IsDaily"] = true,
-			["Level"] = 15,
-			["ModuleType"] = "消耗钻石",
-			["Name"] = "消耗钻石",
-			["RewardParam1"] = "30",
-			["RewardParam2"] = "3000",
-			["RewardType1"] = "经验",
-			["RewardType2"] = "金币",
-			["Type"] = "日常",
-		},
-		[50001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["英雄升级"](API, User, AchieveItemCfg , 2,5)
-end,
-			},
-			["CounterMax"] = 2,
-			["Desc"] = "任意升级2个英雄到5级",
-			["Level"] = 6,
-			["ModuleType"] = "英雄升级",
-			["Name"] = "培养英雄1",
-			["NextAchieve"] = 50002,
-			["NotCheck"] = true,
-			["RewardParam1"] = "3000",
-			["RewardParam2"] = "200012,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[50002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["英雄升级"](API, User, AchieveItemCfg , 3,10)
-end,
-			},
-			["CounterMax"] = 3,
-			["Desc"] = "任意升级3个英雄到10级",
-			["Level"] = 6,
-			["ModuleType"] = "英雄升级",
-			["Name"] = "培养英雄2",
-			["NextAchieve"] = 50003,
-			["NotCheck"] = true,
-			["PreAchieve"] = 50001,
-			["RewardParam1"] = "6000",
-			["RewardParam2"] = "200012,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[50003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["多张卡牌进化颜色"](API, User, AchieveItemCfg , 1,4)
-end,
-			},
-			["Desc"] = "4个英雄进阶到绿",
-			["Level"] = 10,
-			["ModuleType"] = "卡牌进化颜色",
-			["Name"] = "觉醒1",
-			["NextAchieve"] = 50004,
-			["NotCheck"] = true,
-			["PreAchieve"] = 50002,
-			["RewardParam1"] = "6000",
-			["RewardParam2"] = "20",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[50004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["多张卡牌进化颜色"](API, User, AchieveItemCfg , 2,3)
-end,
-			},
-			["Desc"] = "3个英雄进阶到绿+1",
-			["Level"] = 15,
-			["ModuleType"] = "卡牌进化颜色",
-			["Name"] = "觉醒2",
-			["NotCheck"] = true,
-			["PreAchieve"] = 50003,
-			["RewardParam1"] = "6000",
-			["RewardParam2"] = "20",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[50005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["多张卡牌进化颜色"](API, User, AchieveItemCfg , 3,2)
-end,
-			},
-			["Desc"] = "2个英雄进阶到蓝",
-			["Level"] = 20,
-			["ModuleType"] = "卡牌进化颜色",
-			["Name"] = "觉醒3",
-			["NotCheck"] = true,
-			["PreAchieve"] = 50003,
-			["RewardParam1"] = "10000",
-			["RewardParam2"] = "40",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "钻石",
-			["Type"] = "成就",
-		},
-		[60001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 20)
-end,
-			},
-			["CounterMax"] = 20,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到深度",
-			["Desc"] = "遗迹探险达到深度20",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹深处1",
-			["NextAchieve"] = 60002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[60002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 50)
-end,
-			},
-			["CounterMax"] = 50,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到深度",
-			["Desc"] = "遗迹探险达到深度50",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹深处2",
-			["NextAchieve"] = 60003,
-			["PreAchieve"] = 60001,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[60003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 100)
-end,
-			},
-			["CounterMax"] = 100,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到深度",
-			["Desc"] = "遗迹探险达到深度100",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹深处3",
-			["PreAchieve"] = 60002,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[60004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 20)
-end,
-			},
-			["CounterMax"] = 20,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到宽度",
-			["Desc"] = "遗迹探险达到宽度20",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹远处1",
-			["NextAchieve"] = 60005,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[60005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 50)
-end,
-			},
-			["CounterMax"] = 50,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到宽度",
-			["Desc"] = "遗迹探险达到宽度50",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹远处2",
-			["NextAchieve"] = 60006,
-			["PreAchieve"] = 60004,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[60006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数数据达成"](API, User, AchieveItemCfg , 100)
-end,
-			},
-			["CounterMax"] = 100,
-			["CounterParam"] = "无",
-			["CounterType"] = "遗迹挖矿达到宽度",
-			["Desc"] = "遗迹探险达到宽度100",
-			["Level"] = 1,
-			["ModuleType"] = "遗迹挖矿达到",
-			["Name"] = "遗迹远处3",
-			["PreAchieve"] = 60005,
-			["RewardParam1"] = "2000",
-			["RewardParam2"] = "1000,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10309,
-			["Type"] = "成就",
-		},
-		[70001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图1",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)珊瑚曲境获得满星",
-			["Level"] = 3,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱1",
-			["NextAchieve"] = 70002,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[70002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图2",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)精灵沼泽获得满星",
-			["Level"] = 5,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱2",
-			["NextAchieve"] = 70003,
-			["PreAchieve"] = 70001,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[70003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图3",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)帕雅神庙获得满星",
-			["Level"] = 10,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱3",
-			["NextAchieve"] = 70004,
-			["PreAchieve"] = 70002,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[70004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图4",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)圣光之巢获得满星",
-			["Level"] = 15,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱4",
-			["NextAchieve"] = 70005,
-			["PreAchieve"] = 70003,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[70005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图5",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)蒲英魔都获得满星",
-			["Level"] = 20,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱5",
-			["NextAchieve"] = 70006,
-			["PreAchieve"] = 70004,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[70006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "普通_地图6",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(主线)赤鹿之林获得满星",
-			["Level"] = 25,
-			["ModuleType"] = "满星通关",
-			["Name"] = "关卡宝箱6",
-			["PreAchieve"] = 70005,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500004,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["Type"] = "成就",
-		},
-		[80001] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图1",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)珊瑚曲境获得满星",
-			["Level"] = 5,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱1",
-			["NextAchieve"] = 80002,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
-		[80002] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图2",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)精灵沼泽获得满星",
-			["Level"] = 10,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱2",
-			["NextAchieve"] = 80003,
-			["PreAchieve"] = 80001,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
-		[80003] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图3",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)帕雅神庙获得满星",
-			["Level"] = 15,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱3",
-			["NextAchieve"] = 80004,
-			["PreAchieve"] = 80002,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
-		[80004] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图4",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)圣光之巢获得满星",
-			["Level"] = 20,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱4",
-			["NextAchieve"] = 80005,
-			["PreAchieve"] = 80003,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
-		[80005] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图5",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)蒲英魔都获得满星",
-			["Level"] = 25,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱5",
-			["NextAchieve"] = 80006,
-			["PreAchieve"] = 80004,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
-		[80006] = {
-			["ConditionFuncs"] = {
-				function (API, User, AchieveItemCfg)
-	local Args = {}  return API["计数达成"](API, User, AchieveItemCfg , 1)
-end,
-			},
-			["CounterMax"] = 1,
-			["CounterParam"] = "精英_地图6",
-			["CounterType"] = "满星通关地图",
-			["Desc"] = "(精英)赤鹿之林获得满星",
-			["Level"] = 30,
-			["ModuleType"] = "满星通关",
-			["Name"] = "精英宝箱6",
-			["PreAchieve"] = 80005,
-			["RewardParam1"] = "20000",
-			["RewardParam2"] = "500002,5",
-			["RewardType1"] = "金币",
-			["RewardType2"] = "物品",
-			["StageId"] = 10304,
-			["Type"] = "成就",
-		},
+	[10020] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10030",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130010,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10020,
+		["Instance"] = 30010,
+		["Level"] = 1,
+		["Name"] = "审判",
+		["Target"] = {
+			{
+				["场景"] = 120001,
+				["怪物编号"] = 130010,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130010,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120001,
+			["Trigger"] = 5200,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5200,
+		},
+		["Type"] = 1,
 	},
-	["DateCfg"] = {
+	[10023] = {
+		["Active"] = {
+			{
+				["编号"] = 1074,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10023,
+		["Level"] = 7,
+		["Name"] = "魔神升级",
+		["Next"] = 10126,
+		["Pre"] = 10122,
+		["Target"] = {
+			{
+				["名称"] = "升级",
+				["数量"] = 3,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10030] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10040",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10030,
+		["Instance"] = 30011,
+		["Level"] = 1,
+		["Name"] = "审判",
+		["Next"] = 10040,
+		["Pre"] = 10010,
+		["Target"] = {
+			{
+				["场景"] = 121001,
+				["怪物编号"] = 130031,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130031,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121001,
+			["Trigger"] = 5200,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5200,
+		},
+		["Type"] = 1,
+	},
+	[10040] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["X"] = 890,
+				["Y"] = 1700,
+				["场景"] = 100002,
+				["行为"] = "位移传送",
+			},
+		},
+		["ID"] = 10040,
+		["Level"] = 1,
+		["Name"] = "命运",
+		["Next"] = 10050,
+		["Pre"] = 10030,
+		["Target"] = {
+			{
+				["行为"] = "角色起名",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10050] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10050,
+		["Level"] = 1,
+		["Name"] = "冒险",
+		["Next"] = 10060,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10040,
+		["SubmitChat"] = "#cffdd00萨德#n知道远古神殿的消息，也许你会感兴趣。",
+		["SubmitNpc"] = 2004,
+		["TrackTarget"] = {
+			["Data"] = 2004,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10060] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10060,
+		["Level"] = 1,
+		["Name"] = "冒险",
+		["Next"] = 10070,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10050,
+		["SubmitChat"] = "哦？新来的冒险者，#cffdd00远古神殿#n就在#cffdd00蘑灵幻境#n下方。",
+		["SubmitNpc"] = 2011,
+		["TrackTarget"] = {
+			["Data"] = 2011,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10070] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 130050,
+				["行为"] = "删除NPC",
+			},
+			{
+				["编号"] = "chapter_10071",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10070,
+		["Instance"] = 30020,
+		["Level"] = 1,
+		["Name"] = "冒险",
+		["Next"] = 10071,
+		["Pre"] = 10060,
+		["RewardList"] = {
+			"主线任务-宠物2",
+		},
+		["Target"] = {
+			{
+				["场景"] = 120002,
+				["怪物编号"] = 130050,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130050,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120002,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10071] = {
+		["Active"] = {
+			{
+				["编号"] = 1001,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["X"] = 2604,
+				["Y"] = 460,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10071,
+		["Instance"] = 30020,
+		["Level"] = 1,
+		["Name"] = "魔神",
+		["Next"] = 10072,
+		["Pre"] = 10070,
+		["Target"] = {
+			{
+				["行为"] = "魔神上阵",
+				["魔神"] = 80002,
+			},
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10072] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10072,
+		["Level"] = 1,
+		["Name"] = "魔神",
+		["Next"] = 10073,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10071,
+		["RewardExp"] = 90,
+		["RewardList"] = {
+			"主线任务-木武器",
+		},
+		["RewardMoney"] = 13000,
+		["SubmitChat"] = "这个#cffdd00闪光之拳#n送给你，问问荷马，他会告诉你这件装备的来历。",
+		["SubmitNpc"] = 2004,
+		["TrackTarget"] = {
+			["Data"] = 2004,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10073] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 3,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10073,
+		["Level"] = 3,
+		["Name"] = "魔神",
+		["Next"] = 10080,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10072,
+		["SubmitChat"] = "#cffdd00阿修罗#n的#cffdd00屠龙圣器#n终于重见天日了，去蘑灵幻境，感受一下它的强大！",
+		["SubmitNpc"] = 2010,
+		["TrackTarget"] = {
+			["Data"] = 2010,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10074] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 15,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10074,
+		["Level"] = 15,
+		["Name"] = "装备",
+		["Next"] = 10298,
+		["Pre"] = 10201,
+		["RewardList"] = {
+			"主线任务-强化石",
+		},
+		["Target"] = {
+			{
+				["行为"] = "魔神装备穿戴",
+				["道具"] = 31020,
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 120101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10080] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 3,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 130064,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10080,
+		["Instance"] = 30021,
+		["Level"] = 3,
+		["Name"] = "练习",
+		["Next"] = 10081,
+		["Pre"] = 10073,
+		["Target"] = {
+			{
+				["场景"] = 121003,
+				["怪物编号"] = 130064,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130064,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121003,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10081] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 3,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10081,
+		["Level"] = 3,
+		["Name"] = "探索",
+		["Next"] = 10082,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10080,
+		["RewardAnima"] = 32400,
+		["RewardExp"] = 90,
+		["RewardMoney"] = 17000,
+		["SubmitChat"] = "问问依蓓，她会告诉你#cffdd00月光森林#n的位置。",
+		["SubmitNpc"] = 2004,
+		["TrackTarget"] = {
+			["Data"] = 2004,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10082] = {
+		["Active"] = {
+			{
+				["编号"] = 1002,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 4,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10082,
+		["Level"] = 4,
+		["Name"] = "魔神升级",
+		["Next"] = 10083,
+		["Pre"] = 10081,
+		["Target"] = {
+			{
+				["名称"] = "升级",
+				["数量"] = 2,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10083] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 4,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10083,
+		["Level"] = 4,
+		["Name"] = "月光森林",
+		["Next"] = 10090,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10082,
+		["SubmitChat"] = "很久没有见到像你这么勇敢的冒险者了，一直往南走，就会到达月光森林。",
+		["SubmitNpc"] = 2008,
+		["TrackTarget"] = {
+			["Data"] = 2008,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10090] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 4,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10091",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10090,
+		["Instance"] = 30022,
+		["Level"] = 4,
+		["Name"] = "月光森林",
+		["Next"] = 10091,
+		["Pre"] = 10083,
+		["Target"] = {
+			{
+				["场景"] = 121004,
+				["怪物编号"] = 130063,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130063,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121004,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10091] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 4,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10091,
+		["Level"] = 4,
+		["Name"] = "月光森林",
+		["Next"] = 10102,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10090,
+		["RewardExp"] = 100,
+		["RewardList"] = {
+			"主线任务-1阶进化AB",
+		},
+		["RewardMoney"] = 22000,
+		["SubmitChat"] = "你做的很好，作为奖励，我会教你怎么进化魔神。",
+		["SubmitNpc"] = 2004,
+		["TrackTarget"] = {
+			["Data"] = 2004,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10092] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 17,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10092,
+		["Level"] = 17,
+		["Name"] = "魔神装备",
+		["Next"] = 10222,
+		["Pre"] = 10221,
+		["Target"] = {
+			{
+				["行为"] = "魔神装备穿戴",
+				["道具"] = 21020,
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 120101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10093] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10093,
+		["Level"] = 5,
+		["Name"] = "出发",
+		["Next"] = 10101,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10105,
+		["SubmitChat"] = "有个叫雅典娜的女孩来询问你的情况，她说她会在星林那里等你。",
+		["SubmitNpc"] = 2008,
+		["TrackTarget"] = {
+			["Data"] = 2008,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10101] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10101,
+		["Level"] = 5,
+		["Name"] = "出发",
+		["Next"] = 10110,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10093,
+		["SubmitChat"] = "我们一起前往蘑灵幻境，从那里进入远古神殿。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10102] = {
+		["Active"] = {
+			{
+				["编号"] = 1003,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10102,
+		["Level"] = 5,
+		["Name"] = "元素融合",
+		["Next"] = 10103,
+		["Pre"] = 10091,
+		["Target"] = {
+			{
+				["名称"] = "融合",
+				["数量"] = 1,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10103] = {
+		["Active"] = {
+			{
+				["编号"] = 1006,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10103,
+		["Level"] = 5,
+		["Name"] = "魔神进化",
+		["Next"] = 10104,
+		["Pre"] = 10102,
+		["Target"] = {
+			{
+				["名称"] = "进化",
+				["数量"] = 1,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10104] = {
+		["Active"] = {
+			{
+				["编号"] = 1003,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10104,
+		["Level"] = 5,
+		["Name"] = "元素融合",
+		["Next"] = 10105,
+		["Pre"] = 10103,
+		["Target"] = {
+			{
+				["名称"] = "融合",
+				["数量"] = 2,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10105] = {
+		["Active"] = {
+			{
+				["编号"] = 1025,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10105,
+		["Level"] = 5,
+		["Name"] = "魔神进化",
+		["Next"] = 10093,
+		["Pre"] = 10104,
+		["Target"] = {
+			{
+				["名称"] = "进化",
+				["数量"] = 2,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10110] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10111",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130093,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10110,
+		["Instance"] = 30031,
+		["Level"] = 5,
+		["Name"] = "出发",
+		["Next"] = 10111,
+		["Pre"] = 10101,
+		["RewardList"] = {
+			"主线任务-宠物3",
+		},
+		["Target"] = {
+			{
+				["场景"] = 121005,
+				["怪物编号"] = 130093,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130093,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121005,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10111] = {
+		["Active"] = {
+			{
+				["编号"] = 1004,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10111,
+		["Level"] = 5,
+		["Name"] = "魔神上阵",
+		["Next"] = 10112,
+		["Pre"] = 10110,
+		["Target"] = {
+			{
+				["行为"] = "魔神上阵",
+				["魔神"] = 80003,
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10112] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 5,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10112,
+		["Level"] = 5,
+		["Name"] = "激流之剑",
+		["Next"] = 10113,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10111,
+		["RewardExp"] = 110,
+		["RewardList"] = {
+			"主线任务-水武器",
+		},
+		["RewardMoney"] = 28000,
+		["SubmitChat"] = "这把激流之剑送你，去问问希门吹雪，他会告诉你使用大剑的技巧。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10113] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 6,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10113,
+		["Level"] = 6,
+		["Name"] = "激流之剑",
+		["Next"] = 10114,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10112,
+		["SubmitChat"] = "记住，剑发动水元素攻击！我能告诉你的只有这些了，剩下的自己在战斗中领悟吧。",
+		["SubmitNpc"] = 2009,
+		["TrackTarget"] = {
+			["Data"] = 2009,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10114] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 6,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10120",
+				["行为"] = "播放剧情",
+			},
+			{
+				["X"] = 1854,
+				["Y"] = 679,
+				["朝向"] = 0,
+				["编号"] = 130120,
+				["行为"] = "放怪物NPC",
+			},
+		},
+		["ID"] = 10114,
+		["Instance"] = 30040,
+		["Level"] = 6,
+		["Name"] = "神殿",
+		["Next"] = 10120,
+		["Pre"] = 10113,
+		["TrackTarget"] = {
+			["Data"] = 5102,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 120004,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10120] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 6,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10121",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10120,
+		["Instance"] = 30040,
+		["Level"] = 6,
+		["Name"] = "神殿",
+		["Next"] = 10121,
+		["Pre"] = 10114,
+		["Target"] = {
+			{
+				["场景"] = 120004,
+				["怪物编号"] = 130120,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130120,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120004,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10121] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 6,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10121,
+		["Level"] = 6,
+		["Name"] = "神殿",
+		["Next"] = 10122,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10120,
+		["SubmitChat"] = "我们就要动身前往银山小镇，依蓓说出发前去见她一面。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10122] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 6,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10122,
+		["Level"] = 6,
+		["Name"] = "告别",
+		["Next"] = 10023,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10121,
+		["RewardAnima"] = 19200,
+		["RewardExp"] = 150,
+		["RewardList"] = {
+			"主线任务-1阶进化C",
+			"主线任务-钻石奖励",
+		},
+		["RewardMoney"] = 40000,
+		["SubmitChat"] = "我们会再见的！出发前，去和安琪儿道个别吧。",
+		["SubmitNpc"] = 2008,
+		["TrackTarget"] = {
+			["Data"] = 2008,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10124] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10124,
+		["Level"] = 7,
+		["Name"] = "魔踪",
+		["Next"] = 10125,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10127,
+		["SubmitChat"] = "小心，我有预感，出现在银山小镇的魔鬼并不简单！快出发吧，我们会再见的。",
+		["SubmitNpc"] = 2004,
+		["TrackTarget"] = {
+			["Data"] = 2004,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10125] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10125,
+		["Level"] = 7,
+		["Name"] = "魔踪",
+		["Next"] = 10130,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10124,
+		["SubmitChat"] = "镇上很多人失踪了，有人在幻星回廊见到过魔鬼的身影，我们去那里看看。",
+		["SubmitNpc"] = 2103,
+		["TrackTarget"] = {
+			["Data"] = 2103,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10126] = {
+		["Active"] = {
+			{
+				["编号"] = 1022,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10126,
+		["Level"] = 7,
+		["Name"] = "元素融合",
+		["Next"] = 10127,
+		["Pre"] = 10023,
+		["Target"] = {
+			{
+				["名称"] = "融合",
+				["数量"] = 3,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10127] = {
+		["Active"] = {
+			{
+				["编号"] = 1025,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10127,
+		["Level"] = 7,
+		["Name"] = "魔神进化",
+		["Next"] = 10124,
+		["Pre"] = 10126,
+		["Target"] = {
+			{
+				["名称"] = "进化",
+				["数量"] = 3,
+				["等阶"] = 1,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10130] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10132",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130150,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10130,
+		["Instance"] = 30050,
+		["Level"] = 7,
+		["Name"] = "魔踪",
+		["Next"] = 10141,
+		["Pre"] = 10125,
+		["Target"] = {
+			{
+				["场景"] = 120005,
+				["怪物编号"] = 130150,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130150,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120005,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10132] = {
+		["Active"] = {
+			{
+				["编号"] = 1073,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10132,
+		["Level"] = 9,
+		["Name"] = "坐骑",
+		["Next"] = 10142,
+		["Pre"] = 10141,
+		["Target"] = {
+			{
+				["名称"] = "骑乘坐骑",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10141] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 7,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10141,
+		["Level"] = 7,
+		["Name"] = "魔影",
+		["Next"] = 10132,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10130,
+		["RewardExp"] = 360,
+		["RewardMoney"] = 59000,
+		["SubmitChat"] = "我们即将进入盗宝丛林，去问问爱丽丝关于那里的情况。",
+		["SubmitNpc"] = 2103,
+		["TrackTarget"] = {
+			["Data"] = 2103,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10142] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10142,
+		["Level"] = 9,
+		["Name"] = "魔影",
+		["Next"] = 10150,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10132,
+		["SubmitChat"] = "盗宝丛林生活着一群魔法地精，不过自从魔鬼出现后就再也没有了消息。",
+		["SubmitNpc"] = 2102,
+		["TrackTarget"] = {
+			["Data"] = 2102,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10150] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 130210,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 400,
+				["Y"] = 1530,
+				["朝向"] = 307,
+				["编号"] = 5016,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10150,
+		["Instance"] = 30070,
+		["Level"] = 9,
+		["Name"] = "魔影",
+		["Next"] = 10151,
+		["Pre"] = 10142,
+		["Target"] = {
+			{
+				["场景"] = 120007,
+				["怪物编号"] = 130210,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130210,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120007,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10151] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10151,
+		["Level"] = 9,
+		["Name"] = "魔影",
+		["Next"] = 10155,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10150,
+		["RewardExp"] = 410,
+		["RewardMoney"] = 66000,
+		["SubmitChat"] = "想不到地精们都死了，也不知道失踪的人怎么样了。",
+		["SubmitNpc"] = 2102,
+		["TrackTarget"] = {
+			["Data"] = 2102,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10152] = {
+		["Active"] = {
+			{
+				["编号"] = 1032,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 21,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10152,
+		["Level"] = 21,
+		["Name"] = "魔法炼金",
+		["Next"] = 10280,
+		["Pre"] = 10271,
+		["Target"] = {
+			{
+				["名称"] = "魔法炼金",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 520101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10153] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 10,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10153,
+		["Level"] = 10,
+		["Name"] = "暗流",
+		["Next"] = 10160,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10154,
+		["SubmitChat"] = "黑暗的力量正在往流金峡谷涌动，走吧，我们一定会追上潘魔，查清真相。",
+		["SubmitNpc"] = 2103,
+		["TrackTarget"] = {
+			["Data"] = 2103,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10154] = {
+		["Active"] = {
+			{
+				["编号"] = 1076,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10154,
+		["Level"] = 9,
+		["Name"] = "家园炼金炉",
+		["Next"] = 10153,
+		["Pre"] = 10155,
+		["Target"] = {
+			{
+				["名称"] = "炼金炉增加宠物",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10155] = {
+		["Active"] = {
+			{
+				["编号"] = 1093,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 9,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10155,
+		["Level"] = 9,
+		["Name"] = "家园宠物",
+		["Next"] = 10154,
+		["Pre"] = 10151,
+		["Target"] = {
+			{
+				["商店"] = 10,
+				["数量"] = 1,
+				["行为"] = "购买道具",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10160] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 10,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10161",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130240,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 2590,
+				["Y"] = 460,
+				["朝向"] = 307,
+				["编号"] = 5016,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10160,
+		["Instance"] = 30080,
+		["Level"] = 10,
+		["Name"] = "暗流",
+		["Next"] = 10165,
+		["Pre"] = 10153,
+		["Target"] = {
+			{
+				["场景"] = 120008,
+				["怪物编号"] = 130240,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130240,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120008,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10165] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 10,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10165,
+		["Level"] = 10,
+		["Name"] = "暗流",
+		["Next"] = 10242,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10160,
+		["RewardAnima"] = 57900,
+		["RewardExp"] = 830,
+		["RewardList"] = {
+			"主线任务-坐骑外形",
+		},
+		["RewardMoney"] = 73000,
+		["SubmitChat"] = "皮特的声音在我梦里出现，他绝望无助的嘶吼，呼唤着我，就在秘语森林方向。",
+		["SubmitNpc"] = 2105,
+		["TrackTarget"] = {
+			["Data"] = 2105,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10166] = {
+		["Active"] = {
+			{
+				["编号"] = 1064,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 10,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10166,
+		["Level"] = 10,
+		["Name"] = "每月签到",
+		["Next"] = 10180,
+		["Pre"] = 10242,
+		["Target"] = {
+			{
+				["名称"] = "月签到",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 990201,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10180] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 12,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10181",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130300,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 790,
+				["Y"] = 1760,
+				["朝向"] = 307,
+				["编号"] = 5016,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10180,
+		["Instance"] = 30100,
+		["Level"] = 12,
+		["Name"] = "勿忘",
+		["Next"] = 10181,
+		["Pre"] = 10166,
+		["Target"] = {
+			{
+				["场景"] = 120010,
+				["怪物编号"] = 130300,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130300,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120010,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10181] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 12,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10181,
+		["Level"] = 12,
+		["Name"] = "勿忘",
+		["Next"] = 10182,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10180,
+		["RewardAnima"] = 57900,
+		["RewardExp"] = 840,
+		["RewardMoney"] = 87000,
+		["SubmitChat"] = "潘魔带走了勿忘我，他们去了森林深处，问问爱丽丝，那是什么地方？",
+		["SubmitNpc"] = 2103,
+		["TrackTarget"] = {
+			["Data"] = 2103,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10182] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 13,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10182,
+		["Level"] = 13,
+		["Name"] = "血色",
+		["Next"] = 10190,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10181,
+		["SubmitChat"] = "他们一定是进入了#cffdd00暗影之巢#n，那是森林里最邪恶的地方，从没有人敢接近。",
+		["SubmitNpc"] = 2102,
+		["TrackTarget"] = {
+			["Data"] = 2102,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10190] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 13,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10191",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130330,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 2630,
+				["Y"] = 770,
+				["朝向"] = 307,
+				["编号"] = 5016,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10190,
+		["Instance"] = 30110,
+		["Level"] = 13,
+		["Name"] = "血色",
+		["Next"] = 10191,
+		["Pre"] = 10182,
+		["Target"] = {
+			{
+				["场景"] = 120011,
+				["怪物编号"] = 130330,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130330,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120011,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10191] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 13,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10191,
+		["Level"] = 13,
+		["Name"] = "血色",
+		["Next"] = 10193,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10190,
+		["RewardAnima"] = 57900,
+		["RewardExp"] = 850,
+		["RewardList"] = {
+			"主线任务-第4只魔神进化",
+		},
+		["RewardMoney"] = 94000,
+		["SubmitChat"] = "你们赶走了魔鬼，请接受我的谢意！我会告诉你关于魔神进化的事情。",
+		["SubmitNpc"] = 2102,
+		["TrackTarget"] = {
+			["Data"] = 2102,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10192] = {
+		["Active"] = {
+			{
+				["编号"] = 1086,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10192,
+		["Level"] = 14,
+		["Name"] = "第四只魔神",
+		["Next"] = 10201,
+		["Pre"] = 10200,
+		["Target"] = {
+			{
+				["行为"] = "魔神上阵",
+				["魔神"] = 80004,
+			},
+		},
+		["Type"] = 1,
+	},
+	[10193] = {
+		["Active"] = {
+			{
+				["编号"] = 1087,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10193,
+		["Level"] = 14,
+		["Name"] = "魔神升级",
+		["Next"] = 10194,
+		["Pre"] = 10191,
+		["Target"] = {
+			{
+				["名称"] = "升级",
+				["数量"] = 4,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10194] = {
+		["Active"] = {
+			{
+				["编号"] = 1023,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10194,
+		["Level"] = 14,
+		["Name"] = "元素融合",
+		["Next"] = 10195,
+		["Pre"] = 10193,
+		["Target"] = {
+			{
+				["名称"] = "融合",
+				["数量"] = 1,
+				["等阶"] = 2,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10195] = {
+		["Active"] = {
+			{
+				["编号"] = 1018,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10195,
+		["Level"] = 14,
+		["Name"] = "魔神进化",
+		["Next"] = 10197,
+		["Pre"] = 10194,
+		["Target"] = {
+			{
+				["名称"] = "进化",
+				["数量"] = 1,
+				["等阶"] = 2,
+				["行为"] = "魔神计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10197] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10197,
+		["Level"] = 14,
+		["Name"] = "血色",
+		["Next"] = 10198,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10195,
+		["SubmitChat"] = "该隐的复活也许和远古神殿有关，我要前往树屋酒吧，这封信帮我交给曙光之城的塔塔。",
+		["SubmitNpc"] = 2103,
+		["TrackTarget"] = {
+			["Data"] = 2103,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100005,
+			["Trigger"] = 5016,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10198] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10198,
+		["Level"] = 14,
+		["Name"] = "远行",
+		["Next"] = 10200,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10197,
+		["SubmitChat"] = "我是神裔之庭的信使，这件事需要一点时间处理，你先四处转转，了解一下这里。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10200] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10201",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10200,
+		["Instance"] = 30220,
+		["Level"] = 14,
+		["Name"] = "远行",
+		["Next"] = 10192,
+		["Pre"] = 10198,
+		["RewardList"] = {
+			"主线任务-追火少年",
+		},
+		["Target"] = {
+			{
+				["场景"] = 120022,
+				["怪物编号"] = 130660,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130660,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120022,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10201] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10201,
+		["Level"] = 14,
+		["Name"] = "远行",
+		["Next"] = 10074,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10192,
+		["RewardExp"] = 860,
+		["RewardList"] = {
+			"主线任务-宠物武器",
+			"主线任务-宠物铠甲",
+			"主线任务-宠物腰带",
+			"主线任务-宠物护符",
+		},
+		["RewardMoney"] = 102000,
+		["SubmitChat"] = "你要加入城邦吗？让我看看你的实力，有两个坏蛋在幸运山谷砸坏了许多花花草草，教训一下他们！",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10202] = {
+		["Active"] = {
+			{
+				["编号"] = 1065,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 16,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10202,
+		["Level"] = 16,
+		["Name"] = "城邦科技",
+		["Next"] = 10220,
+		["Pre"] = 10211,
+		["Target"] = {
+			{
+				["等级"] = 1,
+				["类型"] = "Single",
+				["行为"] = "城邦科技",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 140101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10210] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 15,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10211",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130690,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10210,
+		["Instance"] = 30230,
+		["Level"] = 15,
+		["Name"] = "坏蛋",
+		["Next"] = 10211,
+		["Pre"] = 10298,
+		["Target"] = {
+			{
+				["场景"] = 120023,
+				["怪物编号"] = 130690,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130690,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120023,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10211] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 15,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10211,
+		["Level"] = 15,
+		["Name"] = "坏蛋",
+		["Next"] = 10202,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10210,
+		["RewardExp"] = 870,
+		["RewardList"] = {
+			"主线任务-功勋",
+		},
+		["RewardMoney"] = 109000,
+		["SubmitChat"] = "要参加天空竞技吗？参赛指引人在竞技场里，她会告诉你怎么做的。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10220] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 16,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10221",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10220,
+		["Instance"] = 30240,
+		["Level"] = 16,
+		["Name"] = "竞技场",
+		["Next"] = 10221,
+		["Pre"] = 10202,
+		["Target"] = {
+			{
+				["场景"] = 120024,
+				["怪物编号"] = 130720,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130720,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120024,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10221] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 16,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10221,
+		["Level"] = 16,
+		["Name"] = "竞技场",
+		["Next"] = 10092,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10220,
+		["RewardExp"] = 880,
+		["RewardList"] = {
+			"主线任务-宠物武器",
+			"主线任务-宠物铠甲",
+			"主线任务-宠物腰带",
+			"主线任务-宠物护符",
+		},
+		["RewardMoney"] = 116000,
+		["SubmitChat"] = "你已经获得了进入竞技场的资格，在这里和其他玩家较量，你会成为令人尊敬的强者！",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10222] = {
+		["Active"] = {
+			{
+				["编号"] = 1009,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 17,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10222,
+		["Level"] = 17,
+		["Name"] = "竞技场",
+		["Next"] = 10223,
+		["Pre"] = 10092,
+		["Target"] = {
+			{
+				["名称"] = "竞技场",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 510101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10223] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 17,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10223,
+		["Level"] = 17,
+		["Name"] = "提升",
+		["Next"] = 10230,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10222,
+		["SubmitChat"] = "我占卜到你的“激流之剑”似乎有股来自地狱的牵引力量，你最好不要忽视它。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10224] = {
+		["Active"] = {
+			{
+				["编号"] = 1071,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 19,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10224,
+		["Level"] = 19,
+		["Name"] = "龙珠秘境",
+		["Next"] = 10262,
+		["Pre"] = 10251,
+		["Target"] = {
+			{
+				["名称"] = "获得龙珠秘境积分",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 610101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10230] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 17,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10242",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 135020,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10230,
+		["Instance"] = 40010,
+		["Level"] = 17,
+		["Name"] = "追溯",
+		["Next"] = 10233,
+		["Pre"] = 10223,
+		["Target"] = {
+			{
+				["场景"] = 190010,
+				["怪物编号"] = 135020,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135020,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190010,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10232] = {
+		["Active"] = {
+			{
+				["编号"] = 1010,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 31,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10232,
+		["Level"] = 31,
+		["Name"] = "星座",
+		["Next"] = 10380,
+		["Pre"] = 10371,
+		["Target"] = {
+			{
+				["名称"] = "星座占星",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+			{
+				["名称"] = "星座装备",
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10233] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 17,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10233,
+		["Level"] = 17,
+		["Name"] = "追溯",
+		["Next"] = 10252,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10230,
+		["RewardExp"] = 890,
+		["RewardMoney"] = 122000,
+		["SubmitChat"] = "地狱的通道已打开，众神感知到你的窘境，也向你打开了大门，接受众神之门的馈赠，然后去问问叶韵祭坛的事情",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5011,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10234] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10234,
+		["Level"] = 18,
+		["Name"] = "祭坛",
+		["Next"] = 10332,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10253,
+		["RewardList"] = {
+			"主线任务-分解宠物",
+		},
+		["SubmitChat"] = "我已为你召唤祭坛，奉献你的祭品，然后去无极之地找潘大师学习吧！",
+		["SubmitNpc"] = 2054,
+		["TrackTarget"] = {
+			["Data"] = 2054,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5011,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10241] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 31003,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 10241,
+		["Level"] = 18,
+		["Name"] = "追溯",
+		["Next"] = 10244,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10243,
+		["RewardExp"] = 930,
+		["RewardList"] = {
+			"主线任务-宠物武器",
+			"主线任务-宠物铠甲",
+			"主线任务-宠物腰带",
+			"主线任务-宠物护符",
+		},
+		["RewardMoney"] = 131000,
+		["SubmitChat"] = "你得到了无极强者的指点，已有与地狱魔王平等对话的权利，去继续你该做的事情吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10242] = {
+		["Active"] = {
+			{
+				["编号"] = 1082,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 12,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10242,
+		["Level"] = 12,
+		["Name"] = "坐骑幻化",
+		["Next"] = 10166,
+		["Pre"] = 10165,
+		["Target"] = {
+			{
+				["参数"] = "101",
+				["名称"] = "坐骑幻化激活",
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10243] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10231",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130750,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10243,
+		["Instance"] = 30250,
+		["Level"] = 18,
+		["Name"] = "提升",
+		["Next"] = 10241,
+		["Pre"] = 10332,
+		["RewardList"] = {
+			"主线任务-痛苦之灵",
+		},
+		["Target"] = {
+			{
+				["场景"] = 120025,
+				["怪物编号"] = 130750,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130750,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120025,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10244] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10244,
+		["Level"] = 18,
+		["Name"] = "魔神装备",
+		["Next"] = 10245,
+		["Pre"] = 10241,
+		["Target"] = {
+			{
+				["行为"] = "魔神装备穿戴",
+				["道具"] = 21020,
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 120101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10245] = {
+		["Active"] = {
+			{
+				["编号"] = 1094,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10245,
+		["Level"] = 18,
+		["Name"] = "家园收取资源",
+		["Next"] = 10250,
+		["Pre"] = 10244,
+		["Target"] = {
+			{
+				["名称"] = "炼金炉资源收取",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 1,
+	},
+	[10250] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 19,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10244",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 135050,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10250,
+		["Instance"] = 40020,
+		["Level"] = 19,
+		["Name"] = "复苏",
+		["Next"] = 10251,
+		["Pre"] = 10245,
+		["Target"] = {
+			{
+				["场景"] = 190011,
+				["怪物编号"] = 135050,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135050,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190011,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10251] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 19,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10251,
+		["Level"] = 19,
+		["Name"] = "复苏",
+		["Next"] = 10224,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10250,
+		["RewardAnima"] = 97500,
+		["RewardExp"] = 980,
+		["RewardList"] = {
+			"主线任务-强化石",
+		},
+		["RewardMoney"] = 138000,
+		["SubmitChat"] = "都是可怜的人儿！据我占卜获悉，目标可能在“幽暗之森”范围。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5011,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10252] = {
+		["Active"] = {
+			{
+				["编号"] = 1026,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10252,
+		["Level"] = 18,
+		["Name"] = "众神之门",
+		["Next"] = 10253,
+		["Pre"] = 10233,
+		["Target"] = {
+			{
+				["名称"] = "钻石之门",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 560101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10253] = {
+		["Active"] = {
+			{
+				["编号"] = 1062,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10253,
+		["Level"] = 18,
+		["Name"] = "魔神更换",
+		["Next"] = 10234,
+		["Pre"] = 10252,
+		["Target"] = {
+			{
+				["目标"] = 80029,
+				["行为"] = "魔神更换",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10261] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10261,
+		["Level"] = 20,
+		["Name"] = "执魂",
+		["Next"] = 10302,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10262,
+		["SubmitChat"] = "相传圣廷有复活灵魂的神术，但您需要更强大的装备才能闯入圣廷。",
+		["SubmitNpc"] = 2075,
+		["TrackTarget"] = {
+			["Data"] = 2075,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5010,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10262] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10246",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 135080,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10262,
+		["Instance"] = 40030,
+		["Level"] = 20,
+		["Name"] = "执魂",
+		["Next"] = 10261,
+		["Pre"] = 10224,
+		["Target"] = {
+			{
+				["场景"] = 190012,
+				["怪物编号"] = 135080,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135080,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190012,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10270] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 21,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 135110,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10270,
+		["Instance"] = 40040,
+		["Level"] = 21,
+		["Name"] = "圣廷",
+		["Next"] = 10271,
+		["Pre"] = 10299,
+		["Target"] = {
+			{
+				["场景"] = 190013,
+				["怪物编号"] = 135110,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135110,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190013,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10271] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 21,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10271,
+		["Level"] = 21,
+		["Name"] = "圣廷",
+		["Next"] = 10152,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10270,
+		["RewardAnima"] = 102500,
+		["RewardExp"] = 1450,
+		["RewardList"] = {
+			"主线任务-宠物武器",
+			"主线任务-宠物铠甲",
+			"主线任务-宠物腰带",
+			"主线任务-宠物护符",
+		},
+		["RewardMoney"] = 153000,
+		["SubmitChat"] = "哪怕是一丝希望也要尝试。假如主人疯狂的话，对地狱、对大陆都是一种灾难。",
+		["SubmitNpc"] = 2075,
+		["TrackTarget"] = {
+			["Data"] = 2075,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5010,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10280] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 22,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10248",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 135140,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10280,
+		["Instance"] = 40050,
+		["Level"] = 22,
+		["Name"] = "复活",
+		["Next"] = 10281,
+		["Pre"] = 10152,
+		["Target"] = {
+			{
+				["场景"] = 190014,
+				["怪物编号"] = 135140,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135140,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190014,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10281] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 22,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10281,
+		["Level"] = 22,
+		["Name"] = "复活",
+		["Next"] = 10290,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10280,
+		["RewardAnima"] = 105000,
+		["RewardExp"] = 1600,
+		["RewardMoney"] = 160000,
+		["SubmitChat"] = "主人已前往“众神遗址”完善剩余记忆的部分，他传来消息让你去那儿寻他。",
+		["SubmitNpc"] = 2075,
+		["TrackTarget"] = {
+			["Data"] = 2075,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5010,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10290] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10251",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 135170,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10290,
+		["Instance"] = 40060,
+		["Level"] = 23,
+		["Name"] = "情结",
+		["Next"] = 10291,
+		["Pre"] = 10281,
+		["Target"] = {
+			{
+				["场景"] = 190016,
+				["怪物编号"] = 135170,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 135170,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 190016,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10291] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10291,
+		["Level"] = 23,
+		["Name"] = "噩讯",
+		["Next"] = 10292,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10290,
+		["RewardAnima"] = 107500,
+		["RewardExp"] = 1680,
+		["RewardMoney"] = 167000,
+		["SubmitChat"] = "耶林萨从树屋酒吧带回一个和你有关的坏消息，他正在着急等你。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5011,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10292] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10292,
+		["Level"] = 24,
+		["Name"] = "噩讯",
+		["Next"] = 10293,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10291,
+		["SubmitChat"] = "该隐就要复活，许多冒险者被抽去灵魂，成为该隐复活的力量，雅典娜让我来找你。",
+		["SubmitNpc"] = 2060,
+		["TrackTarget"] = {
+			["Data"] = 2060,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10293] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10293,
+		["Level"] = 24,
+		["Name"] = "兽人",
+		["Next"] = 10300,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10292,
+		["SubmitChat"] = "不死大军看守着进入黑暗古墓的道路，只有兽人的地穴才能让我们直接进入古墓，阻止该隐复活。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10294] = {
+		["Active"] = {
+			{
+				["编号"] = 1088,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10294,
+		["Level"] = 20,
+		["Name"] = "魔神装备精炼",
+		["Next"] = 10295,
+		["Pre"] = 10302,
+		["Target"] = {
+			{
+				["名称"] = "装备精炼",
+				["数量"] = 3,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10295] = {
+		["Active"] = {
+			{
+				["编号"] = 1089,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10295,
+		["Level"] = 20,
+		["Name"] = "魔神装备精炼",
+		["Next"] = 10296,
+		["Pre"] = 10294,
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 1,
+				["关卡"] = 210001,
+				["怪物编号"] = 320002,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10296] = {
+		["Active"] = {
+			{
+				["编号"] = 1090,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10296,
+		["Level"] = 20,
+		["Name"] = "魔神装备精炼",
+		["Next"] = 10297,
+		["Pre"] = 10295,
+		["Target"] = {
+			{
+				["名称"] = "装备精炼",
+				["数量"] = 4,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10297] = {
+		["Active"] = {
+			{
+				["编号"] = 1038,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10297,
+		["Level"] = 20,
+		["Name"] = "冒险之路",
+		["Next"] = 10303,
+		["Pre"] = 10296,
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 1,
+				["关卡"] = 310001,
+				["怪物编号"] = 320003,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10298] = {
+		["Active"] = {
+			{
+				["编号"] = 1014,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 15,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10298,
+		["Level"] = 15,
+		["Name"] = "魔神装备强化",
+		["Next"] = 10210,
+		["Pre"] = 10074,
+		["Target"] = {
+			{
+				["名称"] = "魔神装备强化",
+				["数量"] = 5,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10299] = {
+		["Active"] = {
+			{
+				["编号"] = 1091,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 32005,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 10299,
+		["Level"] = 20,
+		["Name"] = "魔神装备升阶",
+		["Next"] = 10270,
+		["Pre"] = 10303,
+		["Target"] = {
+			{
+				["名称"] = "装备精炼",
+				["数量"] = 5,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10300] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10301",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130360,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 1205,
+				["Y"] = 1055,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10300,
+		["Instance"] = 30120,
+		["Level"] = 24,
+		["Name"] = "兽人",
+		["Next"] = 10301,
+		["Pre"] = 10293,
+		["Target"] = {
+			{
+				["场景"] = 120012,
+				["怪物编号"] = 130360,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130360,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120012,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10301] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10301,
+		["Level"] = 24,
+		["Name"] = "兽人",
+		["Next"] = 10312,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10300,
+		["RewardAnima"] = 110000,
+		["RewardExp"] = 2400,
+		["RewardList"] = {
+			"主线任务-契约石",
+		},
+		["RewardMoney"] = 174000,
+		["SubmitChat"] = "真是顽固的兽人，现在我们要进入荆棘之森，平息他们和精灵的战争。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10302] = {
+		["AcceptChat"] = "领悟装备的奥秘吧！",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10302,
+		["Level"] = 20,
+		["Name"] = "装备的奥秘",
+		["Next"] = 10294,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10261,
+		["RewardAnima"] = 100000,
+		["RewardExp"] = 1400,
+		["RewardList"] = {
+			"主线任务-5级任务材料",
+		},
+		["RewardMoney"] = 145000,
+		["SubmitChat"] = "我是一个慷慨的人，魔神装备的奥秘随时可以教给你。",
+		["SubmitNpc"] = 2058,
+		["TrackTarget"] = {
+			["Data"] = 2058,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5011,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10303] = {
+		["AcceptChat"] = "领悟装备的奥秘吧！",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 20,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10303,
+		["Level"] = 20,
+		["Name"] = "装备的奥秘",
+		["Next"] = 10299,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10297,
+		["RewardList"] = {
+			"主线任务-大量装备升阶",
+		},
+		["SubmitChat"] = "只要你完成魔神装备升阶，你将掌握魔神装备的全部奥秘，快试试吧！",
+		["SubmitNpc"] = 2058,
+		["TrackTarget"] = {
+			["Data"] = 2058,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5010,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10310] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["X"] = 280,
+				["Y"] = 1500,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10310,
+		["Instance"] = 30130,
+		["Level"] = 25,
+		["Name"] = "精灵",
+		["Next"] = 10311,
+		["Pre"] = 10312,
+		["Target"] = {
+			{
+				["场景"] = 120013,
+				["怪物编号"] = 130390,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130390,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120013,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10311] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10311,
+		["Level"] = 25,
+		["Name"] = "精灵",
+		["Next"] = 10320,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10310,
+		["RewardAnima"] = 112500,
+		["RewardExp"] = 2500,
+		["RewardMoney"] = 180000,
+		["SubmitChat"] = "兽人已经答应了我们，让我们进入他们的地穴，寻找进入黑暗古墓的通道。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10312] = {
+		["Active"] = {
+			{
+				["编号"] = 1053,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10312,
+		["Level"] = 24,
+		["Name"] = "坐骑培养",
+		["Next"] = 10310,
+		["Pre"] = 10301,
+		["Target"] = {
+			{
+				["名称"] = "坐骑结契",
+				["数量"] = 3,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 100203,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10320] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 26,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10321",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130420,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 2418,
+				["Y"] = 638,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10320,
+		["Instance"] = 30140,
+		["Level"] = 26,
+		["Name"] = "地穴",
+		["Next"] = 10321,
+		["Pre"] = 10311,
+		["Target"] = {
+			{
+				["场景"] = 120014,
+				["怪物编号"] = 130420,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130420,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120014,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10321] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 26,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10321,
+		["Level"] = 26,
+		["Name"] = "地穴",
+		["Next"] = 10330,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10320,
+		["RewardAnima"] = 115000,
+		["RewardExp"] = 2600,
+		["RewardMoney"] = 189000,
+		["SubmitChat"] = "我感受到了阿卡莎的气息，我们已经离黑暗古墓很近了。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10330] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 27,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10331",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130450,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 1185,
+				["Y"] = 1670,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10330,
+		["Instance"] = 30150,
+		["Level"] = 27,
+		["Name"] = "地穴",
+		["Next"] = 10331,
+		["Pre"] = 10321,
+		["Target"] = {
+			{
+				["场景"] = 120015,
+				["怪物编号"] = 130450,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130450,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120015,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10331] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 27,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10331,
+		["Level"] = 27,
+		["Name"] = "地穴",
+		["Next"] = 10340,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10330,
+		["RewardAnima"] = 117500,
+		["RewardExp"] = 2700,
+		["RewardMoney"] = 196000,
+		["SubmitChat"] = "走吧，我已经找到了黑暗古墓的位置。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10332] = {
+		["Active"] = {
+			{
+				["编号"] = 1056,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10332,
+		["Level"] = 18,
+		["Name"] = "魔神炼魂",
+		["Next"] = 10243,
+		["Pre"] = 10234,
+		["Target"] = {
+			{
+				["名称"] = "魔神拆解",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 170205,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10340] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 28,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10341",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 2830,
+				["Y"] = 610,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10340,
+		["Instance"] = 30190,
+		["Level"] = 28,
+		["Name"] = "古墓",
+		["Next"] = 10341,
+		["Pre"] = 10331,
+		["Target"] = {
+			{
+				["场景"] = 120019,
+				["怪物编号"] = 130570,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130570,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120019,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10341] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 28,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10341,
+		["Level"] = 28,
+		["Name"] = "古墓",
+		["Next"] = 10350,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10340,
+		["RewardAnima"] = 120000,
+		["RewardExp"] = 2800,
+		["RewardMoney"] = 203000,
+		["SubmitChat"] = "沉睡在黑暗古墓的该隐如今苏醒了，他一定会前往苍夜神殿，制造不死大军。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10350] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 29,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10351",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130600,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 240,
+				["Y"] = 980,
+				["朝向"] = 307,
+				["编号"] = 5002,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10350,
+		["Instance"] = 30200,
+		["Level"] = 29,
+		["Name"] = "苍夜神殿",
+		["Next"] = 10351,
+		["Pre"] = 10341,
+		["Target"] = {
+			{
+				["场景"] = 120020,
+				["怪物编号"] = 130600,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130600,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120020,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10351] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 29,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10351,
+		["Level"] = 29,
+		["Name"] = "苍夜神殿",
+		["Next"] = 10353,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10350,
+		["RewardAnima"] = 122500,
+		["RewardExp"] = 2900,
+		["RewardMoney"] = 206000,
+		["SubmitChat"] = "只有增强你的力量我们才可以对付该隐，现在我要告诉你培养魔神的方法。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10352] = {
+		["Active"] = {
+			{
+				["编号"] = 1052,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 37,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10352,
+		["Level"] = 37,
+		["Name"] = "魔神培养",
+		["Next"] = 10440,
+		["Pre"] = 10431,
+		["Target"] = {
+			{
+				["名称"] = "魔神培养",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10353] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10353,
+		["Level"] = 30,
+		["Name"] = "苍夜神殿",
+		["Next"] = 10360,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10351,
+		["SubmitChat"] = "最后的决战开始了，我们一定会消灭该隐，阻止他建造不死大军。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10360] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10361",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130603,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10360,
+		["Instance"] = 30201,
+		["Level"] = 30,
+		["Name"] = "苍夜神殿",
+		["Next"] = 10361,
+		["Pre"] = 10353,
+		["Target"] = {
+			{
+				["场景"] = 121021,
+				["怪物编号"] = 130603,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130603,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121021,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10361] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10361,
+		["Level"] = 30,
+		["Name"] = "天空之怒",
+		["Next"] = 10362,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10360,
+		["RewardAnima"] = 125000,
+		["RewardExp"] = 3000,
+		["RewardMoney"] = 217000,
+		["SubmitChat"] = "该隐的力量惊醒了沉睡在龙息山脉的天空之怒，它来复仇了，依蓓让你快去找她。",
+		["SubmitNpc"] = 2006,
+		["TrackTarget"] = {
+			["Data"] = 2006,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10362] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 31,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10362,
+		["Level"] = 31,
+		["Name"] = "天空之怒",
+		["Next"] = 10363,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10361,
+		["SubmitChat"] = "屠龙的队伍已经在篝火营地聚集，希望你能赶上。",
+		["SubmitNpc"] = 2008,
+		["TrackTarget"] = {
+			["Data"] = 2008,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100002,
+			["Trigger"] = 5002,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10363] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 31,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10363,
+		["Level"] = 31,
+		["Name"] = "篝火营地",
+		["Next"] = 10370,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10362,
+		["SubmitChat"] = "传奇冒险者威震天正在选拔屠龙的勇士，去试试吧。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10370] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 31,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 130606,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10370,
+		["Instance"] = 30202,
+		["Level"] = 31,
+		["Name"] = "选拔",
+		["Next"] = 10371,
+		["Pre"] = 10363,
+		["Target"] = {
+			{
+				["场景"] = 121022,
+				["怪物编号"] = 130606,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130606,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121022,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10371] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 31,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10371,
+		["Level"] = 31,
+		["Name"] = "选拔",
+		["Next"] = 10232,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10370,
+		["RewardAnima"] = 127500,
+		["RewardExp"] = 3720,
+		["RewardList"] = {
+			"主线任务-星图1",
+			"",
+		},
+		["RewardMoney"] = 224000,
+		["SubmitChat"] = "那些曾经与天空之怒战斗的强者们陨落在了龙骨之地，去那里看看，你会感受到他们的勇气和力量。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10380] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 32,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10381",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130510,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 1330,
+				["Y"] = 1360,
+				["朝向"] = 307,
+				["编号"] = 5019,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10380,
+		["Instance"] = 30170,
+		["Level"] = 32,
+		["Name"] = "传说",
+		["Next"] = 10381,
+		["Pre"] = 10232,
+		["Target"] = {
+			{
+				["场景"] = 120017,
+				["怪物编号"] = 130510,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130510,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120017,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10381] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 32,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10381,
+		["Level"] = 32,
+		["Name"] = "传说",
+		["Next"] = 10390,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10380,
+		["RewardAnima"] = 130000,
+		["RewardExp"] = 3840,
+		["RewardMoney"] = 231000,
+		["SubmitChat"] = "不知道什么人在找你，我们去哀嚎洞穴看看吧。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10390] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 33,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10391",
+				["行为"] = "播放剧情",
+			},
+			{
+				["X"] = 2580,
+				["Y"] = 1220,
+				["朝向"] = 307,
+				["编号"] = 5019,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10390,
+		["Instance"] = 30160,
+		["Level"] = 33,
+		["Name"] = "传说",
+		["Next"] = 10391,
+		["Pre"] = 10381,
+		["Target"] = {
+			{
+				["场景"] = 120016,
+				["怪物编号"] = 130480,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130480,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120016,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10391] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 33,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10391,
+		["Level"] = 33,
+		["Name"] = "传说",
+		["Next"] = 10392,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10390,
+		["RewardAnima"] = 132500,
+		["RewardExp"] = 3960,
+		["RewardMoney"] = 238000,
+		["SubmitChat"] = "威震天正在找你。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10392] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 34,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10392,
+		["Level"] = 34,
+		["Name"] = "龙战（一）",
+		["Next"] = 10400,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10391,
+		["SubmitChat"] = "天空之怒派出了他的爪牙，拿起你的武器，跟我来消灭他们！",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10400] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 34,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10400,
+		["Instance"] = 30161,
+		["Level"] = 34,
+		["Name"] = "龙战（一）",
+		["Next"] = 10401,
+		["Pre"] = 10392,
+		["Target"] = {
+			{
+				["场景"] = 121016,
+				["怪物编号"] = 130483,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130483,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121016,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10401] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 34,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10401,
+		["Level"] = 34,
+		["Name"] = "龙战（一）",
+		["Next"] = 10402,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10400,
+		["RewardAnima"] = 135000,
+		["RewardExp"] = 4080,
+		["RewardMoney"] = 245000,
+		["SubmitChat"] = "这只是开始，马上会有更强的敌人出现！",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10402] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10402,
+		["Level"] = 35,
+		["Name"] = "龙战（二）",
+		["Next"] = 10410,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10401,
+		["SubmitChat"] = "天空之怒派出了小龙女，拿起你的武器，跟我来消灭他们！",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10410] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10410,
+		["Instance"] = 30162,
+		["Level"] = 35,
+		["Name"] = "龙战（二）",
+		["Next"] = 10411,
+		["Pre"] = 10402,
+		["Target"] = {
+			{
+				["场景"] = 121017,
+				["怪物编号"] = 130486,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130486,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121017,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10411] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10411,
+		["Level"] = 35,
+		["Name"] = "龙战（二）",
+		["Next"] = 10412,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10410,
+		["RewardAnima"] = 137500,
+		["RewardExp"] = 4200,
+		["RewardList"] = {
+			"主线任务-星图2",
+			"",
+		},
+		["RewardMoney"] = 252000,
+		["SubmitChat"] = "看来天空之怒已经背叛了龙神，龙神一定会降临惩罚的，将这个好消息告诉威震天吧。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10412] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 36,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10412,
+		["Level"] = 36,
+		["Name"] = "龙战（三）",
+		["Next"] = 10420,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10411,
+		["SubmitChat"] = "我们已经等不到龙神的惩罚了，天空之怒派出了魔龙力士，我们必须现在就战斗",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10420] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 36,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10420,
+		["Instance"] = 30163,
+		["Level"] = 36,
+		["Name"] = "龙战（三）",
+		["Next"] = 10421,
+		["Pre"] = 10412,
+		["Target"] = {
+			{
+				["场景"] = 121018,
+				["怪物编号"] = 130489,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130489,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121018,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10421] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 36,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10421,
+		["Level"] = 36,
+		["Name"] = "龙战（四）",
+		["Next"] = 10430,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10420,
+		["RewardAnima"] = 140000,
+		["RewardExp"] = 4320,
+		["RewardMoney"] = 259000,
+		["SubmitChat"] = "蓝龙正在向我们袭来，他们是天空之怒最可怕的爪牙，消灭他们！",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10430] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 37,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10430,
+		["Instance"] = 30164,
+		["Level"] = 37,
+		["Name"] = "龙战（四）",
+		["Next"] = 10431,
+		["Pre"] = 10421,
+		["Target"] = {
+			{
+				["场景"] = 121019,
+				["怪物编号"] = 130513,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130513,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121019,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10431] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 37,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10431,
+		["Level"] = 37,
+		["Name"] = "龙战（五）",
+		["Next"] = 10352,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10430,
+		["RewardAnima"] = 142500,
+		["RewardExp"] = 4440,
+		["RewardMoney"] = 266000,
+		["SubmitChat"] = "我们已经消灭了天空之怒最锋利的爪牙，是时候发动反攻了，向龙息洞穴前进！",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10440] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 38,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10440,
+		["Instance"] = 30165,
+		["Level"] = 38,
+		["Name"] = "龙战（五）",
+		["Next"] = 10441,
+		["Pre"] = 10352,
+		["Target"] = {
+			{
+				["场景"] = 121020,
+				["怪物编号"] = 130516,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130516,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121020,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10441] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 38,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10441,
+		["Level"] = 38,
+		["Name"] = "龙神使者",
+		["Next"] = 10450,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10440,
+		["RewardAnima"] = 145000,
+		["RewardExp"] = 4560,
+		["RewardMoney"] = 272000,
+		["SubmitChat"] = "马上就要进入龙息洞穴了，我们将缔造传说",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10450] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 39,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10451",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130540,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 1840,
+				["Y"] = 1360,
+				["朝向"] = 307,
+				["编号"] = 5019,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10450,
+		["Instance"] = 30180,
+		["Level"] = 39,
+		["Name"] = "龙神使者",
+		["Next"] = 10451,
+		["Pre"] = 10441,
+		["Target"] = {
+			{
+				["场景"] = 120018,
+				["怪物编号"] = 130540,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130540,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120018,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10451] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 39,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10451,
+		["Level"] = 39,
+		["Name"] = "屠龙",
+		["Next"] = 10452,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10450,
+		["RewardAnima"] = 147500,
+		["RewardExp"] = 5850,
+		["RewardList"] = {
+			"主线任务-宠物武器",
+			"主线任务-宠物铠甲",
+			"主线任务-宠物腰带",
+			"主线任务-宠物护符",
+		},
+		["RewardMoney"] = 279000,
+		["SubmitChat"] = "天空之怒正在往树屋酒吧飞去，威震天正在找你！",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10452] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10452,
+		["Level"] = 40,
+		["Name"] = "屠龙",
+		["Next"] = 10460,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10451,
+		["SubmitChat"] = "屠龙的队伍已经向树屋酒吧进发，快赶上他们！",
+		["SubmitNpc"] = 2031,
+		["TrackTarget"] = {
+			["Data"] = 2031,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10460] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10461",
+				["行为"] = "播放剧情",
+			},
+			{
+				["X"] = 1440,
+				["Y"] = 1800,
+				["朝向"] = 307,
+				["编号"] = 5019,
+				["行为"] = "放触发器",
+			},
+		},
+		["ID"] = 10460,
+		["Instance"] = 30210,
+		["Level"] = 40,
+		["Name"] = "屠龙",
+		["Next"] = 10461,
+		["Pre"] = 10452,
+		["Target"] = {
+			{
+				["场景"] = 120021,
+				["怪物编号"] = 130630,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130630,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120021,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5001,
+		},
+		["Type"] = 1,
+	},
+	[10461] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 34001,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 10461,
+		["Level"] = 40,
+		["Name"] = "屠龙",
+		["Next"] = 10462,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10460,
+		["RewardAnima"] = 150000,
+		["RewardExp"] = 6000,
+		["RewardList"] = {
+			"主线任务-星图3",
+			"主线任务-原力",
+		},
+		["RewardMoney"] = 282000,
+		["SubmitChat"] = "天空之怒终于死了，曙光之城发生了重大事情，塔塔正在寻求你的帮助。",
+		["SubmitNpc"] = 2024,
+		["TrackTarget"] = {
+			["Data"] = 2024,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100004,
+			["Trigger"] = 5019,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10462] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 41,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10462,
+		["Level"] = 41,
+		["Name"] = "使命",
+		["Next"] = 10470,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10461,
+		["SubmitChat"] = "缪斯找到了我们需要的雷霆之火，但是遭到了黑暗力量的堵截，一切都靠你了。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10470] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 41,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10661",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130960,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10470,
+		["Instance"] = 30320,
+		["Level"] = 41,
+		["Name"] = "缪斯",
+		["Next"] = 10471,
+		["Pre"] = 10462,
+		["Target"] = {
+			{
+				["场景"] = 120032,
+				["怪物编号"] = 130960,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130960,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120032,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10471] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 41,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10471,
+		["Level"] = 41,
+		["Name"] = "修补",
+		["Next"] = 10480,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10470,
+		["RewardAnima"] = 152500,
+		["RewardExp"] = 7380,
+		["RewardMoney"] = 293000,
+		["SubmitChat"] = "保存雷霆之火的容器在战斗中糟到了损坏，只有用钢骨巨熊的熊皮才能修复。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10480] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 42,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10480,
+		["Instance"] = 30321,
+		["Level"] = 42,
+		["Name"] = "钢骨巨熊",
+		["Next"] = 10481,
+		["Pre"] = 10471,
+		["Target"] = {
+			{
+				["场景"] = 121032,
+				["怪物编号"] = 130963,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130963,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121032,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10481] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 42,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10481,
+		["Level"] = 42,
+		["Name"] = "堵截",
+		["Next"] = 10490,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10480,
+		["RewardAnima"] = 77500,
+		["RewardExp"] = 3780,
+		["RewardMoney"] = 149500,
+		["SubmitChat"] = "容器已经修复，缪斯将带着雷霆之火去骨塚神庙寻找真理之木，帮她拦住魔女。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10490] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 42,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10681",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130990,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10490,
+		["Instance"] = 30330,
+		["Level"] = 42,
+		["Name"] = "魔女",
+		["Next"] = 10491,
+		["Pre"] = 10481,
+		["Target"] = {
+			{
+				["场景"] = 120033,
+				["怪物编号"] = 130990,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130990,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120033,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10491] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 42,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10491,
+		["Level"] = 42,
+		["Name"] = "窥视",
+		["Next"] = 10500,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10490,
+		["RewardAnima"] = 77500,
+		["RewardExp"] = 3780,
+		["RewardMoney"] = 149500,
+		["SubmitChat"] = "我们收到消息，魔女并没有善罢甘休，她派出许多探子窥视着我们，将他们搜捕出来。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10500] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 43,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10500,
+		["Instance"] = 30331,
+		["Level"] = 43,
+		["Name"] = "魔女探子",
+		["Next"] = 10501,
+		["Pre"] = 10491,
+		["Target"] = {
+			{
+				["场景"] = 121033,
+				["怪物编号"] = 130993,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 130993,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121033,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10501] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 43,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10501,
+		["Level"] = 43,
+		["Name"] = "真理",
+		["Next"] = 10510,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10500,
+		["RewardAnima"] = 78750,
+		["RewardExp"] = 3870,
+		["RewardMoney"] = 153000,
+		["SubmitChat"] = "缪斯带回来一个消息，困惑殿堂的米诺陶斯知道真理之木的下落，去问问他。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10510] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 43,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10701",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131020,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10510,
+		["Instance"] = 30340,
+		["Level"] = 43,
+		["Name"] = "困惑",
+		["Next"] = 10511,
+		["Pre"] = 10501,
+		["Target"] = {
+			{
+				["场景"] = 120034,
+				["怪物编号"] = 131020,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131020,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120034,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10511] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 43,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10511,
+		["Level"] = 43,
+		["Name"] = "游荡怪物",
+		["Next"] = 10520,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10510,
+		["RewardAnima"] = 78750,
+		["RewardExp"] = 3870,
+		["RewardMoney"] = 153000,
+		["SubmitChat"] = "达芙妮吗？通往她那里的路上充满了游荡的怪物，你要先消灭它们！",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10520] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10520,
+		["Instance"] = 30341,
+		["Level"] = 44,
+		["Name"] = "游荡怪物",
+		["Next"] = 10521,
+		["Pre"] = 10511,
+		["Target"] = {
+			{
+				["场景"] = 121034,
+				["怪物编号"] = 131023,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131023,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121034,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10521] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10521,
+		["Level"] = 44,
+		["Name"] = "达芙妮",
+		["Next"] = 10530,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10520,
+		["RewardAnima"] = 80000,
+		["RewardExp"] = 3960,
+		["RewardMoney"] = 156500,
+		["SubmitChat"] = "你已经消灭了沿途的怪物，现在进入千针石林，找到达芙妮，去寻找真理之木吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10530] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10721",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131050,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10530,
+		["Instance"] = 30350,
+		["Level"] = 44,
+		["Name"] = "达芙妮",
+		["Next"] = 10531,
+		["Pre"] = 10521,
+		["Target"] = {
+			{
+				["场景"] = 120035,
+				["怪物编号"] = 131050,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131050,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120035,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10531] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10531,
+		["Level"] = 44,
+		["Name"] = "佣兵",
+		["Next"] = 10592,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10530,
+		["RewardAnima"] = 80000,
+		["RewardExp"] = 3960,
+		["RewardList"] = {
+			"主线任务-夺宝碎片",
+		},
+		["RewardMoney"] = 156500,
+		["SubmitChat"] = "罗宾汉有许多手下在周围活动，从他们那里也许可以知道罗宾汉的下落。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10540] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10540,
+		["Instance"] = 30351,
+		["Level"] = 45,
+		["Name"] = "怪物佣兵",
+		["Next"] = 10541,
+		["Pre"] = 10594,
+		["Target"] = {
+			{
+				["场景"] = 121035,
+				["怪物编号"] = 131053,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131053,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121035,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10541] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10541,
+		["Level"] = 45,
+		["Name"] = "狂徒",
+		["Next"] = 10550,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10540,
+		["RewardAnima"] = 81250,
+		["RewardExp"] = 4500,
+		["RewardMoney"] = 159500,
+		["SubmitChat"] = "知道了罗宾汉的下落，快点找到他。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10550] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10741",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131080,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10550,
+		["Instance"] = 30360,
+		["Level"] = 45,
+		["Name"] = "狂徒",
+		["Next"] = 10551,
+		["Pre"] = 10541,
+		["Target"] = {
+			{
+				["场景"] = 120036,
+				["怪物编号"] = 131080,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131080,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120036,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10551] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10551,
+		["Level"] = 45,
+		["Name"] = "水元素",
+		["Next"] = 10560,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10550,
+		["RewardAnima"] = 81250,
+		["RewardExp"] = 4500,
+		["RewardList"] = {
+			"主线任务-星图4",
+		},
+		["RewardMoney"] = 159500,
+		["SubmitChat"] = "海格力斯曾在海上历险，那些水元素也许知道他的下落。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10560] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 46,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10560,
+		["Instance"] = 30361,
+		["Level"] = 46,
+		["Name"] = "水元素",
+		["Next"] = 10561,
+		["Pre"] = 10551,
+		["Target"] = {
+			{
+				["场景"] = 121036,
+				["怪物编号"] = 131083,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131083,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121036,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10561] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 46,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10561,
+		["Level"] = 46,
+		["Name"] = "苏醒",
+		["Next"] = 10570,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10560,
+		["RewardAnima"] = 82500,
+		["RewardExp"] = 4600,
+		["RewardMoney"] = 163000,
+		["SubmitChat"] = "海格力斯被塞壬催眠在留声回廊，快去解救他。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10570] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 46,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10761",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131110,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10570,
+		["Instance"] = 30370,
+		["Level"] = 46,
+		["Name"] = "苏醒",
+		["Next"] = 10571,
+		["Pre"] = 10561,
+		["Target"] = {
+			{
+				["场景"] = 120037,
+				["怪物编号"] = 131110,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131110,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120037,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10571] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 46,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10571,
+		["Level"] = 46,
+		["Name"] = "地狱卫士",
+		["Next"] = 10580,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10570,
+		["RewardAnima"] = 82500,
+		["RewardExp"] = 4600,
+		["RewardMoney"] = 163000,
+		["SubmitChat"] = "地狱犬，我听说过关于这种怪物的事情，它躲在了地穴深处，只有它的卫士知道位置。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10580] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 47,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10580,
+		["Instance"] = 30371,
+		["Level"] = 47,
+		["Name"] = "地狱卫士",
+		["Next"] = 10581,
+		["Pre"] = 10571,
+		["Target"] = {
+			{
+				["场景"] = 121037,
+				["怪物编号"] = 131113,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131113,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121037,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10581] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 47,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10581,
+		["Level"] = 47,
+		["Name"] = "地狱犬",
+		["Next"] = 10590,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10580,
+		["RewardAnima"] = 83750,
+		["RewardExp"] = 4700,
+		["RewardMoney"] = 166000,
+		["SubmitChat"] = "地狱犬躲藏在了圣火神殿，带海格力斯去那里看看吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10590] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 47,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10781",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131140,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10590,
+		["Instance"] = 30380,
+		["Level"] = 47,
+		["Name"] = "地狱犬",
+		["Next"] = 10591,
+		["Pre"] = 10581,
+		["Target"] = {
+			{
+				["场景"] = 120038,
+				["怪物编号"] = 131140,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131140,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120038,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10591] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 47,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10591,
+		["Level"] = 47,
+		["Name"] = "冰雪巨人",
+		["Next"] = 10600,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10590,
+		["RewardAnima"] = 83750,
+		["RewardExp"] = 4700,
+		["RewardMoney"] = 166000,
+		["SubmitChat"] = "冰雪巨人知道贝奥武夫的下落，去那里问问。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10592] = {
+		["Active"] = {
+			{
+				["编号"] = 1011,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10592,
+		["Level"] = 44,
+		["Name"] = "盗梦空间抢夺",
+		["Next"] = 10593,
+		["Pre"] = 10531,
+		["Target"] = {
+			{
+				["名称"] = "盗梦空间抢夺",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 500101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10593] = {
+		["Active"] = {
+			{
+				["编号"] = 1012,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10593,
+		["Level"] = 44,
+		["Name"] = "盗梦空间合成",
+		["Next"] = 10595,
+		["Pre"] = 10592,
+		["Target"] = {
+			{
+				["名称"] = "盗梦空间合成",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 500101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10594] = {
+		["Active"] = {
+			{
+				["编号"] = 1066,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10594,
+		["Level"] = 44,
+		["Name"] = "藏宝图",
+		["Next"] = 10540,
+		["Pre"] = 10595,
+		["Target"] = {
+			{
+				["名称"] = "进入藏宝图",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 120101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10595] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 44,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10595,
+		["Level"] = 44,
+		["Name"] = "梦境",
+		["Next"] = 10594,
+		["Pre"] = 10593,
+		["Target"] = {
+			{
+				["名称"] = "使用梦境礼包",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 120101,
+			["Type"] = 5,
+		},
+		["Type"] = 1,
+	},
+	[10600] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 48,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10600,
+		["Instance"] = 30381,
+		["Level"] = 48,
+		["Name"] = "冰雪巨人",
+		["Next"] = 10601,
+		["Pre"] = 10591,
+		["Target"] = {
+			{
+				["场景"] = 121038,
+				["怪物编号"] = 131143,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131143,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121038,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10601] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 48,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10601,
+		["Level"] = 48,
+		["Name"] = "寒冬",
+		["Next"] = 10610,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10600,
+		["RewardAnima"] = 85000,
+		["RewardExp"] = 4800,
+		["RewardMoney"] = 169500,
+		["SubmitChat"] = "霜鬼侵占了寒冬一族的家园，贝奥武夫被困在了银色沼泽。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10610] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 48,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10801",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131170,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10610,
+		["Instance"] = 30390,
+		["Level"] = 48,
+		["Name"] = "寒冬",
+		["Next"] = 10611,
+		["Pre"] = 10601,
+		["Target"] = {
+			{
+				["场景"] = 120039,
+				["怪物编号"] = 131170,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131170,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120039,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10611] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 48,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10611,
+		["Level"] = 48,
+		["Name"] = "水之精灵",
+		["Next"] = 10620,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10610,
+		["RewardAnima"] = 85000,
+		["RewardExp"] = 4800,
+		["RewardMoney"] = 169500,
+		["SubmitChat"] = "水之精灵曾经接近过艾欧雷克，它们一定知道艾欧雷克的下落。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10620] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 49,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10620,
+		["Instance"] = 30391,
+		["Level"] = 49,
+		["Name"] = "水之精灵",
+		["Next"] = 10621,
+		["Pre"] = 10611,
+		["Target"] = {
+			{
+				["场景"] = 121039,
+				["怪物编号"] = 131173,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131173,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121039,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10621] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 49,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10621,
+		["Level"] = 49,
+		["Name"] = "梦魇",
+		["Next"] = 10630,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10620,
+		["RewardAnima"] = 86250,
+		["RewardExp"] = 4900,
+		["RewardMoney"] = 172500,
+		["SubmitChat"] = "埃欧雷克守护在梦魇绝地，去那里找他吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10630] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 49,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10821",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131200,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10630,
+		["Instance"] = 30400,
+		["Level"] = 49,
+		["Name"] = "梦魇",
+		["Next"] = 10631,
+		["Pre"] = 10621,
+		["Target"] = {
+			{
+				["场景"] = 120040,
+				["怪物编号"] = 131200,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131200,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120040,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10631] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 49,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10631,
+		["Level"] = 49,
+		["Name"] = "烈火元素",
+		["Next"] = 10640,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10630,
+		["RewardAnima"] = 86250,
+		["RewardExp"] = 4900,
+		["RewardMoney"] = 172500,
+		["SubmitChat"] = "熔岩魔窟，可怕的烈火元素守卫在那里，要进入那里，你必须先击败他们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10640] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10640,
+		["Instance"] = 30401,
+		["Level"] = 50,
+		["Name"] = "烈火元素",
+		["Next"] = 10641,
+		["Pre"] = 10631,
+		["Target"] = {
+			{
+				["场景"] = 121040,
+				["怪物编号"] = 131203,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131203,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 121040,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10641] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10641,
+		["Level"] = 50,
+		["Name"] = "神之苏醒",
+		["Next"] = 10650,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10640,
+		["RewardAnima"] = 87500,
+		["RewardExp"] = 5000,
+		["RewardMoney"] = 176000,
+		["SubmitChat"] = "去吧熔岩魔窟吧，托尔的力量在等着你。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10650] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10841",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131230,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10650,
+		["Instance"] = 30410,
+		["Level"] = 50,
+		["Name"] = "神之苏醒",
+		["Next"] = 10651,
+		["Pre"] = 10641,
+		["Target"] = {
+			{
+				["场景"] = 120041,
+				["怪物编号"] = 131230,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131230,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120041,
+			["Trigger"] = 5006,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5006,
+		},
+		["Type"] = 1,
+	},
+	[10651] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10651,
+		["Level"] = 50,
+		["Name"] = "熔岩魔窟",
+		["Next"] = 10652,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10650,
+		["RewardAnima"] = 87500,
+		["RewardExp"] = 5000,
+		["RewardMoney"] = 176000,
+		["SubmitChat"] = "好好使用托尔的力量，未来你将有用到他的时候。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10652] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 51,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10652,
+		["Level"] = 51,
+		["Name"] = "黑暗古堡",
+		["Next"] = 10660,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10651,
+		["SubmitChat"] = "黑暗古堡的入口开启了，黑暗的力量占据那里，他们以地府之名，寻找着哈迪斯的意志。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5012,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10660] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 51,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10861",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10660,
+		["Instance"] = 30420,
+		["Level"] = 51,
+		["Name"] = "李斯提坦",
+		["Next"] = 10661,
+		["Pre"] = 10652,
+		["Target"] = {
+			{
+				["场景"] = 120042,
+				["怪物编号"] = 131260,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131260,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120042,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10661] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 51,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10661,
+		["Level"] = 51,
+		["Name"] = "李斯提坦",
+		["Next"] = 10670,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10660,
+		["RewardExp"] = 10200,
+		["SubmitChat"] = "黑暗古堡的周围徘徊着许多噩梦幽魂，消灭它们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10670] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 51,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10670,
+		["Instance"] = 30430,
+		["Level"] = 51,
+		["Name"] = "噩梦幽魂",
+		["Next"] = 10671,
+		["Pre"] = 10661,
+		["Target"] = {
+			{
+				["场景"] = 120043,
+				["怪物编号"] = 131290,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131290,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120043,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10671] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 51,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10671,
+		["Level"] = 51,
+		["Name"] = "噩梦幽魂",
+		["Next"] = 10680,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10670,
+		["RewardAnima"] = 180000,
+		["RewardExp"] = 10400,
+		["RewardMoney"] = 358000,
+		["SubmitChat"] = "小心守卫古堡的地狱哀歌，它的鼻子可以轻易发现你。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10680] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 52,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10901",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10680,
+		["Instance"] = 30440,
+		["Level"] = 52,
+		["Name"] = "地狱哀歌",
+		["Next"] = 10681,
+		["Pre"] = 10671,
+		["Target"] = {
+			{
+				["场景"] = 120044,
+				["怪物编号"] = 131320,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131320,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120044,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10681] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 52,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10681,
+		["Level"] = 52,
+		["Name"] = "地狱哀歌",
+		["Next"] = 10690,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10680,
+		["RewardAnima"] = 182500,
+		["RewardExp"] = 10600,
+		["RewardMoney"] = 365000,
+		["SubmitChat"] = "零散的怪物在古堡徘徊，它们又饥又饿。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10690] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 52,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10690,
+		["Instance"] = 30450,
+		["Level"] = 52,
+		["Name"] = "零散怪物",
+		["Next"] = 10691,
+		["Pre"] = 10681,
+		["Target"] = {
+			{
+				["场景"] = 120045,
+				["怪物编号"] = 131350,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131350,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120045,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10691] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 52,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10691,
+		["Level"] = 52,
+		["Name"] = "零散怪物",
+		["Next"] = 10700,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10690,
+		["RewardAnima"] = 185000,
+		["RewardExp"] = 10800,
+		["RewardMoney"] = 371000,
+		["SubmitChat"] = "如果你想穿过彼岸，必须获得冥河守卫的帮助。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10700] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 53,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10941",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10700,
+		["Instance"] = 30460,
+		["Level"] = 53,
+		["Name"] = "冥河守卫",
+		["Next"] = 10701,
+		["Pre"] = 10691,
+		["Target"] = {
+			{
+				["场景"] = 120046,
+				["怪物编号"] = 131380,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131380,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120046,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10701] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 53,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10701,
+		["Level"] = 53,
+		["Name"] = "冥河守卫",
+		["Next"] = 10710,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10700,
+		["RewardAnima"] = 187500,
+		["RewardExp"] = 11000,
+		["RewardMoney"] = 378000,
+		["SubmitChat"] = "四处穿梭的暗影幽魂让人生出阵阵寒意，消灭它们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10710] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 53,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10710,
+		["Instance"] = 30470,
+		["Level"] = 53,
+		["Name"] = "暗影阵阵",
+		["Next"] = 10711,
+		["Pre"] = 10701,
+		["Target"] = {
+			{
+				["场景"] = 120047,
+				["怪物编号"] = 131410,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131410,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120047,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10711] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 53,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10711,
+		["Level"] = 53,
+		["Name"] = "暗影阵阵",
+		["Next"] = 10720,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10710,
+		["RewardAnima"] = 190000,
+		["RewardExp"] = 11200,
+		["RewardMoney"] = 384000,
+		["SubmitChat"] = "死亡使者只满足于制造死亡带来的快感，让他也尝尝死亡的味道。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10720] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 54,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10961",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10720,
+		["Instance"] = 30480,
+		["Level"] = 54,
+		["Name"] = "死亡使者",
+		["Next"] = 10721,
+		["Pre"] = 10711,
+		["Target"] = {
+			{
+				["场景"] = 120048,
+				["怪物编号"] = 131440,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131440,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120048,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10721] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 54,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10721,
+		["Level"] = 54,
+		["Name"] = "死亡使者",
+		["Next"] = 10730,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10720,
+		["RewardAnima"] = 192500,
+		["RewardExp"] = 11400,
+		["RewardMoney"] = 390000,
+		["SubmitChat"] = "阴暗的角落里总有些眼睛紧盯着你，小心那些怪物。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10730] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 54,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10730,
+		["Instance"] = 30490,
+		["Level"] = 54,
+		["Name"] = "阴暗怪物",
+		["Next"] = 10731,
+		["Pre"] = 10721,
+		["Target"] = {
+			{
+				["场景"] = 120049,
+				["怪物编号"] = 131470,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131470,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120049,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10731] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 54,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10731,
+		["Level"] = 54,
+		["Name"] = "阴暗怪物",
+		["Next"] = 10740,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10730,
+		["RewardAnima"] = 195000,
+		["RewardExp"] = 11600,
+		["RewardMoney"] = 397000,
+		["SubmitChat"] = "前往珀耳塞福涅的幽冥古堡会经过一片燃烧着幽火的坟场，传说有不死鸟死在那里。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10740] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10981",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10740,
+		["Instance"] = 30500,
+		["Level"] = 55,
+		["Name"] = "菲尼克斯",
+		["Next"] = 10741,
+		["Pre"] = 10731,
+		["Target"] = {
+			{
+				["场景"] = 120050,
+				["怪物编号"] = 131500,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131500,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120050,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10741] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10741,
+		["Level"] = 55,
+		["Name"] = "菲尼克斯",
+		["Next"] = 10750,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10740,
+		["RewardAnima"] = 197500,
+		["RewardExp"] = 11800,
+		["RewardMoney"] = 403000,
+		["SubmitChat"] = "从骸骨堆里跃起的怪物总会突然给你一击。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10750] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10750,
+		["Instance"] = 30510,
+		["Level"] = 55,
+		["Name"] = "骸骨怪物",
+		["Next"] = 10751,
+		["Pre"] = 10741,
+		["Target"] = {
+			{
+				["场景"] = 120051,
+				["怪物编号"] = 131530,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131530,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120051,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[10751] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10751,
+		["Level"] = 55,
+		["Name"] = "骸骨怪物",
+		["Next"] = 10760,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10750,
+		["RewardAnima"] = 200000,
+		["RewardExp"] = 12000,
+		["RewardMoney"] = 409000,
+		["SubmitChat"] = "接下来，才是真正强大的敌人，甚至你会碰到传说中强大的睡神修谱诺斯。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10760] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 56,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11061",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10760,
+		["Instance"] = 30520,
+		["Level"] = 56,
+		["Name"] = "修普诺斯",
+		["Next"] = 10761,
+		["Pre"] = 10751,
+		["Target"] = {
+			{
+				["场景"] = 120052,
+				["怪物编号"] = 131560,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131560,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120052,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10761] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 56,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10761,
+		["Level"] = 56,
+		["Name"] = "修普诺斯",
+		["Next"] = 10770,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10760,
+		["RewardAnima"] = 202500,
+		["RewardExp"] = 12200,
+		["RewardMoney"] = 415000,
+		["SubmitChat"] = "睡神召唤的梦境怪物会慢慢吞噬你的灵魂，消灭它们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10770] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 56,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10770,
+		["Instance"] = 30530,
+		["Level"] = 56,
+		["Name"] = "梦境怪物",
+		["Next"] = 10771,
+		["Pre"] = 10761,
+		["Target"] = {
+			{
+				["场景"] = 120053,
+				["怪物编号"] = 131590,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131590,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120053,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10771] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 56,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10771,
+		["Level"] = 56,
+		["Name"] = "梦境怪物",
+		["Next"] = 10780,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10770,
+		["RewardAnima"] = 205000,
+		["RewardExp"] = 12400,
+		["RewardMoney"] = 422000,
+		["SubmitChat"] = "死神达拿都斯是修普诺斯的哥哥，但他的力量要强大的多。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10780] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 57,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11101",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10780,
+		["Instance"] = 30540,
+		["Level"] = 57,
+		["Name"] = "达拿都斯",
+		["Next"] = 10781,
+		["Pre"] = 10771,
+		["Target"] = {
+			{
+				["场景"] = 120054,
+				["怪物编号"] = 131620,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131620,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120054,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10781] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 57,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10781,
+		["Level"] = 57,
+		["Name"] = "达拿都斯",
+		["Next"] = 10790,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10780,
+		["RewardAnima"] = 207500,
+		["RewardExp"] = 12600,
+		["RewardMoney"] = 428000,
+		["SubmitChat"] = "死神恶灵会从任何地方涌现，消灭它们才能避免死亡。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10790] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 57,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10790,
+		["Instance"] = 30550,
+		["Level"] = 57,
+		["Name"] = "死神恶灵",
+		["Next"] = 10791,
+		["Pre"] = 10781,
+		["Target"] = {
+			{
+				["场景"] = 120055,
+				["怪物编号"] = 131650,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131650,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120055,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10791] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 57,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10791,
+		["Level"] = 57,
+		["Name"] = "死神恶灵",
+		["Next"] = 10800,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10790,
+		["RewardAnima"] = 210000,
+		["RewardExp"] = 12800,
+		["RewardMoney"] = 434000,
+		["SubmitChat"] = "其实我很奇怪珀耳塞福涅会这样做，这件事情一定另有隐情。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10800] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 58,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11141",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10800,
+		["Instance"] = 30560,
+		["Level"] = 58,
+		["Name"] = "洛基",
+		["Next"] = 10801,
+		["Pre"] = 10791,
+		["Target"] = {
+			{
+				["场景"] = 120056,
+				["怪物编号"] = 131680,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131680,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120056,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10801] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 58,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10801,
+		["Level"] = 58,
+		["Name"] = "洛基",
+		["Next"] = 10810,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10800,
+		["RewardAnima"] = 212500,
+		["RewardExp"] = 13000,
+		["RewardMoney"] = 440000,
+		["SubmitChat"] = "四处巡逻的黑暗侍卫是最可怕的侩子手，消灭他们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10810] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 58,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10810,
+		["Instance"] = 30570,
+		["Level"] = 58,
+		["Name"] = "黑暗侍卫",
+		["Next"] = 10811,
+		["Pre"] = 10801,
+		["Target"] = {
+			{
+				["场景"] = 120057,
+				["怪物编号"] = 131710,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131710,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120057,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10811] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 58,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10811,
+		["Level"] = 58,
+		["Name"] = "黑暗侍卫",
+		["Next"] = 10820,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10810,
+		["RewardAnima"] = 215000,
+		["RewardExp"] = 13200,
+		["RewardMoney"] = 446000,
+		["SubmitChat"] = "让珀耳塞福涅痛苦自己犯下的罪恶吧，如果她还知道悔改的话。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10820] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 59,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11181",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 130570,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10820,
+		["Instance"] = 30580,
+		["Level"] = 59,
+		["Name"] = "珀耳塞福涅",
+		["Next"] = 10821,
+		["Pre"] = 10811,
+		["Target"] = {
+			{
+				["场景"] = 120058,
+				["怪物编号"] = 131740,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131740,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120058,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10821] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 59,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10821,
+		["Level"] = 59,
+		["Name"] = "珀耳塞福涅",
+		["Next"] = 10830,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10820,
+		["RewardAnima"] = 217500,
+		["RewardExp"] = 13400,
+		["RewardMoney"] = 452000,
+		["SubmitChat"] = "你的进入唤醒了守卫冥皇的黑暗武士，消灭它们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10830] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 59,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10830,
+		["Instance"] = 30590,
+		["Level"] = 59,
+		["Name"] = "黑暗武士",
+		["Next"] = 10831,
+		["Pre"] = 10821,
+		["Target"] = {
+			{
+				["场景"] = 120059,
+				["怪物编号"] = 131770,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131770,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120059,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10831] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 59,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10831,
+		["Level"] = 59,
+		["Name"] = "黑暗武士",
+		["Next"] = 10840,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10830,
+		["RewardAnima"] = 220000,
+		["RewardExp"] = 13600,
+		["RewardMoney"] = 459000,
+		["SubmitChat"] = "哈迪斯的灵魂碎片被封印在那里，那是他轮回后失去的记忆。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10840] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11221",
+				["行为"] = "播放剧情",
+			},
+		},
+		["ID"] = 10840,
+		["Instance"] = 30600,
+		["Level"] = 60,
+		["Name"] = "冥皇归来",
+		["Next"] = 10841,
+		["Pre"] = 10831,
+		["Target"] = {
+			{
+				["场景"] = 120060,
+				["怪物编号"] = 131800,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131800,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120060,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10841] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10841,
+		["Level"] = 60,
+		["Name"] = "哈迪斯",
+		["Next"] = 10842,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10840,
+		["RewardAnima"] = 222500,
+		["RewardExp"] = 13800,
+		["RewardMoney"] = 465000,
+		["SubmitChat"] = "我们已经找到了哈迪斯的意志，是到了炼化他的时刻了。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10842] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 61,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10842,
+		["Level"] = 61,
+		["Name"] = "干涸之境",
+		["Next"] = 10850,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10841,
+		["SubmitChat"] = "水源正在干涸，太阳炙烤着大地，越来越热，你能查清楚原因么？",
+		["SubmitNpc"] = 2060,
+		["TrackTarget"] = {
+			["Data"] = 2060,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10850] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 61,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11231",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131830,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10850,
+		["Instance"] = 30610,
+		["Level"] = 61,
+		["Name"] = "干涸之境",
+		["Next"] = 10851,
+		["Pre"] = 10842,
+		["Target"] = {
+			{
+				["场景"] = 120061,
+				["怪物编号"] = 131830,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131830,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120061,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10851] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 61,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10851,
+		["Level"] = 61,
+		["Name"] = "旱魃之灾",
+		["Next"] = 10860,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10850,
+		["RewardAnima"] = 225000,
+		["RewardExp"] = 14000,
+		["RewardMoney"] = 471000,
+		["SubmitChat"] = "水源的干涸造成了无数旱魃在肆虐，消灭那些给世界带来灾难的旱魃。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10860] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 61,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10860,
+		["Instance"] = 30620,
+		["Level"] = 61,
+		["Name"] = "旱魃之灾",
+		["Next"] = 10861,
+		["Pre"] = 10851,
+		["Target"] = {
+			{
+				["场景"] = 120062,
+				["怪物编号"] = 131860,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131860,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120062,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10861] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 61,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10861,
+		["Level"] = 61,
+		["Name"] = "潘神水困",
+		["Next"] = 10870,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10860,
+		["RewardAnima"] = 227500,
+		["RewardExp"] = 14200,
+		["RewardMoney"] = 477000,
+		["SubmitChat"] = "如你所述，那个人也许是潘神的仆人牧笛-绪任克斯，去找潘神吧，他一定知道什么。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10870] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 62,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11241",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131890,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10870,
+		["Instance"] = 30630,
+		["Level"] = 62,
+		["Name"] = "潘神水困",
+		["Next"] = 10871,
+		["Pre"] = 10861,
+		["Target"] = {
+			{
+				["场景"] = 120063,
+				["怪物编号"] = 131890,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131890,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120063,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10871] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 62,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10871,
+		["Level"] = 62,
+		["Name"] = "水魔之灾",
+		["Next"] = 10880,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10870,
+		["RewardAnima"] = 230000,
+		["RewardExp"] = 14400,
+		["RewardMoney"] = 483000,
+		["SubmitChat"] = "绪任克斯用牧笛操纵了水能量，召唤出了水魔，消灭那些水魔。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10880] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 62,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10880,
+		["Instance"] = 30640,
+		["Level"] = 62,
+		["Name"] = "水魔之灾",
+		["Next"] = 10881,
+		["Pre"] = 10871,
+		["Target"] = {
+			{
+				["场景"] = 120064,
+				["怪物编号"] = 131920,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131920,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120064,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10881] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 62,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10881,
+		["Level"] = 62,
+		["Name"] = "太阳之印",
+		["Next"] = 10890,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10880,
+		["RewardAnima"] = 232500,
+		["RewardExp"] = 14600,
+		["RewardMoney"] = 489000,
+		["SubmitChat"] = "绪任克斯一定去找达芙妮了，我们必须阻止他！",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10890] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 63,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11251",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 131950,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 10890,
+		["Instance"] = 30650,
+		["Level"] = 63,
+		["Name"] = "太阳之印",
+		["Next"] = 10891,
+		["Pre"] = 10881,
+		["Target"] = {
+			{
+				["场景"] = 120065,
+				["怪物编号"] = 131950,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131950,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120065,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10891] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 63,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10891,
+		["Level"] = 63,
+		["Name"] = "太阳魔魂",
+		["Next"] = 10900,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10890,
+		["RewardAnima"] = 235000,
+		["RewardExp"] = 14800,
+		["RewardMoney"] = 495000,
+		["SubmitChat"] = "如今太阳魔魂守卫往太阳神殿的路上，你只有先消灭它们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[10900] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 63,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10900,
+		["Instance"] = 30660,
+		["Level"] = 63,
+		["Name"] = "太阳魔魂",
+		["Next"] = 10901,
+		["Pre"] = 10891,
+		["Target"] = {
+			{
+				["场景"] = 120066,
+				["怪物编号"] = 131980,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 131980,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120066,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[10901] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 63,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 10901,
+		["Level"] = 63,
+		["Name"] = "太阳神殿",
+		["Next"] = 11000,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 10900,
+		["RewardAnima"] = 237500,
+		["RewardExp"] = 15000,
+		["RewardMoney"] = 501000,
+		["SubmitChat"] = "我们已经找到了太阳神殿的位置，快去阻止丁诺佩。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11000] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 64,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11261",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 132010,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11000,
+		["Instance"] = 30670,
+		["Level"] = 64,
+		["Name"] = "太阳神殿",
+		["Next"] = 11001,
+		["Pre"] = 10901,
+		["Target"] = {
+			{
+				["场景"] = 120067,
+				["怪物编号"] = 132010,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132010,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120067,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11001] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 64,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11001,
+		["Level"] = 64,
+		["Name"] = "太阳魔魂",
+		["Next"] = 11010,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11000,
+		["RewardAnima"] = 240000,
+		["RewardExp"] = 15200,
+		["RewardMoney"] = 507000,
+		["SubmitChat"] = "太阳已经疯狂了，不知何处被召唤的魔魂肆意的破坏着这个世界，消灭他们。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11010] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 64,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11010,
+		["Instance"] = 30680,
+		["Level"] = 64,
+		["Name"] = "太阳魔魂",
+		["Next"] = 11011,
+		["Pre"] = 11001,
+		["Target"] = {
+			{
+				["场景"] = 120068,
+				["怪物编号"] = 132040,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132040,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120068,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11011] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 64,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11011,
+		["Level"] = 64,
+		["Name"] = "过去之狼",
+		["Next"] = 11020,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11010,
+		["RewardAnima"] = 242500,
+		["RewardExp"] = 15400,
+		["RewardMoney"] = 513000,
+		["SubmitChat"] = "进入太阳神殿，一定要阻止丁诺佩吸收太阳的力量。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11020] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 65,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11271",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 132070,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11020,
+		["Instance"] = 30690,
+		["Level"] = 65,
+		["Name"] = "过去之狼",
+		["Next"] = 11021,
+		["Pre"] = 11011,
+		["Target"] = {
+			{
+				["场景"] = 120069,
+				["怪物编号"] = 132070,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132070,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120069,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11021] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 65,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11021,
+		["Level"] = 65,
+		["Name"] = "幻境怪物",
+		["Next"] = 11030,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11020,
+		["RewardAnima"] = 245000,
+		["RewardExp"] = 15600,
+		["RewardMoney"] = 519000,
+		["SubmitChat"] = "三圣兽制造的幻境怪物正在疯狂抽取太阳的力量，净化那些幻境怪物。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11030] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 65,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11030,
+		["Instance"] = 30700,
+		["Level"] = 65,
+		["Name"] = "幻境怪物",
+		["Next"] = 11031,
+		["Pre"] = 11021,
+		["Target"] = {
+			{
+				["场景"] = 120070,
+				["怪物编号"] = 132100,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132100,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120070,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11031] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 65,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11031,
+		["Level"] = 65,
+		["Name"] = "现在之熊",
+		["Next"] = 11040,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11030,
+		["RewardAnima"] = 247500,
+		["RewardExp"] = 15800,
+		["RewardMoney"] = 525000,
+		["SubmitChat"] = "终于在太阳神殿发现了第二只圣兽现在之熊的踪迹，快去净化它吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11040] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 66,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11040,
+		["Instance"] = 30710,
+		["Level"] = 66,
+		["Name"] = "现在之熊",
+		["Next"] = 11041,
+		["Pre"] = 11031,
+		["Target"] = {
+			{
+				["场景"] = 120071,
+				["怪物编号"] = 132130,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132130,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120071,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11041] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 66,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11041,
+		["Level"] = 66,
+		["Name"] = "幻境怪物",
+		["Next"] = 11050,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11040,
+		["RewardAnima"] = 250000,
+		["RewardExp"] = 16000,
+		["RewardMoney"] = 531000,
+		["SubmitChat"] = "三圣兽制造的幻境怪物正在疯狂抽取太阳的力量，净化那些幻境怪物。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11050] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 66,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11050,
+		["Instance"] = 30720,
+		["Level"] = 66,
+		["Name"] = "幻境怪物",
+		["Next"] = 11051,
+		["Pre"] = 11041,
+		["Target"] = {
+			{
+				["场景"] = 120072,
+				["怪物编号"] = 132160,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132160,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120072,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11051] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 66,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11051,
+		["Level"] = 66,
+		["Name"] = "未来之鹰",
+		["Next"] = 11060,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11050,
+		["RewardAnima"] = 252500,
+		["RewardExp"] = 16200,
+		["RewardMoney"] = 537000,
+		["SubmitChat"] = "最后一只圣兽未来之鹰在神殿出现了，快去将它净化吧。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11060] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 67,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11290",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 132190,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11060,
+		["Instance"] = 30730,
+		["Level"] = 67,
+		["Name"] = "未来之鹰",
+		["Next"] = 11061,
+		["Pre"] = 11051,
+		["Target"] = {
+			{
+				["场景"] = 120073,
+				["怪物编号"] = 132190,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132190,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120073,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11061] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 67,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11061,
+		["Level"] = 67,
+		["Name"] = "太阳武士",
+		["Next"] = 11070,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11060,
+		["RewardAnima"] = 255000,
+		["RewardExp"] = 16400,
+		["RewardMoney"] = 542000,
+		["SubmitChat"] = "丁诺佩正在朝黑暗走去，只有消灭那些堕落的太阳武士，才能接近她。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11070] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 67,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11070,
+		["Instance"] = 30740,
+		["Level"] = 67,
+		["Name"] = "太阳武士",
+		["Next"] = 11071,
+		["Pre"] = 11061,
+		["Target"] = {
+			{
+				["场景"] = 120074,
+				["怪物编号"] = 132220,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132220,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120074,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11071] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 67,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11071,
+		["Level"] = 67,
+		["Name"] = "走向黑暗",
+		["Next"] = 11080,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11070,
+		["RewardAnima"] = 257500,
+		["RewardExp"] = 16600,
+		["RewardMoney"] = 548000,
+		["SubmitChat"] = "我们已经找到了丁诺佩的踪迹，她正在进入深渊的入口。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11080] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 68,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11301",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 132250,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11080,
+		["Instance"] = 30750,
+		["Level"] = 68,
+		["Name"] = "走向黑暗",
+		["Next"] = 11081,
+		["Pre"] = 11071,
+		["Target"] = {
+			{
+				["场景"] = 120075,
+				["怪物编号"] = 132250,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132250,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120075,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11081] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 68,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11081,
+		["Level"] = 68,
+		["Name"] = "深渊恶灵",
+		["Next"] = 11090,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11080,
+		["RewardAnima"] = 260000,
+		["RewardExp"] = 16800,
+		["RewardMoney"] = 554000,
+		["SubmitChat"] = "这都是丁诺佩的预言吗？看来我们要尽快消灭那些阻拦的恶灵，找到深渊的入口。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11090] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 68,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11090,
+		["Instance"] = 30760,
+		["Level"] = 68,
+		["Name"] = "深渊恶灵",
+		["Next"] = 11091,
+		["Pre"] = 11081,
+		["Target"] = {
+			{
+				["场景"] = 120076,
+				["怪物编号"] = 132280,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132280,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120076,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11091] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 68,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11091,
+		["Level"] = 68,
+		["Name"] = "寻找光明",
+		["Next"] = 11100,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11090,
+		["RewardAnima"] = 262500,
+		["RewardExp"] = 17000,
+		["RewardMoney"] = 560000,
+		["SubmitChat"] = "太好了，我们找到了深渊的入口，小心，请务必要把阿波罗的神格带回来。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11100] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 69,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 132310,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11100,
+		["Instance"] = 30770,
+		["Level"] = 69,
+		["Name"] = "寻找光明",
+		["Next"] = 11101,
+		["Pre"] = 11091,
+		["Target"] = {
+			{
+				["场景"] = 120077,
+				["怪物编号"] = 132310,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132310,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120077,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11101] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 69,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11101,
+		["Level"] = 69,
+		["Name"] = "黑暗魔女",
+		["Next"] = 11120,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11100,
+		["RewardAnima"] = 265000,
+		["RewardExp"] = 17200,
+		["RewardMoney"] = 566000,
+		["SubmitChat"] = "们不知道撒旦将沉睡的阿波罗藏在了哪里，从那些黑暗魔女身上，也许能知道进去的办法。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11120] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 69,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11120,
+		["Instance"] = 30780,
+		["Level"] = 69,
+		["Name"] = "黑暗魔女",
+		["Next"] = 11121,
+		["Pre"] = 11101,
+		["Target"] = {
+			{
+				["场景"] = 120078,
+				["怪物编号"] = 132340,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132340,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120078,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11121] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 69,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11121,
+		["Level"] = 69,
+		["Name"] = "光明之子",
+		["Next"] = 11130,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11120,
+		["RewardAnima"] = 267500,
+		["RewardExp"] = 17400,
+		["RewardMoney"] = 572000,
+		["SubmitChat"] = "只有最黑暗的深渊才能遮挡太阳的光辉，撒旦一定是将阿波罗藏在了深渊最深处。",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11130] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_11321",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 132370,
+				["行为"] = "删除NPC",
+			},
+		},
+		["ID"] = 11130,
+		["Instance"] = 30790,
+		["Level"] = 70,
+		["Name"] = "光明之子",
+		["Next"] = 11131,
+		["Pre"] = 11121,
+		["Target"] = {
+			{
+				["场景"] = 120079,
+				["怪物编号"] = 132370,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132370,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120079,
+			["Trigger"] = 5005,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5005,
+		},
+		["Type"] = 1,
+	},
+	[11131] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11131,
+		["Level"] = 70,
+		["Name"] = "回城",
+		["Next"] = 11140,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11130,
+		["RewardAnima"] = 270000,
+		["RewardExp"] = 17600,
+		["RewardMoney"] = 578000,
+		["SubmitChat"] = "去战斗吧",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5009,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11140] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 71,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11140,
+		["Instance"] = 30800,
+		["Level"] = 71,
+		["Name"] = "熔岩魔窟",
+		["Next"] = 11141,
+		["Pre"] = 11131,
+		["Target"] = {
+			{
+				["场景"] = 120080,
+				["怪物编号"] = 132400,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132400,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120080,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[11141] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 71,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11141,
+		["Level"] = 71,
+		["Name"] = "回城",
+		["Next"] = 11150,
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11140,
+		["RewardAnima"] = 272500,
+		["RewardExp"] = 17800,
+		["RewardMoney"] = 583000,
+		["SubmitChat"] = "去战斗吧",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[11150] = {
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 71,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11150,
+		["Instance"] = 30810,
+		["Level"] = 71,
+		["Name"] = "熔岩魔窟",
+		["Next"] = 11151,
+		["Pre"] = 11141,
+		["Target"] = {
+			{
+				["场景"] = 120081,
+				["怪物编号"] = 132430,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 132430,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 120081,
+			["Trigger"] = 5004,
+			["Type"] = 2,
+		},
+		["Trigger"] = {
+			5004,
+		},
+		["Type"] = 1,
+	},
+	[11151] = {
+		["AcceptChat"] = "去战斗吧",
+		["Chain"] = "主线",
+		["Condition"] = {
+			{
+				["等级"] = 71,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 11151,
+		["Level"] = 71,
+		["Name"] = "回城",
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Pre"] = 11150,
+		["SubmitChat"] = "去战斗吧",
+		["SubmitNpc"] = 2015,
+		["TrackTarget"] = {
+			["Data"] = 2015,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 100003,
+			["Trigger"] = 5008,
+			["Type"] = 1,
+		},
+		["Type"] = 1,
+	},
+	[20001] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20001,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160001,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520003,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20002] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20002,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520010,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20003] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20003,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160003,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520002,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20004] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20004,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160004,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520007,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20005] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20005,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520014,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20006] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20006,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520013,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20007] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20007,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520010,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20008] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20008,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520010,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20009] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20009,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160009,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520001,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20010] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20010,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160010,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520008,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20011] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20011,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160011,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520013,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20012] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20012,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160012,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520007,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20013] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20013,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160013,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520001,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20014] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20014,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160014,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520003,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20015] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20015,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520014,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20016] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20016,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160016,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520007,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20017] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20017,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160017,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520003,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20018] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20018,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10503,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520004,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20019] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20019,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160019,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520011,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20020] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20020,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160020,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520012,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20021] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20021,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160021,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520008,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20022] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20022,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10503,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520004,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20023] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20023,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160023,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520003,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20024] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20024,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160024,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520008,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20025] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20025,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160025,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520003,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20026] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20026,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160026,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520011,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20027] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20027,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10505,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520009,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20028] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20028,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160028,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520006,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20029] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20029,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160029,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520013,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20030] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20030,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160030,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520002,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20031] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20031,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160031,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520007,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20032] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20032,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160032,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520002,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20033] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20033,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10504,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520005,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20034] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20034,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160034,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520013,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20035] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20035,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10506,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520010,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20036] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20036,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160036,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520007,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20037] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20037,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160037,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520006,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20038] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20038,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10504,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520005,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20039] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20039,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160039,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520006,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20040] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20040,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160040,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520008,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20041] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20041,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10503,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520004,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20042] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20042,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160042,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520011,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20043] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20043,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10503,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520004,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20044] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20044,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10505,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520009,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20045] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20045,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 10504,
+			["Type"] = 3,
+		},
+		["TrackType"] = {
+			["ID"] = 520005,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20046] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20046,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160046,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520001,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20047] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20047,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160047,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520001,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20048] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20048,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160048,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520006,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20049] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20049,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160049,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520012,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20050] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20050,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 160050,
+			["Type"] = 4,
+		},
+		["TrackType"] = {
+			["ID"] = 520002,
+			["Type"] = 2,
+		},
+		["Type"] = 2,
+	},
+	[20051] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20051,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 520101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20052] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20052,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 560101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20053] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20053,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 560101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20054] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20054,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 110206,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20055] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20055,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20056] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20056,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 130101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20057] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20057,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 130101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[20058] = {
+		["Chain"] = "城邦悬赏",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 20058,
+		["Level"] = 1,
+		["Name"] = "城邦悬赏任务",
+		["TrackTarget"] = {
+			["Data"] = 510101,
+			["Type"] = 5,
+		},
+		["Type"] = 2,
+	},
+	[30001] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30001,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30002,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-获得魔神1",
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 500000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 3,
+				["等阶"] = 3,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30002] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30002,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30003,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30001,
+		["RewardList"] = {
+			"支线任务-获得魔神1",
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 4,
+				["等阶"] = 3,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30003] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30003,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30004,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30002,
+		["RewardList"] = {
+			"支线任务-获得魔神2",
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 700000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 5,
+				["等阶"] = 3,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30004] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30004,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30005,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30003,
+		["RewardList"] = {
+			"支线任务-获得魔神2",
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 1,
+				["等阶"] = 4,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30005] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30005,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30006,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30004,
+		["RewardList"] = {
+			"支线任务-获得魔神2",
+			"支线任务-绿色强化石",
+		},
+		["RewardMoney"] = 900000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 2,
+				["等阶"] = 4,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30006] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30006,
+		["Level"] = 23,
+		["Name"] = "魔神进化",
+		["Next"] = 30007,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30005,
+		["RewardList"] = {
+			"支线任务-获得魔神2",
+			"支线任务-绿色强化石",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 3,
+				["等阶"] = 4,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30007] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30007,
+		["Level"] = 25,
+		["Name"] = "魔神进化",
+		["Next"] = 30008,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30006,
+		["RewardList"] = {
+			"支线任务-获得魔神3",
+			"支线任务-绿色强化石",
+		},
+		["RewardMoney"] = 1100000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 4,
+				["等阶"] = 4,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30008] = {
+		["Chain"] = "杂项一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30008,
+		["Level"] = 25,
+		["Name"] = "魔神进化",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30007,
+		["RewardList"] = {
+			"支线任务-获得魔神3",
+			"支线任务-绿色强化石",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["历史计数"] = 1,
+				["数量"] = 5,
+				["等阶"] = 4,
+				["行为"] = "魔神统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110205,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30011] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 30001,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 30011,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30012,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-2阶水核",
+		},
+		["Target"] = {
+			{
+				["数量"] = 2,
+				["等级"] = 10,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30012] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30012,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30013,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30011,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-2阶火核",
+		},
+		["Target"] = {
+			{
+				["数量"] = 4,
+				["等级"] = 10,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30013] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30013,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30014,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30012,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"主线任务-木2阶进化",
+		},
+		["Target"] = {
+			{
+				["数量"] = 6,
+				["等级"] = 10,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30014] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 30100,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 30014,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30015,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30013,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"主线任务-水2阶进化",
+		},
+		["Target"] = {
+			{
+				["数量"] = 8,
+				["等级"] = 10,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30015] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 30021,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 30015,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30016,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30014,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"主线任务-火2阶进化",
+		},
+		["Target"] = {
+			{
+				["数量"] = 4,
+				["等级"] = 20,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30016] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30016,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30017,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30015,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"主线任务-木2阶进化",
+		},
+		["Target"] = {
+			{
+				["数量"] = 8,
+				["等级"] = 20,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30017] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30017,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30018,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30016,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-3阶火核",
+		},
+		["Target"] = {
+			{
+				["数量"] = 12,
+				["等级"] = 20,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30018] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30018,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Next"] = 30019,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30017,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-3阶水核",
+		},
+		["Target"] = {
+			{
+				["数量"] = 14,
+				["等级"] = 20,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30019] = {
+		["Chain"] = "杂项二",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30019,
+		["Level"] = 23,
+		["Name"] = "装备强化",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30018,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-3阶木核",
+		},
+		["Target"] = {
+			{
+				["数量"] = 16,
+				["等级"] = 20,
+				["行为"] = "魔神装备强化",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110207,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30021] = {
+		["Chain"] = "杂项三",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30021,
+		["Level"] = 25,
+		["Name"] = "拥有装备",
+		["Next"] = 30022,
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["数量"] = 6,
+				["等级"] = 3,
+				["类型"] = 1,
+				["背包"] = {
+					11,
+					3,
+				},
+				["行为"] = "道具统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30022] = {
+		["Chain"] = "杂项三",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30022,
+		["Level"] = 25,
+		["Name"] = "拥有装备",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 30021,
+		["RewardList"] = {
+			"支线任务-白色强化石",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["数量"] = 8,
+				["等级"] = 3,
+				["类型"] = 1,
+				["背包"] = {
+					11,
+					3,
+				},
+				["行为"] = "道具统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110215,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30023] = {
+		["Chain"] = "杂项三",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30023,
+		["Level"] = 1,
+		["Name"] = "拥有装备",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"主线任务-强化石",
+		},
+		["Target"] = {
+			{
+				["数量"] = 15,
+				["等级"] = 3,
+				["类型"] = 1,
+				["背包"] = {
+					11,
+					3,
+				},
+				["行为"] = "道具统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 170202,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30024] = {
+		["Chain"] = "杂项三",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30024,
+		["Level"] = 1,
+		["Name"] = "拥有装备",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"主线任务-强化石",
+		},
+		["Target"] = {
+			{
+				["数量"] = 20,
+				["等级"] = 3,
+				["类型"] = 1,
+				["背包"] = {
+					11,
+					3,
+				},
+				["行为"] = "道具统计",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 170202,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30031] = {
+		["Chain"] = "杂项四",
+		["Condition"] = {
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30031,
+		["Level"] = 1,
+		["Name"] = "魔神升级",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["名称"] = "升级",
+				["数量"] = 5,
+				["行为"] = "魔神计数",
+				["领取判断"] = 1,
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 110101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30100] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 22,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30100,
+		["Level"] = 22,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 5,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30101] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30101,
+		["Level"] = 23,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 5,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30102] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 24,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30102,
+		["Level"] = 24,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 5,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30103] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30103,
+		["Level"] = 25,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 5,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30104] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 26,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30104,
+		["Level"] = 26,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 10,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30105] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 27,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30105,
+		["Level"] = 27,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 10,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30106] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 28,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30106,
+		["Level"] = 28,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 10,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[30107] = {
+		["Chain"] = "杂项五",
+		["Condition"] = {
+			{
+				["等级"] = 29,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 30107,
+		["Level"] = 29,
+		["Name"] = "扫荡冒险之路",
+		["Params"] = {
+			["计数样式"] = 1,
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 5000,
+		["Target"] = {
+			{
+				["数量"] = 10,
+				["行为"] = "冒险之路击杀",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31001] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 16,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31001,
+		["Level"] = 16,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3001,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3001,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31002] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 18,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31002,
+		["Level"] = 18,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3001,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3001,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31003] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31003,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31004,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3001,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3001,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31004] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = 30011,
+				["行为"] = "领取任务",
+			},
+		},
+		["ID"] = 31004,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31005,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31003,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3001,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3001,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31005] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31005,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31006,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31004,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3001,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3001,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31006] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31006,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31007,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31005,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3002,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3002,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31007] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31007,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31008,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31006,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3002,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3002,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31008] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31008,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31009,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31007,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3002,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3002,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31009] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31009,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31010,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31008,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3002,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3002,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31010] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31010,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31011,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31009,
+		["RewardList"] = {
+			"支线任务-魔神试炼1",
+			"20绑钻",
+		},
+		["RewardMoney"] = 200000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3002,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3002,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31011] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31011,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31013,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31010,
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3003,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3003,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31012] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31012,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3003,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3003,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31013] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31013,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31015,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31011,
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3003,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3003,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31014] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31014,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3003,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3003,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31015] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31015,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31017,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31013,
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3003,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3003,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31016] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31016,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3004,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3004,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31017] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31017,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31019,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31015,
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3004,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3004,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31018] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31018,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3004,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3004,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31019] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31019,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31021,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31017,
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3004,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3004,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31020] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31020,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼2",
+			"20绑钻",
+		},
+		["RewardMoney"] = 400000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3004,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3004,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31021] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31021,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31023,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31019,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3005,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3005,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31022] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31022,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3005,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3005,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31023] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31023,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31025,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31021,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3005,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3005,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31024] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31024,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3005,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3005,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31025] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31025,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31027,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31023,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3005,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3005,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31026] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31026,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3006,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3006,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31027] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31027,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31029,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31025,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3006,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3006,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31028] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31028,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3006,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3006,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31029] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31029,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Next"] = 31031,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31027,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 600000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3006,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3006,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31030] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31030,
+		["Level"] = 23,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3006,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3006,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31031] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31031,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Next"] = 31033,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31029,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3007,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3007,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31032] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31032,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3007,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3007,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31033] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31033,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Next"] = 31035,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31031,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3007,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3007,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31034] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31034,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3007,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3007,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31035] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31035,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Next"] = 31037,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31033,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3007,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3007,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31036] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31036,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3008,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3008,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31037] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31037,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Next"] = 31039,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31035,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3008,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3008,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31038] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31038,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3008,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3008,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31039] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31039,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Next"] = 31041,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31037,
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3008,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3008,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31040] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 25,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31040,
+		["Level"] = 25,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼3",
+			"20绑钻",
+		},
+		["RewardMoney"] = 800000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3008,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3008,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31041] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31041,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Next"] = 31043,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31039,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3009,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3009,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31042] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31042,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3009,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3009,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31043] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31043,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Next"] = 31045,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31041,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3009,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3009,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31044] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31044,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3009,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3009,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31045] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31045,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Next"] = 31047,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31043,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3009,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3009,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31046] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31046,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3010,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3010,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31047] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31047,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Next"] = 31049,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31045,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3010,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3010,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31048] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31048,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3010,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3010,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31049] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31049,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Next"] = 31051,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31047,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3010,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3010,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31050] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31050,
+		["Level"] = 30,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1000000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3010,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3010,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31051] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31051,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Next"] = 31053,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31049,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3011,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3011,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31052] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31052,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3011,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3011,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31053] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31053,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Next"] = 31055,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31051,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3011,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3011,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31054] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31054,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3011,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3011,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31055] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31055,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Next"] = 31057,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31053,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3011,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3011,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31056] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31056,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3012,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3012,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31057] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31057,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Next"] = 31059,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31055,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3012,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3012,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31058] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31058,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3012,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3012,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31059] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31059,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Next"] = 31061,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31057,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3012,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3012,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31060] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 35,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31060,
+		["Level"] = 35,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1200000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3012,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3012,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31061] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31061,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Next"] = 31063,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31059,
+		["RewardList"] = {
+			"支线任务-魔神试炼4",
+			"30绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3013,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3013,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31062] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31062,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3013,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3013,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31063] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31063,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Next"] = 31065,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31061,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3013,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3013,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31064] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31064,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3013,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3013,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31065] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31065,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Next"] = 31067,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31063,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3013,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3013,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31066] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31066,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3014,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3014,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31067] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31067,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Next"] = 31069,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31065,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3014,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3014,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31068] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31068,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3014,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3014,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31069] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31069,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Next"] = 31071,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31067,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3014,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3014,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31070] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31070,
+		["Level"] = 40,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1400000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3014,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3014,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31071] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31071,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Next"] = 31073,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31069,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3015,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3015,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31072] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31072,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3015,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3015,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31073] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31073,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Next"] = 31075,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31071,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3015,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3015,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31074] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31074,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3015,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3015,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31075] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31075,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Next"] = 31077,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31073,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3015,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3015,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31076] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31076,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3016,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3016,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31077] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31077,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Next"] = 31079,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31075,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3016,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3016,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31078] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31078,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3016,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3016,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31079] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31079,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Next"] = 31081,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31077,
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3016,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3016,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31080] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 45,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31080,
+		["Level"] = 45,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼5",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1600000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3016,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3016,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31081] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31081,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Next"] = 31083,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31079,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3017,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3017,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31082] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31082,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3017,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3017,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31083] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31083,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Next"] = 31085,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31081,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3017,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3017,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31084] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31084,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3017,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3017,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31085] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31085,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Next"] = 31087,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31083,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3017,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3017,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31086] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31086,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3018,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3018,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31087] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31087,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Next"] = 31089,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31085,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3018,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3018,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31088] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31088,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3018,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3018,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31089] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31089,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Next"] = 31091,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31087,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3018,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3018,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31090] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31090,
+		["Level"] = 50,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 1800000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3018,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3018,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31091] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31091,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Next"] = 31093,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31089,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3019,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3019,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31092] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31092,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3019,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3019,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31093] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31093,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Next"] = 31095,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31091,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3019,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3019,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31094] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31094,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3019,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3019,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31095] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31095,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Next"] = 31097,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31093,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3019,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3019,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31096] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31096,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 1,
+				["章节"] = 3020,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3020,
+			["Param2"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31097] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31097,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Next"] = 31099,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31095,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 2,
+				["章节"] = 3020,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3020,
+			["Param2"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31098] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31098,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 3,
+				["章节"] = 3020,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3020,
+			["Param2"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31099] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31099,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 31097,
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 4,
+				["章节"] = 3020,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3020,
+			["Param2"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[31100] = {
+		["Chain"] = "支线一",
+		["Condition"] = {
+			{
+				["等级"] = 55,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 31100,
+		["Level"] = 55,
+		["Name"] = "魔神试炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-魔神试炼6",
+			"50绑钻",
+		},
+		["RewardMoney"] = 2000000,
+		["Target"] = {
+			{
+				["关卡"] = 5,
+				["章节"] = 3020,
+				["行为"] = "章节通关",
+			},
+		},
+		["TargetAsync"] = true,
+		["TrackTarget"] = {
+			["Data"] = 200101,
+			["Param1"] = 3020,
+			["Param2"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32005] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32005,
+		["Level"] = 14,
+		["Name"] = "冒险之路",
+		["Next"] = 32007,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 50000,
+		["RewardList"] = {
+			"支线任务-困难冒险20级",
+			"20绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 1,
+				["关卡"] = 510001,
+				["怪物编号"] = 321001,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32006] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32006,
+		["Level"] = 14,
+		["Name"] = "冒险之路",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 50000,
+		["RewardList"] = {
+			"支线任务-困难冒险20级",
+			"20绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 1,
+				["关卡"] = 610001,
+				["怪物编号"] = 321002,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32007] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32007,
+		["Level"] = 14,
+		["Name"] = "冒险之路",
+		["Next"] = 32009,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32005,
+		["RewardAnima"] = 50000,
+		["RewardList"] = {
+			"支线任务-困难冒险20级",
+			"20绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 1,
+				["关卡"] = 710001,
+				["怪物编号"] = 321003,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32008] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 14,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32008,
+		["Level"] = 14,
+		["Name"] = "冒险之路",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardAnima"] = 50000,
+		["RewardList"] = {
+			"支线任务-困难冒险20级",
+			"20绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 1,
+				["关卡"] = 810001,
+				["怪物编号"] = 321004,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 1,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32009] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32009,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32010,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32007,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-简单冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 2,
+				["关卡"] = 110002,
+				["怪物编号"] = 320005,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32010] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32010,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32011,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32009,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-简单冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 2,
+				["关卡"] = 210002,
+				["怪物编号"] = 320006,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32011] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32011,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32012,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32010,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-简单冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 2,
+				["关卡"] = 310002,
+				["怪物编号"] = 320007,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32012] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32012,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32013,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32011,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-简单冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 2,
+				["关卡"] = 410002,
+				["怪物编号"] = 320008,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32013] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32013,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32014,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32012,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-困难冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 2,
+				["关卡"] = 510002,
+				["怪物编号"] = 321005,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32014] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32014,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32015,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32013,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-困难冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 2,
+				["关卡"] = 610002,
+				["怪物编号"] = 321006,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32015] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32015,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32016,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32014,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-困难冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 2,
+				["关卡"] = 710002,
+				["怪物编号"] = 321007,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32016] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 30,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32016,
+		["Level"] = 30,
+		["Name"] = "冒险之路",
+		["Next"] = 32017,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32015,
+		["RewardAnima"] = 100000,
+		["RewardList"] = {
+			"支线任务-困难冒险30级",
+			"30绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 2,
+				["关卡"] = 810002,
+				["怪物编号"] = 321008,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 2,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32017] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32017,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32018,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32016,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-简单冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 3,
+				["关卡"] = 110003,
+				["怪物编号"] = 320009,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32018] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32018,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32019,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32017,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-简单冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 3,
+				["关卡"] = 210003,
+				["怪物编号"] = 320010,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32019] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32019,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32020,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32018,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-简单冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 3,
+				["关卡"] = 310003,
+				["怪物编号"] = 320011,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32020] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32020,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32021,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32019,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-简单冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 3,
+				["关卡"] = 410003,
+				["怪物编号"] = 320012,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32021] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32021,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32022,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32020,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-困难冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 3,
+				["关卡"] = 510003,
+				["怪物编号"] = 321009,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32022] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32022,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32023,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32021,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-困难冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 3,
+				["关卡"] = 610003,
+				["怪物编号"] = 321010,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32023] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32023,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32024,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32022,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-困难冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 3,
+				["关卡"] = 710003,
+				["怪物编号"] = 321011,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32024] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 40,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32024,
+		["Level"] = 40,
+		["Name"] = "冒险之路",
+		["Next"] = 32025,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32023,
+		["RewardAnima"] = 200000,
+		["RewardList"] = {
+			"支线任务-困难冒险40级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 3,
+				["关卡"] = 810003,
+				["怪物编号"] = 321012,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 3,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32025] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32025,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32026,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32024,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-简单冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 4,
+				["关卡"] = 110004,
+				["怪物编号"] = 320013,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32026] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32026,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32027,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32025,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-简单冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 4,
+				["关卡"] = 210004,
+				["怪物编号"] = 320014,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32027] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32027,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32028,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32026,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-简单冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 4,
+				["关卡"] = 310004,
+				["怪物编号"] = 320015,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32028] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32028,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32029,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32027,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-简单冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 4,
+				["关卡"] = 410004,
+				["怪物编号"] = 320016,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32029] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32029,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32030,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32028,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-困难冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 4,
+				["关卡"] = 510004,
+				["怪物编号"] = 321013,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32030] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32030,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32031,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32029,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-困难冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 4,
+				["关卡"] = 610004,
+				["怪物编号"] = 321014,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32031] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32031,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32032,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32030,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-困难冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 4,
+				["关卡"] = 710004,
+				["怪物编号"] = 321015,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32032] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 50,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32032,
+		["Level"] = 50,
+		["Name"] = "冒险之路",
+		["Next"] = 32033,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32031,
+		["RewardAnima"] = 300000,
+		["RewardList"] = {
+			"支线任务-困难冒险50级",
+			"50绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 4,
+				["关卡"] = 810004,
+				["怪物编号"] = 321016,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 4,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32033] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32033,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32034,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32032,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-简单冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 5,
+				["关卡"] = 110005,
+				["怪物编号"] = 320017,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32034] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32034,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32035,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32033,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-简单冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 5,
+				["关卡"] = 210005,
+				["怪物编号"] = 320018,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32035] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32035,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32036,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32034,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-简单冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 5,
+				["关卡"] = 310005,
+				["怪物编号"] = 320019,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32036] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32036,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32037,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32035,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-简单冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 5,
+				["关卡"] = 410005,
+				["怪物编号"] = 320020,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32037] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32037,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32038,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32036,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-困难冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 5,
+				["关卡"] = 510005,
+				["怪物编号"] = 321017,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32038] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32038,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32039,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32037,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-困难冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 5,
+				["关卡"] = 610005,
+				["怪物编号"] = 321018,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32039] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32039,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32040,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32038,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-困难冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 5,
+				["关卡"] = 710005,
+				["怪物编号"] = 321019,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32040] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 60,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32040,
+		["Level"] = 60,
+		["Name"] = "冒险之路",
+		["Next"] = 32041,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32039,
+		["RewardAnima"] = 400000,
+		["RewardList"] = {
+			"支线任务-困难冒险60级",
+			"100绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 5,
+				["关卡"] = 810005,
+				["怪物编号"] = 321020,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 5,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32041] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32041,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32042,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32040,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-简单冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 6,
+				["关卡"] = 110006,
+				["怪物编号"] = 320021,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32042] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32042,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32043,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32041,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-简单冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 6,
+				["关卡"] = 210006,
+				["怪物编号"] = 320022,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32043] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32043,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32044,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32042,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-简单冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 6,
+				["关卡"] = 310006,
+				["怪物编号"] = 320023,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32044] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32044,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32045,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32043,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-简单冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 6,
+				["关卡"] = 410006,
+				["怪物编号"] = 320024,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32045] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32045,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32046,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32044,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-困难冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 6,
+				["关卡"] = 510006,
+				["怪物编号"] = 321021,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32046] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32046,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32047,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32045,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-困难冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 6,
+				["关卡"] = 610006,
+				["怪物编号"] = 321022,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32047] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32047,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32048,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32046,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-困难冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 6,
+				["关卡"] = 710006,
+				["怪物编号"] = 321023,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32048] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 70,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32048,
+		["Level"] = 70,
+		["Name"] = "冒险之路",
+		["Next"] = 32049,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32047,
+		["RewardAnima"] = 500000,
+		["RewardList"] = {
+			"支线任务-困难冒险70级",
+			"150绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 6,
+				["关卡"] = 810006,
+				["怪物编号"] = 321024,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 6,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32049] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32049,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32050,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32048,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-简单冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 7,
+				["关卡"] = 110007,
+				["怪物编号"] = 320025,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32050] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32050,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32051,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32049,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-简单冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 7,
+				["关卡"] = 210007,
+				["怪物编号"] = 320026,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32051] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32051,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32052,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32050,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-简单冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 7,
+				["关卡"] = 310007,
+				["怪物编号"] = 320027,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32052] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32052,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32053,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32051,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-简单冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 7,
+				["关卡"] = 410007,
+				["怪物编号"] = 320028,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32053] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32053,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32054,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32052,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-困难冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 7,
+				["关卡"] = 510007,
+				["怪物编号"] = 321025,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32054] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32054,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32055,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32053,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-困难冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 7,
+				["关卡"] = 610007,
+				["怪物编号"] = 321026,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32055] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32055,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32056,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32054,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-困难冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 7,
+				["关卡"] = 710007,
+				["怪物编号"] = 321027,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32056] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 80,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32056,
+		["Level"] = 80,
+		["Name"] = "冒险之路",
+		["Next"] = 32057,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32055,
+		["RewardAnima"] = 600000,
+		["RewardList"] = {
+			"支线任务-困难冒险80级",
+			"200绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 7,
+				["关卡"] = 810007,
+				["怪物编号"] = 321028,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 7,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32057] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32057,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32058,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32056,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-简单冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 8,
+				["关卡"] = 110008,
+				["怪物编号"] = 320029,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32058] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32058,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32059,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32057,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-简单冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 8,
+				["关卡"] = 210008,
+				["怪物编号"] = 320030,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32059] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32059,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32060,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32058,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-简单冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 8,
+				["关卡"] = 310008,
+				["怪物编号"] = 320031,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32060] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32060,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32061,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32059,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-简单冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 8,
+				["关卡"] = 410008,
+				["怪物编号"] = 320032,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32061] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32061,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32062,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32060,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-困难冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 8,
+				["关卡"] = 510008,
+				["怪物编号"] = 321029,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32062] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32062,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32063,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32061,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-困难冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 8,
+				["关卡"] = 610008,
+				["怪物编号"] = 321030,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32063] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32063,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32064,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32062,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-困难冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 8,
+				["关卡"] = 710008,
+				["怪物编号"] = 321031,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32064] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 90,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32064,
+		["Level"] = 90,
+		["Name"] = "冒险之路",
+		["Next"] = 32065,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32063,
+		["RewardAnima"] = 700000,
+		["RewardList"] = {
+			"支线任务-困难冒险90级",
+			"300绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 8,
+				["关卡"] = 810008,
+				["怪物编号"] = 321032,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 8,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32065] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32065,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32066,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32064,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-简单冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 9,
+				["关卡"] = 110009,
+				["怪物编号"] = 320033,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32066] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32066,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32067,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32065,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-简单冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 9,
+				["关卡"] = 210009,
+				["怪物编号"] = 320034,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32067] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32067,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32068,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32066,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-简单冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 9,
+				["关卡"] = 310009,
+				["怪物编号"] = 320035,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32068] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32068,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32069,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32067,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-简单冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 9,
+				["关卡"] = 410009,
+				["怪物编号"] = 320036,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32069] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32069,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32070,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32068,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-困难冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 9,
+				["关卡"] = 510009,
+				["怪物编号"] = 321033,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32070] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32070,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32071,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32069,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-困难冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 9,
+				["关卡"] = 610009,
+				["怪物编号"] = 321034,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32071] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32071,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32072,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32070,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-困难冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 9,
+				["关卡"] = 710009,
+				["怪物编号"] = 321035,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32072] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32072,
+		["Level"] = 100,
+		["Name"] = "冒险之路",
+		["Next"] = 32073,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32071,
+		["RewardAnima"] = 800000,
+		["RewardList"] = {
+			"支线任务-困难冒险100级",
+			"400绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 9,
+				["关卡"] = 810009,
+				["怪物编号"] = 321036,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 9,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32073] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32073,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32074,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32072,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-简单冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 1,
+				["MapId"] = 10,
+				["关卡"] = 110010,
+				["怪物编号"] = 320037,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32074] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32074,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32075,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32073,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-简单冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 2,
+				["MapId"] = 10,
+				["关卡"] = 210010,
+				["怪物编号"] = 320038,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32075] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32075,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32076,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32074,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-简单冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 3,
+				["MapId"] = 10,
+				["关卡"] = 310010,
+				["怪物编号"] = 320039,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32076] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32076,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32077,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32075,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-简单冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 4,
+				["MapId"] = 10,
+				["关卡"] = 410010,
+				["怪物编号"] = 320040,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32077] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32077,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32078,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32076,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-困难冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 5,
+				["MapId"] = 10,
+				["关卡"] = 510010,
+				["怪物编号"] = 321037,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32078] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32078,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32079,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32077,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-困难冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 6,
+				["MapId"] = 10,
+				["关卡"] = 610010,
+				["怪物编号"] = 321038,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32079] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32079,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Next"] = 32080,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32078,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-困难冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 7,
+				["MapId"] = 10,
+				["关卡"] = 710010,
+				["怪物编号"] = 321039,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[32080] = {
+		["Chain"] = "支线二",
+		["Condition"] = {
+			{
+				["等级"] = 110,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 32080,
+		["Level"] = 110,
+		["Name"] = "冒险之路",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 32079,
+		["RewardAnima"] = 900000,
+		["RewardList"] = {
+			"支线任务-困难冒险110级",
+			"500绑钻",
+		},
+		["Target"] = {
+			{
+				["Layer"] = 8,
+				["MapId"] = 10,
+				["关卡"] = 810010,
+				["怪物编号"] = 321040,
+				["行为"] = "冒险之路",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 210101,
+			["Param1"] = 10,
+			["Type"] = 5,
+		},
+		["Type"] = 3,
+	},
+	[34001] = {
+		["Active"] = {
+			{
+				["编号"] = 1067,
+				["行为"] = "功能引导",
+			},
+			{
+				["类型"] = 14,
+				["行为"] = "禁止自动装备",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["类型"] = 14,
+				["行为"] = "获得道具",
+			},
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34001,
+		["Level"] = 1,
+		["Name"] = "宝石",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["名称"] = "装备魔神原力装备",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 3,
+	},
+	[34002] = {
+		["Active"] = {
+			{
+				["编号"] = 1072,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["ItemShowType"] = 7,
+				["行为"] = "魔神召唤",
+			},
+			{
+				["等级"] = 1,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34002,
+		["Level"] = 1,
+		["Name"] = "魔神召唤",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["名称"] = "魔神召唤",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 3,
+	},
+	[34003] = {
+		["Active"] = {
+			{
+				["编号"] = 1075,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34003,
+		["Level"] = 100,
+		["Name"] = "家园扩建",
+		["Next"] = 34004,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["行为"] = "家园道具激活",
+				["道具"] = 8100,
+			},
+		},
+		["TargetAsync"] = true,
+		["Type"] = 3,
+	},
+	[34004] = {
+		["Active"] = {
+			{
+				["编号"] = 1076,
+				["行为"] = "功能引导",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["等级"] = 100,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34004,
+		["Level"] = 100,
+		["Name"] = "家园炼金炉",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 34003,
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["名称"] = "家园喂养",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 3,
+	},
+	[34101] = {
+		["Active"] = {
+			{
+				["编号"] = 1088,
+				["行为"] = "功能引导",
+			},
+			{
+				["行为"] = "禁止精炼暴击",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34101,
+		["Level"] = 23,
+		["Name"] = "装备精炼",
+		["Next"] = 34102,
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["名称"] = "装备精炼",
+				["数量"] = 1,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 3,
+	},
+	[34102] = {
+		["Active"] = {
+			{
+				["编号"] = 1089,
+				["行为"] = "功能引导",
+			},
+			{
+				["行为"] = "禁止精炼暴击",
+			},
+		},
+		["Chain"] = "支线四",
+		["Condition"] = {
+			{
+				["等级"] = 23,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 34102,
+		["Level"] = 23,
+		["Name"] = "装备精炼",
+		["Params"] = {
+			["隐藏任务"] = 1,
+		},
+		["Pre"] = 34101,
+		["RewardList"] = {
+			"支线任务-钻石奖励",
+		},
+		["Target"] = {
+			{
+				["名称"] = "装备精炼",
+				["数量"] = 2,
+				["行为"] = "玩法计数",
+			},
+		},
+		["Type"] = 3,
+	},
+	[90001] = {
+		["Condition"] = {
+			{
+				["等级"] = 0,
+				["行为"] = "玩家等级",
+			},
+		},
+		["ID"] = 90001,
+		["Level"] = 0,
+		["Name"] = "战斗前有脚本",
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Target"] = {
+			{
+				["场景"] = 120001,
+				["怪物编号"] = 130010,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 2019,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 120001,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Type"] = 4,
+	},
+	[90002] = {
+		["Condition"] = {
+			{
+				["等级"] = 0,
+				["行为"] = "玩家等级",
+			},
+		},
+		["Finish"] = {
+			{
+				["编号"] = "chapter_10010",
+				["行为"] = "播放剧情",
+			},
+			{
+				["编号"] = 2019,
+				["行为"] = "删除NPC",
+			},
+			{
+				["X"] = 1375,
+				["Y"] = 635,
+				["朝向"] = 333,
+				["编号"] = 130010,
+				["行为"] = "放怪物NPC",
+			},
+		},
+		["ID"] = 90002,
+		["Level"] = 0,
+		["Name"] = "战斗后有脚本",
+		["Params"] = {
+			["自动提交"] = 0,
+		},
+		["Target"] = {
+			{
+				["场景"] = 120001,
+				["怪物编号"] = 130010,
+				["数量"] = 1,
+				["行为"] = "杀怪",
+			},
+		},
+		["TrackTarget"] = {
+			["Data"] = 2019,
+			["Type"] = 1,
+		},
+		["TrackType"] = {
+			["ID"] = 120001,
+			["Trigger"] = 5001,
+			["Type"] = 2,
+		},
+		["Type"] = 4,
 	},
 }

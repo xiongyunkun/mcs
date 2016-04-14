@@ -11,7 +11,7 @@ module(...,package.seeall)
 IndexName = "UserPayDayStatics"
 
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--从充值订单表中拿到这一次要统计的订单列表
 	local PayOrderList = PayOrderData:Get(PlatformID, {HostID=HostID, StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59"})
 	--按照玩家角色分类

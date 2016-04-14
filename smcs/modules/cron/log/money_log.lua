@@ -15,13 +15,13 @@ RequestType = "getlog"
 -- 需要读取的文件名
 FileNames = {"key/addmoney.log", "key/submoney.log"}
 
-local Cols = {"Uid", "Urs", "Changes", "Reason", "Remain", "Name"}
+local Cols = {"Uid", "Urs", "Value", "Type", "Remain", "Name"}
 --区别判断重复的数据，用于统计时间点的数据比对
 local UniqueKey = "Uid"
 
 --构造请求参数
-function GenerateReqParams(self, HostID)
-	local StartDate = os.date("%Y-%m-%d",ngx.time()) 
+function GenerateReqParams(self, PlatformID, HostID)
+	local StartDate = os.date("%Y-%m-%d",os.time()) 
 	local StartTime = os.date("%Y-%m-%d %H:%M:%S",GetTimeStamp(StartDate .. " 00:00:00"))  --默认是当天的0点
 	local StartTimes = {}
 	for _, FileName in ipairs(FileNames) do
@@ -40,52 +40,46 @@ function GenerateReqParams(self, HostID)
 end
 
 --处理回调结果
-function HandleResponse(self, HostID, Response, ExecuteTime, LastSaticsTimes)
+function HandleResponse(self, PlatformID, HostID, Response, ExecuteTime, LastSaticsTimes)
 	if not CommonFunc.CheckLogErr(HostID, IndexName, Response) then
 		return false
 	end
+	local TotalNum = 0 
 	for FileName, LogContent in pairs(Response) do
 		if LogContent ~= "" or LogContent ~= " " then
 			local LastSaticsTime = LastSaticsTimes[FileName]
+			--需要把上一次统计时间点的记录拿出来对比下看有没有
+			local SameTimeStatics = MoneyLogData:GetSameTimeStatics(PlatformID,{HostID=HostID, Time=LastSaticsTime})
 			local Results = {}
 			local Lines = string.split(LogContent, "\n")
 			local LastTime = nil
-			local PlatformIDs = {}
 			local IsSub = string.find(FileName, "sub")
 			for _, Line in ipairs(Lines) do
 				if Line ~= "" and Line ~= " " then
-					local Result = {["HostID"] = HostID}
+					local Result = {HostID,}
 					local UniqueValue = nil
 					for _, Col in ipairs(Cols) do
 						local ColValue = CommonFunc.GetLogValue(Line, Col)
-						if Col == "Changes" and IsSub then
+						if Col == "Value" and IsSub then
 							ColValue = "-" .. ColValue --如果是扣除钻石的话前面添加负号
 						end
-						Result[Col] = ColValue
+						table.insert(Result, ColValue)
+						if Col ==  UniqueKey then
+							UniqueValue = tonumber(ColValue)
+						end
 					end
-					local PlatformID = CommonFunc.GetPlatformIDByUrs(Result["Urs"])
-					Result["PlatformID"] = PlatformID
-					PlatformIDs[PlatformID] = true --加入平台列表，便于过滤重复日志
 					--再提取时间
-					Result["Time"] = CommonFunc.GetLogTime(Line)
-					table.insert(Results, Result)
+					local RegTime = CommonFunc.GetLogTime(Line)
+					if SameTimeStatics[UniqueValue] ~= RegTime then
+						--没有重复数据的才添加
+						table.insert(Result, RegTime)
+						table.insert(Results, Result)
+						TotalNum = TotalNum + 1 --暂时先加1，后面再去分析时间统计
+						LastTime = RegTime -- 时间取最后一个
+					end
 				end
 			end
-			local SameTimeStatics = {}
-			for PlatformID, _ in pairs(PlatformIDs) do
-				SameTimeStatics[PlatformID] = MoneyLogData:GetSameTimeStatics(PlatformID,{HostID=HostID,Time=LastSaticsTime})
-			end
-			local PlatformResults = {}
-			for _, Result in ipairs(Results) do
-				if Result["PlatformID"] and SameTimeStatics[Result["PlatformID"]] 
-					and SameTimeStatics[Result["PlatformID"]][tonumber(Result[UniqueKey])] ~= Result["Time"] then
-					PlatformResults[Result["PlatformID"]] = PlatformResults[Result["PlatformID"]] or {}
-					table.insert(PlatformResults[Result["PlatformID"]], Result)
-					LastTime = Result["Time"] -- 时间取最后一个
-				end
-			end
-			--分平台记录
-			for PlatformID, Results in pairs(PlatformResults) do
+			if #Results > 0 then
 				MoneyLogData:BatchInsert(PlatformID, Results)
 			end
 			-- 更新tblStaticsCfg表中统计时间记录

@@ -26,7 +26,11 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.StartTime and Options.StartTime ~= "" then
 		Where = Where .. " and Time >= '" .. Options.StartTime .. "'"
@@ -37,8 +41,8 @@ function Get(self, Options)
 	if Options.Time and Options.Time ~= "" then
 		Where = Where .. " and Time >= '" .. Options.Time .. " 00:00:00' and Time <= '" .. Options.Time .. " 23:59:59'"
 	end
-	local Sql = "select HostID, Time,sum(RegNum) as Num from " ..PlatformID.."_statics.tblAddPlayer " .. Where .. " group by HostID, Time"
-
+	local Sql = "select HostID, Time,sum(RegNum) as Num, sum(Male) as Male, sum(Female) as Female from "
+		..PlatformID.."_statics.tblAddPlayer " .. Where .. " group by HostID, Time"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return {}, Err end
 	return Res
@@ -69,8 +73,8 @@ end
 
 
 function Insert(self, PlatformID, HostID, RegNum, Male, Female, Time)
-	local Sql = "insert into " .. PlatformID .. "_statics.tblAddPlayer(PlatformID, HostID, RegNum, Time) values('" .. PlatformID .. "','".. HostID .. "','" .. RegNum .. "','" .. Time .. "')"
-	
+	local Sql = "insert into " .. PlatformID .. "_statics.tblAddPlayer(PlatformID, HostID, RegNum, Male, Female, Time) values('"
+			.. PlatformID .. "','".. HostID .. "','" .. RegNum .. "','".. Male .. "','" .. Female ..  "','" .. Time .. "')"
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return nil, Err end
 	return Res		

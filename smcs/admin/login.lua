@@ -1,5 +1,5 @@
 ------------------------------------
---$Id: login.lua 56211 2015-04-08 09:05:48Z xiongyunkun $
+--$Id: login.lua 104537 2016-02-05 03:49:20Z xiongyunkun $
 ------------------------------------
 --[[
 --for user login
@@ -67,6 +67,45 @@ function DoLogout(self)
 		DelSession()		
 	end
 	ngx.redirect("/")
+end
+
+--单点登陆
+function SSOLogin(self)
+	local Args = GetPostArgs()
+	local Account = Args.account
+	local Pass = Args.pass
+	local User = UserData:GetUserByAccount(Account)
+	if not User then
+		return
+	end
+	if not User.password or User.password == "" then
+		ngx.say(MsgList[2])
+		return
+	end
+	if not Pass or Pass == "" or ngx.md5(Pass) ~= User.password then
+		ngx.say(MsgList[1])
+		return
+	end
+
+	--把用户的权限列表也设置在session中
+	local ModulePermissions = UserModuleData:Get({UserID=User.id})
+	local ModulePermissionList = {}
+	for _, Permission in ipairs(ModulePermissions) do
+		ModulePermissionList[Permission.Module] = true
+	end
+	--把用户的平台权限列表也设置在session中
+	local PlatformPerms = UserPlatformData:Get({UserID=User.id})
+	local PlatformPermList = {}
+	for _, PlatformPerm in ipairs(PlatformPerms) do
+		PlatformPermList[PlatformPerm.PlatfromID] = true
+	end
+	local SessionTable = {
+		UserId = User.id,
+		ModulePermissions = ModulePermissionList,
+		PlatformPermissions = PlatformPermList,
+	}
+	BatchSetSession(SessionTable)
+	ngx.print("ok")
 end
 
 DoRequest(true)

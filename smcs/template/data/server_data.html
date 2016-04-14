@@ -144,50 +144,6 @@
 			</tbody>
 		</table>
 	</div>
-	<div id="tab_7" class="tab-pane">
-		<table class="dataTable table table-striped table-bordered " style="border-collapse: collapse;width:100%;">
-			<thead>
-				<tr class="table_head">
-					<th>服</th>
-#for _,Day in pairs(DayList) do
-					<th>$Day$</th>
-#end				
-				</tr>
-			</thead>
-			<tbody>
-#for HostID,ServerMark in pairs(ServerMarkMap) do
-				<tr>
-					<td nowrap="nowrap">$ServerMark$</td>
-#for _,Day in pairs(DayList) do
-					<td>$PayCountData[HostID] and PayCountData[HostID][Day] or "-"$</td>
-#end
-				</tr>
-#end
-			</tbody>
-		</table>
-	</div>
-	<div id="tab_8" class="tab-pane">
-		<table class="dataTable table table-striped table-bordered " style="border-collapse: collapse;width:100%;">
-			<thead>
-				<tr class="table_head">
-					<th>服</th>
-#for _,Day in pairs(DayList) do
-					<th>$Day$</th>
-#end				
-				</tr>
-			</thead>
-			<tbody>
-#for HostID,ServerMark in pairs(ServerMarkMap) do
-				<tr>
-					<td nowrap="nowrap">$ServerMark$</td>
-#for _,Day in pairs(DayList) do
-					<td>$FirstPayNumData[HostID] and FirstPayNumData[HostID][Day] or "-"$</td>
-#end
-				</tr>
-#end
-			</tbody>
-		</table>
-	</div>
 </div>
 #else
 <div class="alert alert-warning" role="alert">请选择平台！</div>

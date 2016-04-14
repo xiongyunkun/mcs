@@ -7,21 +7,21 @@
 --]]
 --充值数据
 function PayData(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",ngx.time())
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
 	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	local TableData = {}
+	TableData = {}
 	local DateData = {}
 	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
 	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59") 
@@ -66,7 +66,7 @@ function PayData(self)
 		end
 		
 	end
-	local Titles = {"时间", "平台", "服", "日活跃", 
+	Titles = {"时间", "平台", "服", "日活跃", 
 			"充值次数", "充值人数", "首充人数", "ARPU", 
 			"付费率", "日充值", "日消耗", "总存量","总充值", "总消耗",}
 	if Options.Submit == "导出" then
@@ -75,7 +75,7 @@ function PayData(self)
 		return
 	else
 		--hicharts插件内容
-		local Hicharts = {
+		Hicharts = {
 			["CssID"] = "container",
 			["Text"] = "充值数据表",
 			["Title"] = "日充值",
@@ -85,40 +85,30 @@ function PayData(self)
 			["TimeRange"] = TimeRange,
 			["PointInterval"] = 86400, --时间间隔为1天
 		}
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-			Hicharts = Hicharts,
-		}
 	end
-	Viewer:View("template/oss/payData.html", Params)
+	Viewer:View("template/oss/payData.html")
 end 
 
 --角色充值排行
 function RolePayRank(self)
-	local Options = GetQueryArgs()
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Options = GetQueryArgs()
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Export",},
 	}
-	local Titles = {"排名", "平台", "服", "账号", 
+	Titles = {"排名", "平台", "服", "账号", 
 			"角色", "累计充值", "累计次数", "昨充", 
 			"今充", "单次最少", "单次最多", "首充","首充时间",
 			"最后充", "最后充值时间"}
-	local TableData = {}
+	TableData = {}
 	if Options.PlatformID then		
 		local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 		local ServerList = ServerData:GetAllServers()
@@ -128,7 +118,7 @@ function RolePayRank(self)
 		end
 		Options.OrderCol = "TotalCashNum DESC limit 100" --按总充值金额倒序排列
 		local UserPayRes = UserPayStaticsData:GetPayRank(Options)
-		local NowTime = ngx.time()
+		local NowTime = os.time()
 		local Today = os.date("%Y-%m-%d", NowTime) --今天日期
 		local Yesterday = os.date("%Y-%m-%d", NowTime - 86400) --昨天日期
 		for Idx, UserPay in ipairs(UserPayRes) do
@@ -166,41 +156,32 @@ function RolePayRank(self)
 		local ExcelStr = CommonFunc.ExportExcel("充值数据.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 			["SortBy"] = "asc",
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/oss/rolePayRank.html", Params)
+		Viewer:View("template/oss/rolePayRank.html")
 	end
 	
 end
 --角色充值统计
 function RolePayStatics(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
 		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {"全服数据", "新服数据"},},
 		{["Type"] = "Export",},
 	}
-	local TableData = {}
-	local Titles = {"平台", "服", "用户档次(元宝)", "帐号数", "占比"}
+	TableData = {}
+	Titles = {"平台", "服", "用户档次(元宝)", "帐号数", "占比"}
 	
 	if Options.PlatformID then
 		local ZoneMap = PayZoneStaticsData:GetZoneMap()
@@ -241,34 +222,29 @@ function RolePayStatics(self)
 		local ExcelStr = CommonFunc.ExportExcel("角色充值数据.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/oss/rolePayRankStatics.html", Params)
+		Viewer:View("template/oss/rolePayRankStatics.html")
 	end
 	
 end
 
+function GetZoneData(self, Options)
+	local UserPayRes = UserPayStaticsData:Get(Options.PlatformID, Options)
+end
+
 --充值对账
 function PayVerify(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",ngx.time())
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
 	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host"},
 		{["Type"] = "label", ["Text"] = "角色ID:",},
@@ -282,9 +258,6 @@ function PayVerify(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	local TableData = {}
-	local DataTable = {}
-	local Titles = {}
 	if Options.PlatformID then
 		Titles = {"充值时间", "平台", "服名称", "订单号", "玩家角色ID", "玩家角色名","玩家平台账号",
 		"充值金额", "货币类型","所获钻石","充值状态"}
@@ -293,7 +266,7 @@ function PayVerify(self)
 		for _, ServerInfo in ipairs(ServerList) do
 			ServerMap[ServerInfo.hostid] = ServerInfo.name
 		end
-		
+		TableData = {}
 		--重新封装一下查询条件
 		local NowOptions = {
 			PlatformID = Options.PlatformID, 
@@ -333,41 +306,32 @@ function PayVerify(self)
 			}
 		end
 	end
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/oss/payVerify.html", Params)
+	Viewer:View("template/oss/payVerify.html")
 end
 
 -- VIP用户统计
 function VipStatics(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
 	Options.Date = Options.Time
 	local VipResults, TotalNum, TotalLostNum = VipData:GetStatics(Options)
-	local Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
 		{["Type"] = "Export",}
 	}
-	local Titles = {"时间", "平台", "服", "VIP等级", "vip人数", "当前vip人数",
+	Titles = {"时间", "平台", "服", "VIP等级", "vip人数", "当前vip人数",
 		"VIP同级流失","同级流失率","总流失率","总人数"}
-	local TitleTips = {}
+	TitleTips = {}
 	TitleTips[5] = "当前VIP总人数(包括激活和非激活)"
 	TitleTips[6] = "当前激活的VIP人数"
-	local TableData = {}
+	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
 	local VipLevels = CommonData.VipLevels
@@ -401,73 +365,52 @@ function VipStatics(self)
 		local ExcelStr = CommonFunc.ExportExcel("VIP用户统计.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["SortCol"] = "3",
 			["SortBy"] = "asc",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-			Timestamp= Timestamp,
-			TitleTips = TitleTips,
-		}
-		Viewer:View("template/oss/vipStatics.html", Params)
+		Viewer:View("template/oss/vipStatics.html")
 	end
 end
 
---过滤去重玩家账号列表
-function GetUniqueUidNum(self, Uids)
-	local Uids = string.split(Uids, ",")
-	local UidMap = {}
-	for _, Uid in ipairs(Uids) do
-		if Uid ~= "" then
-			UidMap[Uid] = true
-		end
+--元宝消耗
+function GoldConsume(self)
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
+	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	local GoldResults, TotalValue = GoldData:GetStatics("Sub" ,Options)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	local GoldTypes = CommonData.GoldTypeNames
+	local TGoldTypes = {[""] = "全部",}
+	for ID, GoldName in pairs(GoldTypes) do
+		TGoldTypes[tostring(ID)] = GoldName
 	end
-	return table.size(UidMap)
-end
-
---钻石统计
-function GoldStatics(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",ngx.time())
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	Options.SelectType = Options.SelectType or 1 --默认是产出
-	local SelectType = tonumber(Options.SelectType)
-	local GoldResults, TotalValue = GoldData:GetStatics(SelectType == 1 and "Add" or "Sub" ,Options)
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local SelectTypes = {"钻石产出", "钻石消耗"}
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
-		{["Type"] = "Select", ["Label"] = "查询类型",["Name"] = "SelectType", ["Values"] = SelectTypes,},
+		{["Type"] = "Select", ["Label"] = "钻石类型",["Name"] = "GoldType", ["Values"] = TGoldTypes,},
 		{["Type"] = "<br>",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	local Titles = {"平台", "服", "渠道", "相关系统", "物品名称", "物品数量",  
-		"钻石数量","占比", "统计人数", "统计次数"}
-	local TableData = {}
+	Titles = {"货币类型", "渠道", "相关系统", "物品名称", "物品数量", "元宝消耗值", "占比", "消费人数", "消费次数"}
+
+	local Channels = {"VIP购买","众神之门","魔法炼金", "快速扫荡","宠物购买",}
+	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
 	local TotalUidNum, TotalConsumeNum = 0, 0
-
 	for GoldType, GoldInfo in pairs(GoldResults) do
 		for Channel, ChannelInfo in pairs(GoldInfo) do 
 			if string.len(Channel) > 0 then
 				local TInfo = {}
-				table.insert(TInfo, PlatformStr)
-				table.insert(TInfo, HostStr)
+				table.insert(TInfo, GoldTypes[GoldType])
 				local Names = string.split(Channel, "_")
 				table.insert(TInfo, Names[1])
 				table.insert(TInfo, Names[2] or Names[#Names])
@@ -486,37 +429,106 @@ function GoldStatics(self)
 		end
 	end
 	--先加上总计
-	local SInfo = {PlatformStr, HostStr, "all", "all", "all", "", TotalValue, "100%", 
-		TotalUidNum, TotalConsumeNum}
+	local TGoldType = "all"
+	if Options.GoldType and Options.GoldType ~= "" then
+		TGoldType = GoldTypes[tonumber(Options.GoldType)] or "all"
+	end
+	local SInfo = { TGoldType, "all", "all", "all", "", TotalValue, "100%", TotalUidNum, TotalConsumeNum}
 	table.insert(TableData, 1, SInfo)
 	if Options.Submit == "导出" then
-		local ExcelStr = CommonFunc.ExportExcel("钻石统计.xls", Titles, TableData)
+		local ExcelStr = CommonFunc.ExportExcel("元宝消耗.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
-			["SortCol"] = "6",
+			["bSort"] = true,
+			["SortCol"] = "4",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-			Timestamp= Timestamp,
+		Viewer:View("template/oss/goldConsume.html")
+	end
+end
+
+--过滤去重玩家账号列表
+function GetUniqueUidNum(self, Uids)
+	local Uids = string.split(Uids, ",")
+	local UidMap = {}
+	for _, Uid in ipairs(Uids) do
+		if Uid ~= "" then
+			UidMap[Uid] = true
+		end
+	end
+	return table.size(UidMap)
+end
+
+--钻石产出
+function GoldGenerate(self)
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
+	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	local GoldResults, TotalValue = GoldData:GetStatics("Add" ,Options)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	local GoldTypes = CommonData.GoldTypeNames
+	local TGoldTypes = {[""] = "全部",}
+	for ID, GoldName in pairs(GoldTypes) do
+		TGoldTypes[tostring(ID)] = GoldName
+	end
+	--filter页面模板显示的参数
+	Filters = {
+		{["Type"] = "Platform",},
+		{["Type"] = "Host",},
+		{["Type"] = "Select", ["Label"] = "钻石类型",["Name"] = "GoldType", ["Values"] = TGoldTypes,},
+		{["Type"] = "<br>",},
+		{["Type"] = "StartTime",},
+		{["Type"] = "EndTime",},
+		{["Type"] = "Export",},
+	}
+	Titles = {"平台", "服", "货币", "渠道", "相关系统", "物品名称", "物品数量",  "元宝产出量","占比"}
+	TableData = {}
+	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
+	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
+	--先加上总计
+	local SInfo = {PlatformStr, HostStr, "钻石", "all", "all", "all", "all", TotalValue, "100%"}
+	table.insert(TableData, SInfo)
+	for GoldType, GoldInfo in pairs(GoldResults) do
+		for Channel, ChannelInfo in pairs(GoldInfo) do 
+			local TInfo = {}
+			table.insert(TInfo, PlatformStr)
+			table.insert(TInfo, HostStr)
+			table.insert(TInfo, GoldTypes[GoldType])
+			local Names = string.split(Channel, "_")
+			table.insert(TInfo, Names[1])
+			table.insert(TInfo, Names[2] or Names[#Names])
+			table.insert(TInfo, Names[3] or Names[#Names])
+			table.insert(TInfo, 1)
+			local Value = ChannelInfo.Value
+			table.insert(TInfo, Value)
+			table.insert(TInfo, math.floor(Value * 10000/TotalValue)/100 .. "%")
+			table.insert(TableData, TInfo)
+		end
+	end
+	if Options.Submit == "导出" then
+		local ExcelStr = CommonFunc.ExportExcel("元宝产出.xls", Titles, TableData)
+		ngx.say(ExcelStr)
+	else
+		DataTable = {
+			["ID"] = "logTable",
+			["bSort"] = true,
+			["SortCol"] = "4",
+			["NoDivPage"] = true,
 		}
-		Viewer:View("template/oss/goldStatics.html", Params)
+		Viewer:View("template/oss/goldGenerate.html")
 	end
 end
 
 --充值频率
 function PayFrequencyShow(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",ngx.time())
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
+	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	local NewServers = ServerData:GetServersByServerTime(Options) -- 开服数
 	--如果选择了新服数据先获得新服HostID列表
 	if tonumber(Options.ServerType) == 2 then
@@ -527,10 +539,10 @@ function PayFrequencyShow(self)
 		Options.HostIDs = HostIDs
 	end
 	local FreResults = PayDayFrequencyStaticsData:GetStatics(Options)
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "StartTime",},
@@ -538,8 +550,8 @@ function PayFrequencyShow(self)
 		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {"全服数据", "新服数据"},},
 		{["Type"] = "Export",},
 	}
-	local Titles = {"时间","平台", "服", "充值人数","1次","2次","3次","4次","5次","6-10","11-20","20次以上"}
-	local TableData = {}
+	Titles = {"时间","平台", "服", "充值人数","1次","2次","3次","4次","5次","6-10","11-20","20次以上"}
+	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
 	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
@@ -566,95 +578,73 @@ function PayFrequencyShow(self)
 		local ExcelStr = CommonFunc.ExportExcel("充值频率.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/oss/payFrequency.html", Params)
+		Viewer:View("template/oss/payFrequency.html")
 	end
 end
 
---金钱统计
-function MoneyStatics(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",ngx.time())
+--钻石积累
+function GoldAccumulate(self)
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-01",os.time())
 	local Timestamp = GetTimeStamp(Options.StartTime .. " 00:00:00")
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	Options.SelectType = Options.SelectType or 1
-	local SelectType = tonumber(Options.SelectType)
-	local MoneyResults, TotalValue = MoneyData:GetStatics(SelectType == 1 and "Add" or "Sub" ,Options)
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-	local SelectTypes = {"金钱产出", "金钱消耗"}
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
-		{["Type"] = "Select", ["Label"] = "查询类型",["Name"] = "SelectType", ["Values"] = SelectTypes,},
-		{["Type"] = "<br>",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	local Titles = {"平台", "服", "渠道", "相关系统", "物品名称", "物品数量", "金钱数量", 
-		"占比", "统计人数", "统计次数"}
-
-	local TableData = {}
+	Titles = {"时间", "平台", "服", "充值钻石数", "消费非绑定钻石数", "消费绑定钻石数", "非绑定钻石囤积", "绑定钻石囤积"}
+	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
-	local TotalUidNum, TotalConsumeNum = 0, 0
-	for Channel, ChannelInfo in pairs(MoneyResults) do 
-		if string.len(Channel) > 0 then
-			local TInfo = {}
-			table.insert(TInfo, PlatformStr)
-			table.insert(TInfo, HostStr)
-			local Names = string.split(Channel, "_")
-			table.insert(TInfo, Names[1] or "")
-			table.insert(TInfo, Names[2] or Names[#Names] or "")
-			table.insert(TInfo, Names[3] or Names[#Names] or "")
-			table.insert(TInfo, 1)
-			local Value = ChannelInfo.Value
-			table.insert(TInfo, Value)
-			table.insert(TInfo, math.floor(Value * 10000/TotalValue)/100 .. "%")
-			local UidNum = self:GetUniqueUidNum(ChannelInfo.Uids)
-			TotalUidNum = TotalUidNum + UidNum
-			table.insert(TInfo, UidNum)
-			TotalConsumeNum = TotalConsumeNum + ChannelInfo.ConsumeNum
-			table.insert(TInfo, ChannelInfo.ConsumeNum)
-			table.insert(TableData, TInfo)
+	local PayDayRes = PayDayStaticsData:GetStatics(Options)
+	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
+	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59") 
+	while StartTime < EndTime do
+		local DateInfo = {}
+		local Date = os.date("%Y-%m-%d",StartTime)
+		table.insert(DateInfo, Date)
+		table.insert(DateInfo, PlatformStr)
+		table.insert(DateInfo, HostStr)
+		local PayGold = 0 --充值钻石数
+		local GoldConsume = 0 -- 消费非绑定钻石数
+		local CreditGoldConsume = 0 --消费绑定钻石数
+		local GoldRest = 0 -- 非绑定钻石囤积
+		local CreditGoldRest = 0 -- 绑定钻石囤积
+		if PayDayRes[Date] then
+			PayGold = PayDayRes[Date].PayGold
+			GoldConsume = PayDayRes[Date].GoldConsume
+			CreditGoldConsume = PayDayRes[Date].CreditGoldConsume
+			GoldRest = PayDayRes[Date].TotalGoldProduce + PayDayRes[Date].TotalGoldConsume
+			CreditGoldRest = PayDayRes[Date].TotalCreditGoldProduce + PayDayRes[Date].TotalCreditGoldConsume
 		end
+		table.insert(DateInfo, PayGold)
+		table.insert(DateInfo, GoldConsume)
+		table.insert(DateInfo, CreditGoldConsume)
+		table.insert(DateInfo, GoldRest)
+		table.insert(DateInfo, CreditGoldRest)
+		table.insert(TableData, DateInfo)
+		StartTime = StartTime + 86400
 	end
-	--先加上总计
-	local SInfo = { PlatformStr, HostStr, "all", "all", "all", "", TotalValue, "100%", TotalUidNum, TotalConsumeNum}
-	table.insert(TableData, 1, SInfo)
 	if Options.Submit == "导出" then
-		local ExcelStr = CommonFunc.ExportExcel("金钱统计.xls", Titles, TableData)
+		local ExcelStr = CommonFunc.ExportExcel("钻石积累.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
-			["SortCol"] = "6",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/oss/moneyStatics.html", Params)
+		Viewer:View("template/oss/goldGenerate.html")
 	end
 end
 

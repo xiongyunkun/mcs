@@ -14,7 +14,7 @@ local MaxDay = 7 --统计的最大天数
 
 --通过分析玩家信息表中的玩家等级获得玩家的等级分布
 function CronStatics(self, PlatformID, HostID)
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local Day = os.date("%Y-%m-%d", NowTime) -- 统计当前时间的
 	local MountUserList = MountLevelData:Get(PlatformID, {HostID = HostID})
 	local DayTimeStamp = self:GetStartTimeStamp(NowTime) --获得第二天0点的时间戳

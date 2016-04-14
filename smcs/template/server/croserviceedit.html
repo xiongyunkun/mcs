@@ -26,6 +26,32 @@
 	</td>
 </tr>
 <tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">是否绑定跨服分区:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="BindCroZone">
+			<option value ="0" $Service.BindCroZone == 0 and "selected" or ""$>否</option>
+			<option value ="1" $Service.BindCroZone == 1 and "selected" or ""$>是</option>
+		</select>
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">战区所需开服天数:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<input type="text" name="StartServerDays" value="$Service.StartServerDays or ''$">
+	</td>
+</tr>
+<tr>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">共享战区服务名称:</td>
+	<td width="80%" height="26" style="text-align: left;" class="content">
+		<select name="ShareServiceID">
+			<option value ="0">请选择</option>
+#for id, ServiceName in pairs(ServiceMap) do
+			<option value ="$id$" $id == Service.ShareServiceID and "selected" or ""$>$ServiceName$</option>
+#end
+		</select>
+	</td>
+</tr>
+<tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">备注:</td>
 	<td width="80%" height="26" style="text-align: left;" class="content">
 		<textarea name=Memo cols="30" rows="3">$Service.Memo or ""$</textarea>

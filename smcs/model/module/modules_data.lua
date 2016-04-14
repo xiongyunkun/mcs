@@ -14,12 +14,7 @@ local ConfigFilePath = {
 function GetAllModules(self,Options)
 	local Where = " where 1=1 "
 	if Options and Options.ModuleName and Options.ModuleName ~= "" then
-		if Options.Precise then
-			Where = Where .. " and name = '" .. Options.ModuleName .. "' "
-		else
-			Where = Where .. " and name like '%" .. Options.ModuleName .. "%' "
-		end
-		
+		Where = Where .. " and name like '%" .. Options.ModuleName .. "%' "
 	end
 	if Options and Options.System then
 		Where = Where .. " and System like '" .. Options.System .. "%'"

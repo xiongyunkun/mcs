@@ -27,8 +27,14 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		local HostIDList = {Options.HostID, CommonData.W3_HOSTID}
-		Where = Where .. " and HostID in ('" .. table.concat( HostIDList, "','") .. "')"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
+	end
+	if Options.Date and Options.Date ~= "" then
+		Where = Where .. " and Date = '" .. Options.Date .. "'"
 	end
 	if Options.StartTime and Options.StartTime ~= "" then
 		Where = Where .. " and Date >= '" .. Options.StartTime .. "'"

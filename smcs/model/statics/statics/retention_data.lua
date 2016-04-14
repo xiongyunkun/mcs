@@ -38,10 +38,27 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.HostIDs and type(Options.HostIDs) == "table" then
-		Where = Where .. " and HostID in ('" .. table.concat(Options.HostIDs, "','") .. "')"
+		local HostIDs = Options.HostIDs
+		if not Options.NoMerge then
+			local NewHostIDs = {}
+			local THostMap = {}
+			for _, HostID in ipairs(HostIDs) do
+				HostID = CommonFunc.GetToHostID(HostID) --合服转换
+				if not THostMap[HostID] then
+					table.insert(NewHostIDs, HostID)
+					THostMap[HostID] = true
+				end
+			end
+			HostIDs = NewHostIDs
+		end
+		Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
 	end
 	if Options.Date and Options.Date ~= "" then
 		Where = Where .. " and Date = '" .. Options.Date .. "'"

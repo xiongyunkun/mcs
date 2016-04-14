@@ -17,12 +17,7 @@ Status = {
 function ReqPlatformList(self, Msg)
 	PlatformList = PlatformData:GetPlatform()	
 	ExtMsg = Msg
-	local Params = {
-		PlatformList = PlatformList,
-		ExtMsg = ExtMsg,
-		Status = Status,
-	}
-	Viewer:View("template/platform/platformlist.html", Params)
+	Viewer:View("template/platform/platformlist.html")
 end
 
 function DoUpdatePlatform(self)
@@ -36,8 +31,6 @@ function DoUpdatePlatform(self)
 		else
 			local Res, Msg = PlatformData:UpdatePlatform(Args)
 		end
-		
-		CommonFunc.UpdateSDKIDMapDict(Args.SDKID, Args.PlatformID)
 		self:ReqPlatformList(Msg)
 		return
 	end
@@ -49,11 +42,7 @@ function DoUpdatePlatform(self)
 	if PlatformInfo and PlatformInfo[1] then
 		PlatformInfo = PlatformInfo[1]
 	end
-	local Params = {
-		PlatformInfo = PlatformInfo,
-		
-	}
-	Viewer:View("template/platform/editplatform.html", Params)
+	Viewer:View("template/platform/editplatform.html")
 end
 
 function DoDelPlatform(self)

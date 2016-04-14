@@ -24,7 +24,6 @@ $(document).ready(function(){
 		<th>平台</th>
 		<th>服务器</th>
 		<th>开服时间</th>
-		<th>7日在线峰值</th>
 		<th>目标服</th>
 	</tr>
 	</thead>
@@ -40,8 +39,7 @@ $(document).ready(function(){
 #end
 			<td>$PlatformMap[Server.platformid]$</td>
 			<td>$Server.name$</td>
-			<td>$os.date("%Y-%m-%d %X",(Server.StartTime or ngx.time()))$</td>
-			<td>$(Server.Avg7Num or 0)$</td>
+			<td>$Server.m_startservertime ~= "0000-00-00 00:00:00" and Server.m_startservertime or Server.startservertime$</td>
 #if id == 1 then
 			<td rowspan="$#Servers$">
 #for _, TargetServer in ipairs(TargetServers) do 

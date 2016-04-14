@@ -21,7 +21,7 @@ function GetPlatformList(IsAll)
 	--再获得该用户拥有权限的平台
 	local SelectedMap = {}
 	local PlatformPermissions = GetSession("PlatformPermissions")
-	for PlatformID, _ in pairs(PlatformPermissions or {}) do
+	for PlatformID, _ in pairs(PlatformPermissions) do
 		if Platforms[PlatformID] then
 			SelectedMap[PlatformID] = Platforms[PlatformID]
 		end
@@ -30,18 +30,23 @@ function GetPlatformList(IsAll)
 end
 
 --服列表
+--[[
+ Params:PlatformID,平台ID
+]]
 function GetServers(PlatformID)
 	--如果平台为空服务器列表也直接返回为空
 	if not PlatformID or PlatformID == "" then 
 		return {} 
 	end
-	
-	local Servers = MixServerData:GetServers(PlatformID)
+	local Options = {}
+	Options["PlatformID"] = PlatformID
+	local Servers = ServerData:GetServer(Options)
 	local NewServers = {}
 	for _, Server in ipairs(Servers) do
 		NewServers[Server.hostid] = Server.name
 	end
-	return NewServers
+	Servers = NewServers
+	return Servers
 end
 
 --获得多选服务器类型选择列表
@@ -61,9 +66,11 @@ end
 
 function GetBroadcastTypes()
 	local Types = {
-	"聊天框世界频道",
-	"聊天框系统频道",
-	"系统滚屏公告",
+	"主界面重要公告",
+	"界面大电视公告",
+	"聊天框公告频道",
+	"聊天框传闻频道",
+	"聊天框信息频道",
 	}
 	return Types
 end
@@ -81,22 +88,21 @@ function ExportExcel(FileName, Titles, Contents)
 	ngx.header["Pragma"] = "no-cache"
 	ngx.header["Expires"] = 0
 	--构造内容
-	local ContentArray = {}
+	local ContentStr = ""
 	local NewTitles = {}
 	for _, Title in ipairs(Titles) do
 		Title = utf2gbk:iconv(Title) --转成gbk格式
 		table.insert(NewTitles, Title or "")
 	end
-	table.insert(ContentArray, table.concat(NewTitles, "\t"))
+	ContentStr = ContentStr .. table.concat(NewTitles, "\t") .. "\n"
 	for _, RowContent in ipairs(Contents) do
 		local NewRowContent = {}
 		for _, ColValue in ipairs(RowContent) do
 			ColValue = utf2gbk:iconv(ColValue) --转成gbk格式
 			table.insert(NewRowContent, ColValue)
 		end
-		table.insert(ContentArray, table.concat(NewRowContent, "\t"))
+		ContentStr = ContentStr .. table.concat(NewRowContent, "\t") .. "\n"
 	end
-	local ContentStr = table.concat( ContentArray, "\n")
 	return ContentStr
 end
 --[[
@@ -176,7 +182,7 @@ end
 
 --用正则表达式提取Log对应的内容
 function GetLogValue(Line,Key, DefaultValue)
-	local Key = "[), ]" .. Key .. " = "
+	local Key = "[),]" .. Key .. "="
 	local Value = DefaultValue or ""
 	local From, To = string.find(Line, Key)
 	if not From then
@@ -187,18 +193,17 @@ function GetLogValue(Line,Key, DefaultValue)
 	if Strs and Strs[1] then
 		Value = Strs[1]
 	end
-	Value = MysqlEscapeString(Value) --mysql转义
+	Value = MysqlEscapeString(Value) --mysql字符转义
 	return Value
 end
 
---获得日志时间
+-- 获得Log中行数据的时间
 function GetLogTime(Line)
 	local Match = "%[[%S%s]+]"
 	local Time = string.match(Line, Match)
 	Time = string.sub(Time,2,string.len(Time)-1)
 	return Time
 end
-
 --获得距离Day这天相隔OverDays天的日期
 --params: Day:2015-01-24 OverDays: -1
 function GetOverDate(Day, OverDays)
@@ -210,7 +215,7 @@ end
 --获得修正时间,统计的时候可能不是准时的，根据其TimeDiff时间间隔计算其修正时间
 --例如当前执行时间是10:01，Frequency为5其修正执行时间为10:00
 function GetCorrectTime(Frequency)
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local Date = os.date("%Y-%m-%d", NowTime)
 	Date = Date .. " 00:00:00"
 	local StartTime = GetTimeStamp(Date)
@@ -290,7 +295,7 @@ function MysqlEscapeString(Str)
 	Str = string.gsub(Str, "\\", '\\\\')
 	Str = string.gsub(Str, "'", "\\'")
 	return Str
-end
+end 
 
 --获得对应平台接口的密钥
 function GetInterfaceKey(PlatformID, IndexName)
@@ -322,143 +327,139 @@ function SendRTX(Receivers, Title, Content)
 	return Response
 end
 
-function SendMail(Receivers, ErroKey, Content)
-	ErroKey = utf2gbk:iconv(ErroKey) --转成gbk格式
-	Content = utf2gbk:iconv(Content) --转成gbk格式
-	
-	local Params = {
-		"errorkey=" .. ngx.escape_uri(ErroKey),
-		"Content=" .. ngx.escape_uri(Content),
-	}
-
-	local Url = CommonData.MAIL_URL .. table.concat(Params, "&")
-	local Flag, Response = ReqOutUrl(Url)
-	return Response
+--获得log表中的日期（log表后面按日期分表的日期)
+function GetMySqlTableDate(Time)
+	local Date = string.match(Time, "(%d%d%d%d%-%d%d%-%d%d)") --提取日期出来
+	Date = string.gsub(Date, "-","") --替换-
+	return Date
 end
+--获得日期
+function GetDate(Time)
+	local Date = string.split(Time, " ") --提取日期出来
+	Date = Date and Date[1] or os.date("%Y-%m-%d", os.time())
+	return Date
+end
+
+--获得log表中开始时间和结束时间所经历的日期列表
+function GetMySqlTableDateList(StartDate, EndDate)
+	if StartDate == EndDate then
+		StartDate = string.gsub(StartDate, "-","") --替换-
+		return {StartDate}
+	end
+	local DateList = {}
+	local StartTime = GetTimeStamp(StartDate .. " 00:00:00")
+	local EndTime = GetTimeStamp(EndDate .. " 00:00:00")
+	while StartTime <= EndTime do
+		local Date = os.date("%Y%m%d", StartTime)
+		table.insert(DateList, Date)
+		StartTime = StartTime + 86400
+	end
+	return DateList
+end
+
 --判断字符串是否为空
 function IsStrEmpty(Str)
 	return not Str or Str == ""
 end
 
--- 获取SDKName对应的ServerList 
-function GetServerListByFileName(FileName)
-	local InListServer = {}
-	local ServList = { ServerList = {} }
-	local ServerInList = ServerData:GetServerSDKInfo(FileName)
-	for _, Svrinlist in pairs(ServerInList) do
-		InListServer[Svrinlist.serverid] = true
+--获得平台账号，后台这里在每个平台账号前面加上了平台ID
+function ExtractPlatformUrs(Urs)
+	local Strs = string.split(Urs, "_")
+	return Strs[#Strs]
+end 
+
+--生成跨服文件 
+function ExportCroZone()
+	--获得跨服服务名列表
+	local CroServerList = CroServerData:GetCroServer()
+	if #CroServerList == 0 then
+		ngx.say("0")
+		return 
 	end
-	if not next(InListServer) then
-		return {}
-	end
-	
+	--最终结果记录在这里面
+	local TotalResults = {["HostCfg"] = {}}
+	--先把服务器列表都获取出来
 	local Servers = ServerData:GetAllServers()
-	for id, Server in ipairs(Servers) do
-		if InListServer[Server.hostid] then
-			if not ServList.ServerList[Server.hostid] then
-				ServList.ServerList[Server.hostid] = {
-					Ip = Server.address,
-					Port = Server.ports,
-					Name = Server.name,
-					State = Server.status,
-					Priority = Server.priority,
-					Tips = Server.tips
-				}
+	-- 构造serverMap
+	local ServerMap = {}
+	for _, Server in ipairs(Servers) do
+		local MapAddress = (not IsStrEmpty(Server.cmcsip)) and Server.cmcsip or nil
+		local MapPort = (not IsStrEmpty(Server.cmcsport)) and Server.cmcsport or nil
+		local ServerMark = (not IsStrEmpty(Server.servmark)) and Server.servmark or nil
+		local MergeTo = Server.mergeto ~= 0 and Server.mergeto or nil
+		TotalResults["HostCfg"][Server.hostid] = {
+			['CrossPort'] = tonumber(Server.crossport),
+			['Ip'] = Server.address,
+			['Name'] = Server.name,
+			['NetPort'] = string.split(Server.ports),
+			["Platform"] = Server.platformid,
+			["MapAddress"] = MapAddress,
+			["MapPort"] = MapPort,
+			["ServerMark"] = ServerMark,
+			["MergeTo"] = MergeTo,
+		}
+	end
+	for _, CroServer in ipairs(CroServerList) do
+		--获得跨服配置表
+		local Service = CroServerData:GetCroService(CroServer.ServiceID)
+		if #Service ~= 0 then
+			Service = Service[1]
+			local ServiceName = Service.ServiceName
+			TotalResults[ServiceName] = TotalResults[ServiceName] or {
+				["Module"] = Service.Module,
+				["NeedSelfGroup"] = Service.NeedSelfGroup and tonumber(Service.NeedSelfGroup),
+				["SrcHosts"] = {},
+				["DestHosts"] = {},
+			}
+			--获得战区配置
+			local CroInfos = CroServerData:GetCroZoneInfo({["ServiceID"] = CroServer.ID})
+			--按照战区进行分类
+			local ZoneData = {}
+			for _, CroInfo in ipairs(CroInfos) do
+				if not ZoneData[CroInfo.ZoneName] then
+					ZoneData[CroInfo.ZoneName] = {["SrcHosts"] = {CroInfo.HostID},["DestHosts"] = CroInfo.TargetServer}
+				else
+					table.insert(ZoneData[CroInfo.ZoneName]["SrcHosts"], CroInfo.HostID)
+				end
+			end
+			--再把战区的源服和目标服合并到导出结果中
+			for _, ZoneInfo in pairs(ZoneData) do
+				table.insert(TotalResults[ServiceName]["SrcHosts"], ZoneInfo["SrcHosts"])
+				table.insert(TotalResults[ServiceName]["DestHosts"], ZoneInfo["DestHosts"])
 			end
 		end
 	end
-
-	return ServList
+	local Str = "return " .. Serialize(TotalResults)
+	--写文件
+	local CroFilePath = "/../gservice/interfacedata/croserver/cross_server_cfg.lua"
+	local Writer = io.open(GetBasePath().. CroFilePath,"w")
+	Writer:write(Str)
+	Writer:flush()
+	Writer:close()
 end
 
-function GetEnvListByEnvName(EnvName, FileName)
-	local UrlCfg = SDKCfg.UrlList[EnvName]
-	if not UrlCfg then return end
-
-	local EnvList = {
-		["ASSET_URL"] =  UrlCfg.AssetUrl,
-		["FILE_URL"] = UrlCfg.FileUrl,
-		["SERVER_LIST_URL"] = UrlCfg.ServerListUrl .. "serverlist/" .. FileName .. ".txt",
-		["BROADCAST_URL"] = UrlCfg.BroadCastUrl,
-	}
-	
-	return EnvList
-end
 
 --查询获得合服之后的目标服，如果没有合服则直接返回源服HostID
 function GetToHostID(SrcHostID)
 	SrcHostID = tonumber(SrcHostID)
-	--TODO:后面做合服的时候再做扩展
-	local ToHostID = SrcHostID
+	local MergeHostMap = ngx.shared.merge_host_map --合服映射表
+	local ToHosts = MergeHostMap:get_keys(0)
+	if #ToHosts == 0 then
+		--缓存里面为空，初始化缓存
+		local Servers = ServerData:GetAllServers()
+		for _, Server in ipairs(Servers) do
+			SetToHostID(Server.hostid, Server.mergeto)
+		end
+	end
+	local ToHostID = MergeHostMap:get(SrcHostID)
+	if not ToHostID or ToHostID == 0 then
+		ToHostID = SrcHostID --没有进行过合服，目标服就是源服
+	end
 	return ToHostID
 end
 
---从渠道账号中获得渠道ID
-function GetPlatformIDByUrs(Urs)
-	local DefaultPlatformID = "test"
-	local PlatformID = DefaultPlatformID
-	if Urs and Urs ~= "" then
-		local SDKID = nil
-		for X in string.gmatch(Urs, "(%d+)_%d+_%d+") do
-			SDKID = X
-			break
-		end
-		if SDKID then
-			SDKID = tonumber(SDKID)
-			local SDKIDMap = ngx.shared.sdkid_platform_map --sdkid-map映射表
-			local Platforms = SDKIDMap:get_keys(0) 
-			if #Platforms == 0 then --dict中未空，全部初始化一下
-				Platforms = PlatformData:GetPlatform()
-				for _, Info in ipairs(Platforms) do
-					UpdateSDKIDMapDict(Info.SDKID, Info.PlatformID)
-				end
-			end
-			PlatformID = SDKIDMap:get(SDKID)
-		end
-		
-		if not PlatformID then --如果没有就取默认值
-			PlatformID = DefaultPlatformID 
-		end
-	end
-	return PlatformID
+--设置合服的目标服
+function SetToHostID(SrcHostID, ToHostID)
+	local MergeHostMap = ngx.shared.merge_host_map --合服映射表
+	MergeHostMap:set(SrcHostID, ToHostID)
 end
-
---根据HostID查询该HostID所在的平台列表
-function GetPlatformListByHostID(HostID)
-	local PlatformList = {}
-	local PRes = MixServerData:Get({HostID = HostID})
-	for _, PInfo in ipairs(PRes) do
-		local PlatformID = PInfo.PlatformID
-		table.insert(PlatformList, PlatformID)
-	end
-	return PlatformList
-end
-
---更新SDK缓存
-function UpdateSDKIDMapDict(SDKID, PlatformID)
-	local SDKIDMap = ngx.shared.sdkid_platform_map --sdkid-map映射表
-	SDKIDMap:set(tonumber(SDKID), PlatformID)
-end
-
---转换成页面展示的奖励列表
-function GetReward(Rewards)
-	local Results = {}
-	local RewardList = string.split(Rewards, ";")
-	for _, Reward in ipairs(RewardList) do
-		--再用下划线划分
-		local RewardInfo = string.split(Reward, "_")
-		if #RewardInfo == 3 and CommonData.MAIL_TYPE2NAME[tonumber(RewardInfo[1])] then
-			local RewardName = CommonData.MAIL_TYPE2NAME[tonumber(RewardInfo[1])]
-			if RewardName == "物品" then
-				local ItemName = ItemDataMap[tonumber(RewardInfo[3])] or "未知物品"
-				Results[ItemName] = (Results[ItemName] or 0) + tonumber(RewardInfo[2])
-			else
-				Results[RewardName] = (Results[RewardName] or 0) + tonumber(RewardInfo[2])
-			end
-		end
-	end
-	return Results
-end
-
-
-

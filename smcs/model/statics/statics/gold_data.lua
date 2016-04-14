@@ -30,7 +30,11 @@ function Get(self, Options)
 		Where = Where .. " and PlatformID = '" .. Options.PlatformID .. "'"
 	end
 	if Options.HostID and Options.HostID ~= "" then
-		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
+		local HostID = Options.HostID
+		if not Options.NoMerge then
+			HostID = CommonFunc.GetToHostID(HostID) --合服转换
+		end
+		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	if Options.Date and Options.Date ~= "" then
 		Where = Where .. " and Date = '" .. Options.Date .. "'"
@@ -100,7 +104,7 @@ end
 function MergeData(self, Results, GoldRes, TotalValue)
 	local TotalValue = TotalValue
 	for _, GoldInfo in ipairs(GoldRes) do
-		local GoldType = GoldInfo.GoldType or 1
+		local GoldType = GoldInfo.GoldType
 		local Channel = GoldInfo.Channel
 		local Value = GoldInfo.Value
 		local ConsumeNum = GoldInfo.ConsumeNum

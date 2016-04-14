@@ -9,13 +9,13 @@
 
 function Index(self)
 	--获得平台列表
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
+	Platforms = CommonFunc.GetPlatformList()
 	Options.HostID = nil --这里没有HostID
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
@@ -36,8 +36,8 @@ function Index(self)
 	local LoginRes = RetentionData:GetStatics(Options) -- 日活跃
 	local OnlineRes = HistoryOnlineData:GetStatics(Options) --PCU最高在线
 	local ServerPayRes = PayDayStaticsData:GetStatics(Options) --服充值日统计数据
-	local TableData = {}
-	local TotalDateList = {}
+	TableData = {}
+	TotalDateList = {}
 	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
 	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59")
 	local TotalRegNum = 0
@@ -45,8 +45,9 @@ function Index(self)
 		local DateInfo = {}
 		local Date = os.date("%Y-%m-%d",StartTime)
 		table.insert(DateInfo, Date)
-		table.insert(DateInfo, ServerNums[Date] or 0) --总充值暂时为0，后面有数据了再改
-		table.insert(DateInfo, RegRes[Date] and RegRes[Date].RegNum or 0)
+		table.insert(DateInfo, ServerNums[Date] or 0) 
+		local RegNum = RegRes[Date] and RegRes[Date].RegNum or 0
+		table.insert(DateInfo, RegNum)
 		local LoginNum = LoginRes[Date] and LoginRes[Date].LoginNum or 0
 		table.insert(DateInfo, LoginNum)
 		table.insert(DateInfo, OnlineRes[Date] and OnlineRes[Date].MaxOnline or 0)
@@ -66,40 +67,52 @@ function Index(self)
 	end
 	TableData = NewTableData
 	if Options.Submit == "导出" then
-		local Titles = {"日期", "开服数", "日创角", "日活跃", "在线峰值", "充值人数", "充值金额", "ARPU值", "活跃付费率"}
+		local Titles = {"日期", "开服数", "日注册", "日活跃", "在线峰值", "充值人数", "充值金额", "ARPU值", "活跃付费率"}
 		local ExcelStr = CommonFunc.ExportExcel("数据总览.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
+		--各平台收入总数
+		PlatformPayList = {}
+		TotalPayAmount = 0
 		--各平台的注册人数
-		local RegResults = self:GetTotalRegNumByPlatform(Options)
-		local PayResults = self:GetTotalCashNumByPlatform(Options)
-		local DataTable = {
+		RegResults = self:GetTotalRegNumByPlatform(Options)
+		PayResults = self:GetTotalCashNumByPlatform(Options)
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
+			
 		}
-		local Params = {
-			Options = Options,
-			Filters = Filters,
-			Platforms = Platforms,
-			TableData = TableData,
-			RegResults = RegResults,
-			PayResults = PayResults,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/data/index.html", Params)
+		Viewer:View("template/data/index.html")
 	end
 end
 
+--获得当天在线峰值人数，目前是从5分钟在线数据中直接获取，后期考虑下怎么优化
+function GetMaxOnline(self, Options, Date)
+	local NewOptions = {
+		PlatformID = Options.PlatformID,
+		HostID = Options.HostID,
+		Time = Date,
+	}
+	local OnlineRes = OnlineData:GetStatics(NewOptions)
+	local MaxOnline = 0
+	for Time, Num in pairs(OnlineRes) do
+		if Num > MaxOnline then
+			MaxOnline = Num
+		end
+	end
+	return MaxOnline
+end
+
 function OnlineStatics(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
-	local Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
-	local Platforms = CommonFunc.GetPlatformList()
+	Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
@@ -107,7 +120,7 @@ function OnlineStatics(self)
 	}
 	
 	local DateData = {}
-	local TableData = {}
+	TableData = {}
 	--数据库中获取数据
 	local OnlineRes = OnlineData:GetStatics(Options)
 	local StartTime = Timestamp
@@ -126,13 +139,13 @@ function OnlineStatics(self)
 		table.insert(DateData, Data)
 		StartTime = StartTime + 300
 	end
-	local Titles = {"时间", "平台", "服", "在线人数"}
+	Titles = {"时间", "平台", "服", "在线人数"}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时在线.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
 		--hicharts插件内容
-		local Hicharts = {
+		Hicharts = {
 			["CssID"] = "container",
 			["Text"] = "实时在线人数",
 			["Title"] = "在线人数",
@@ -142,44 +155,33 @@ function OnlineStatics(self)
 			["TimeRange"] = TimeRange,
 			["PointInterval"] = 300,
 		}
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Timestamp = Timestamp,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			Titles = Titles,
-			TableData = TableData,
-			DataTable = DataTable,
-			Hicharts = Hicharts,
-		}
-		Viewer:View("template/data/online_statics.html", Params)
+		Viewer:View("template/data/online_statics.html")
 	end
 end
 
 --实时注册
 function RegStatics(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
-	local Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
-	local Platforms = CommonFunc.GetPlatformList()
+	Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
+	Platforms = CommonFunc.GetPlatformList()
 	
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
 		{["Type"] = "Export",}
 	}
 	local DateData = {}
-	local TableData = {}
+	TableData = {}
 	--数据库中获取数据
 	local PlayerRes = AddPlayerData:GetStatics(Options)
 	local StartTime = Timestamp
@@ -195,8 +197,8 @@ function RegStatics(self)
 		table.insert(DateInfo, Options.PlatformID and Platforms[Options.PlatformID] or "all")
 		table.insert(DateInfo, Options.HostID and Servers[tonumber(Options.HostID)] or "all")
 		table.insert(DateInfo, Data)
-		table.insert(TableData, DateInfo)
 		TotalRegNum = TotalRegNum + Data
+		table.insert(TableData, DateInfo)
 		table.insert(DateData, Data)
 		StartTime = StartTime + 300
 	end
@@ -207,13 +209,13 @@ function RegStatics(self)
 		TotalRegNum,
 	}
 	table.insert(TableData, 1, TotalInfo)
-	local Titles = {"时间", "平台", "服", "注册人数"}
+	Titles = {"时间", "平台", "服", "注册人数"}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时注册.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
 		--hicharts插件内容
-		local Hicharts = {
+		Hicharts = {
 			["CssID"] = "container",
 			["Text"] = "实时注册人数",
 			["Title"] = "注册人数",
@@ -223,37 +225,25 @@ function RegStatics(self)
 			["TimeRange"] = TimeRange,
 			["PointInterval"] = 300,
 		}
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Timestamp = Timestamp,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			Hicharts = Hicharts,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/data/reg_statics.html", Params)
+		Viewer:View("template/data/reg_statics.html")
 	end
 end
 
-
 --实时充值
 function PayStatics(self)
-	local Options = GetQueryArgs()
-	local NowTime = ngx.time()
+	Options = GetQueryArgs()
+	local NowTime = os.time()
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
-	local Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
-	local Platforms = CommonFunc.GetPlatformList()
+	Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
+	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
+	Servers = CommonFunc.GetServers(Options.PlatformID)
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
@@ -263,7 +253,7 @@ function PayStatics(self)
 	--充值数据
 	local PayRes = PayActualTimeData:GetStatics(Options)
 	local DateData = {}
-	local TableData = {}
+	TableData = {}
 	local StartTime = Timestamp
 	local EndTime = StartTime + 86400
 	EndTime = EndTime < NowTime and EndTime or NowTime
@@ -289,13 +279,13 @@ function PayStatics(self)
 		TotalPayNum,
 	}
 	table.insert(TableData, 1, TotalInfo)
-	local Titles = {"时间", "平台", "服", "充值金额"}
+	Titles = {"时间", "平台", "服", "充值金额"}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时充值.xls", Titles, TableData)
 		ngx.say(ExcelStr)
 	else
 		--hicharts插件内容
-		local Hicharts = {
+		Hicharts = {
 			["CssID"] = "container",
 			["Text"] = "实时充值金额",
 			["Title"] = "充值金额",
@@ -305,22 +295,12 @@ function PayStatics(self)
 			["TimeRange"] = TimeRange,
 			["PointInterval"] = 300,
 		}
-		local DataTable = {
+		DataTable = {
 			["ID"] = "logTable",
 			["NoDivPage"] = true,
 		}
-		local Params = {
-			Options = Options,
-			Timestamp = Timestamp,
-			Platforms = Platforms,
-			Servers = Servers,
-			Filters = Filters,
-			TableData = TableData,
-			Titles = Titles,
-			Hicharts = Hicharts,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/data/pay_statics.html", Params)
+
+		Viewer:View("template/data/pay_statics.html")
 	end
 end
 
@@ -397,80 +377,4 @@ function GetTotalCashNumByPlatform(self, Options)
 	end
 	return Results
 end
-
-
--- 手机信息统计
-function PhoneInfoStatics(self)
-	--获得平台列表
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
-	local Platforms = CommonFunc.GetPlatformList()
-	Options.HostID = nil --这里没有HostID
-	local TabList = {"手机型号", "手机品牌","分辨率"}
-	--filter页面模板显示的参数
-	local Filters = {
-		{["Type"] = "Platform",},
-		{["Type"] = "StartTime",},
-		{["Type"] = "EndTime",},
-		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {"全服数据", "新服数据"},},
-		{["Type"] = "Export",},
-	}
-
-	local Servers = ServerData:GetServersByServerTime(Options) -- 开服数
-	local ServerNums = self:GetServerNums(Servers)
-	--如果选择了新服数据先获得新服HostID列表
-	if tonumber(Options.ServerType) == 2 then
-		local HostIDs = {}
-		for _, Server in ipairs(Servers) do
-			table.insert(HostIDs, Server.hostid)
-		end
-		Options.HostIDs = HostIDs
-	end
-
-	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
-	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59")
-	
-	local PhoneRes, Count = PhoneData:GetStatics(Options)
-	local ModelData = {}
-	local BrandData = {}
-	local DPIData = {}
-	
-	for Name, Num in pairs(PhoneRes.Model) do
-		
-		table.insert(ModelData, {Name, Num, Count~=0 and math.floor(Num * 10000/Count)/100 .. "%" or 0}) 
-	end
-
-	for Name, Num in pairs(PhoneRes.Brand) do
-		table.insert(BrandData, {Name, Num, Count~=0 and math.floor(Num * 10000/Count)/100 .. "%" or 0})
-	end
-
-	for Name, Num in pairs(PhoneRes.DPI) do
-		table.insert(DPIData, {Name, Num, Count~=0 and math.floor(Num * 10000/Count)/100 .. "%" or 0})
-	end
-
-	if Options.Submit == "导出" then
-		local Titles = {"手机机型", "机型占比"}
-		local ExcelStr = CommonFunc.ExportExcel("手机信息.xls", Titles, ModelData)
-		ngx.say(ExcelStr)
-	else
-		local DataTable = {
-			["ID"] = "logTable",
-			["NoDivPage"] = true,
-			
-		}
-		local Params = {
-			Options = Options,
-			Platforms = Platforms,
-			TabList = TabList,
-			Filters = Filters,
-			ModelData = ModelData,
-			BrandData = BrandData,
-			DPIData = DPIData,
-			DataTable = DataTable,
-		}
-		Viewer:View("template/data/phone.html", Params)
-	end
-end
-
 DoRequest()

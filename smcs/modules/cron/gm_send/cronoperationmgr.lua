@@ -14,7 +14,7 @@ function ServerOperation(self)
 		return 
 	end
 	ServerOperationFlag = true --正在执行，设置标志位
-	local NowTime = ngx.time()
+	local NowTime = os.time()
 	local StartTime = os.date("%Y-%m-%d %H:%M:%S",NowTime - 60)
 	ngx.say("start time: " .. StartTime)
 	local EndTime = os.date("%Y-%m-%d %H:%M:%S",NowTime + 60)

@@ -13,7 +13,7 @@ module(...,package.seeall)
 IndexName = "Gold" 
 
 function CronStatics(self, PlatformID, HostID)
-	local Day = os.date("%Y-%m-%d", ngx.time() - 3600) -- 统计前一个小时的
+	local Day = os.date("%Y-%m-%d", os.time() - 3600) -- 统计前一个小时的
 	--按照渠道来统计
 	local GoldRes = GoldLogData:Get(PlatformID, {HostID = HostID, StartTime = Day .. " 00:00:00", EndTime = Day .. " 23:59:59"})
 	local AddGoldResults = {}
@@ -21,7 +21,6 @@ function CronStatics(self, PlatformID, HostID)
 	local AddCreditResults = {}
 	local SubCreditResults = {}
 	for _, GoldInfo in ipairs(GoldRes) do
-		GoldInfo["GoldType"] = GoldInfo["GoldType"] or 1
 		if tonumber(GoldInfo["GoldType"]) == 1 then
 			if tonumber(GoldInfo["Changes"]) >= 0 then
 				self:MergeResults(AddGoldResults, GoldInfo)

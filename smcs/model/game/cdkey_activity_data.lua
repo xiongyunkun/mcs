@@ -66,7 +66,6 @@ function Insert(self, Args)
 	end
 	Sql = Sql .. table.concat(InsertValues, "','") .. "')"
 	DB:ExeSql(Sql)
-
 	--返回ID
 	local Res = self:Get(Args)
 	if not Res or not Res[1] then

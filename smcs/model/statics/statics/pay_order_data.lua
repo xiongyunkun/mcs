@@ -78,7 +78,7 @@ end
 
 --更改状态
 function UpdateStatus(self, PlatformID, OrderID, Status)
-	local NowTime = os.date("%Y-%m-%d %H:%M:%S", ngx.time())
+	local NowTime = os.date("%Y-%m-%d %H:%M:%S", os.time())
 	local Sql = "update "..PlatformID.."_statics.tblPayOrder set Status = '" .. Status
 		.. "', LastUpdateTime='" .. NowTime .. "' where OrderID = '" ..OrderID .. "'"
 	DB:ExeSql(Sql)

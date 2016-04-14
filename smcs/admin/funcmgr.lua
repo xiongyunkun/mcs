@@ -166,7 +166,7 @@ function DoAdminAdd(self)
 		ActionUrl = "/admin/moduleadd"
 		ModuleInfo = {}
 		if Name and Name ~= "" then
-			ModuleInfo = ModulesData:GetAllModules({ModuleName = Name, Precise = true}) --精确查找
+			ModuleInfo = ModulesData:GetAllModules({ModuleName = Name})
 			if ModuleInfo and ModuleInfo[1] then
 				ModuleInfo = ModuleInfo[1]
 				local Systems = string.split(ModuleInfo.system, ",")

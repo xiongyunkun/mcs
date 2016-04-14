@@ -8,7 +8,7 @@
 local GMID = 15 --公告GMID
 function CronExecute(self)
 	--先获得当前在执行时间范围内的公告
-	local NowTimeStamp = ngx.time()
+	local NowTimeStamp = os.time()
 	local NowTime = os.date("%Y-%m-%d %H:%M:%S",NowTimeStamp)
 	local BroadcastList = BroadcastData:GetProperTimeInfo(NowTime)
 	--根据上一次执行时间和时间间隔判断是否需要执行
@@ -24,11 +24,7 @@ function CronExecute(self)
 			local NowOperationNum = BroadcastInfo.NowOperationNum
 			if SendNum == 0  or SendNum > NowOperationNum then --没有次数限制,执行GM
 				local HostIDs = string.split(BroadcastInfo.HostIDs, ",")
-				local NHostIDs = {}
-				for _, HostID in ipairs(HostIDs) do
-					table.insert(NHostIDs, tonumber(HostID))
-				end
-				local HostList = ServerData:GetServerList(BroadcastInfo.ServerType, NHostIDs, BroadcastInfo.PlatformID)
+				local HostList = ServerData:GetServerList(BroadcastInfo.ServerType, HostIDs, BroadcastInfo.PlatformID)
 				local Results = self:ExecuteGM(BroadcastInfo.PlatformID, HostList, GMID, BroadcastInfo.BroadType, BroadcastInfo.Content)
 				BroadcastData:UpdateResult(BroadcastInfo.ID, Serialize(Results))
 			end
@@ -43,7 +39,7 @@ function ExecuteGM(self, PlatformID, HostList, GMID, BroadType, Content)
 	--获得GM指令
 	local OperationInfo = GMRuleData:Get({ID = GMID})
 	local Rule = OperationInfo[1].Rule
-	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
+	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local BroadcastID = CommonData.BroadcastList[tonumber(BroadType)]
 	if not BroadcastID then
 		return

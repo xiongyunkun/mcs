@@ -13,7 +13,8 @@ function GetAllServers(self)
 end
 
 --SvrCol = {"name","address","ports","descinfo"}
-SvrCol = {"name","address","ports","descinfo","version","hostid","status","crossport","startservertime","mergeservertime","priority","tips"}
+SvrCol = {"name","address","ports","descinfo","version","hostid","status","servmark","platformid",
+	"crossport","startservertime","mergeservertime","cmcsip","cmcsport","gsnum", "cname"}
 function AddServer(self, ServerInfo)
 	local Sql = "insert into servers set "
 	local SetTbl = {}
@@ -77,6 +78,16 @@ function GetAllServerGroupInfo(self, PlatformID)
 	local Res, Err = DB:ExeSql(Sql)
 	return Res, Err
 end
+--返回标签的所有服务器信息
+function GetServerGroup(self, TagID)
+	local Where = " "
+	if TagID and TagID ~= "" then
+		Where = Where .. " where tagid = '" .. TagID .. "'"
+	end
+	local Sql = "select * from groupclassinfo " .. Where
+	local Res, Err = DB:ExeSql(Sql)
+	return Res, Err
+end
 
 function AddGroup(self, GroupName, Weight, Flag)
 	local Sql = "insert into servergroup set name='"..GroupName.."',weight="..(Weight or 100) ..",flag=" .. (Flag or 2)
@@ -126,17 +137,6 @@ function DelServerFromGroup(self, ServerId, GroupId)
 	return (Err == nil), Err
 end
 
-function GetServerSelectCode(self, ArgName, CurSvrId)
-	local Servers = self:GetAllServers()
-	local OpFormat = "<option value='%d' %s>%s</option>\n"
-	local OpTbl = {}
-	for _, Svr in ipairs(Servers) do
-		table.insert(OpTbl, string.format(OpFormat,Svr.hostid, ((CurSvrId or -1)==Svr.hostid and "selected" or ""),Svr.name))
-	end
-	local RetStr = "<select name='"..ArgName.."'>\n"..table.concat(OpTbl,"").."</select>"
-	return RetStr
-end
-
 function GetServList(self, PlatformID)
 	local Where = ""
 	if PlatformID and PlatformID ~= "" then
@@ -166,7 +166,8 @@ end
 
 function ModGrpCls(self, Args)
 	local Sql = "update groupclass set name='"..Args.name.."',descinfo='"..(Args.descinfo or "")
-		.."',clienturl='"..(Args.clienturl or "") .."' where id="..Args.id
+		.."',clienturl='"..(Args.clienturl or "") .."',cdn='"..(Args.cdn or "")
+		.."' where id="..Args.id
 	local Res, Err = DB:ExeSql(Sql)
 	return (Res==nil),Err
 end
@@ -195,6 +196,7 @@ function GetHostTagInfo(self, HostID)
 	return Res, Err
 end
 
+
 function DelServerFromTag(self,SvrId,TagId)
 	local Sql = "delete from groupclassinfo where svrid="..SvrId.." and tagid="..TagId
 	local Res,Err = DB:ExeSql(Sql)
@@ -206,69 +208,6 @@ function AddServer2Tag(self, SvrId, TagId)
 	local Res,Err = DB:ExeSql(Sql)
 	return Res, Err
 end
-
-------------------------------------------
--- 服务器SDK列表
-function GetServerSDKInfo(self, FileName, PlatformID)
-	local Where = ""
-	
-	if FileName and FileName ~= "" then
-		Where = " and a.sdkname = '" .. FileName .. "'"
-	end
-	if PlatformID and PlatformID ~= "" then
-		Where = " and b.platformid = '" .. PlatformID .. "'"
-	end
-
-	local Sql = "select a.* from srvsdkinfo a, servers b where a.serverid = b.hostid " .. Where
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
--- 服务器SDK列表
-function GetServerSDKInfoById(self, ServerId)
-	local Sql = "select * from srvsdkinfo Where serverid = " .. ServerId
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
-function DelServerFromSDK(self, SvrId, FileName)
-	local Sql = "delete from srvsdkinfo where serverid=" .. SvrId .. " and sdkname='" .. FileName .. "'"
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
-function AddServer2SDK(self, SvrId, FileName)
-	local Sql = "insert into srvsdkinfo set serverid=" .. SvrId .. ",sdkname='" .. FileName .. "'"
-	
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
-function GetEnvUrl2SDK(self, FileName)
-	local Where = " where 1=1 "
-	if FileName and FileName ~= "" then
-		Where = Where .. " and sdkname = '" .. FileName .. "'"
-	end
-	local Sql = "select * from sdkurlinfo " .. Where
-	
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
-function AddEnvUrl2SDK(self, FileName, EnvList)
---	local Str = "asseturl='" .. EnvList.asseturl .. "',fileurl='" .. EnvList.fileurl .."',serverlisturl='" .. EnvList.serverlisturl .. "',broadcasturl='" .. EnvList.broadcasturl .. "'"
-	
-	local Str = "envname='" .. EnvList.envname .. "'"
-
-	local Sql = "insert into sdkurlinfo set sdkname='" .. FileName .. "'," .. Str .. " on duplicate key update " .. Str 
-	
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
-------------------------------------------
-
-
 
 -- 库表，条件（[字段]=值）
 function GetData(self, TbName, Condition)
@@ -316,7 +255,15 @@ end
 function GetServer(self,Options)
 	local Where = " where 1 = 1 "
 	for Key,Value in pairs(Options) do
-		Where = Where .. " and " .. Key .. " = '" .. Value .. "' "
+		if Value ~= "" then
+			if Key == "min_start_server_time" then
+				Where = Where .. " and startservertime >= '" ..Value .. "'"
+			elseif Key == "max_start_server_time" then
+				Where = Where .. " and startservertime <= '" .. Value .. "'"
+			else
+				Where = Where .. " and " .. Key .. " = '" .. Value .. "' "
+			end
+		end
 	end
 	local Sql = "select * from servers " .. Where
 	local Res, Err = DB:ExeSql(Sql)
@@ -324,147 +271,29 @@ function GetServer(self,Options)
 	return Res
 end
 
--- 获得跨服信息表
-function GetCroServer(self, ID)
-	local Where = " Where Flag = 'true' "
-	if ID and ID ~= "" then
-		Where = Where .. " and ID = '"..ID.."'"
-	end
-	local Sql = "select * from smcs.tblCroServiceInfo ".. Where
-	local Res, Err = DB:ExeSql(Sql)
-	if not Res then return nil, Err end
-	return Res
-end
-
--- 更新跨服数据表
-function UpdateCroServer(self,Values)
-	DB:ExeSql("delete a from tblCroZone a left join servers b on a.HostID = b.hostid where b.hostid is NULL")
-	local Platforms = table.concat(Values.Platforms,",")
-	local Sql = ""
-	local Res,Err
-	local ID = Values.ID
-	if Values.ID and Values.ID ~= "" then
-		Sql = "update smcs.tblCroServiceInfo set Name = '"..Values.Name.."',Platforms = '"..Platforms.."',MinNum='"..Values.MinNum.."',NormalNum='"..Values.NormalNum.."',Memo='"..Values.Memo.."',ServiceID='"..Values.ServiceID.."',Flag = 'true' where ID='"..Values.ID.."'"
-		Res, Err = DB:ExeSql(Sql)
-	else
-		Sql = "insert into smcs.tblCroServiceInfo(Name,Platforms,MinNum,NormalNum,Memo,ServiceID) values('"..Values.Name.."','"..Platforms.."','"..Values.MinNum.."','"..Values.NormalNum.."','"..Values.Memo.."','"..Values.ServiceID.."')"
-		Res, Err = DB:ExeSql(Sql)
-		--这里获得最大的ID为当前的ID，暂时不用考虑多线程的情况
-		local GetSql = "select max(ID) as MaxID from smcs.tblCroServiceInfo where Flag = 'true'"
-		Res, Err = DB:ExeSql(GetSql)
-		if Res then
-			ID = Res[1].MaxID
-		end
-	end
-	return ID
-end
-
---删除跨服配置
-function DeleteCroServer(self,ID)
-	local Sql = "update smcs.tblCroServiceInfo set Flag = 'false' where ID = '"..ID.."'"
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
-
---获得服运营数据（7日留存、开服时间等信息）
-function GetServerData(self,PlatformID)
-	local Sql = "select a.hostid,a.name,a.platformid,c.tagid,b.* from smcs.servers a left join smcs.tblServerData b on a.hostid=b.HostID left join groupclassinfo c on a.hostid=c.svrid where a.platformid='"..PlatformID.."'"
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
---获得跨服专区的服务器列表
-function GetTargetServer(self,PlatformIDs)
-	local Where = ""
-	if PlatformIDs and type(PlatformIDs) == "table" then
-		local PlatformStr = table.concat(PlatformIDs,"','")
-		Where = Where .. "and a.platformid in ('"..PlatformStr.."')"
-	end
-	local Sql = "select a.*, c.tagid from smcs.servers a left join smcs.srvgroupinfo b on a.hostid=b.serverid left join smcs.groupclassinfo c on a.hostid=c.svrid where b.groupid = '5' " .. Where
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
--- 更新跨服战区配置表
-function UpdateCroZone(self,Values)
-	local Sql = "insert into smcs.tblCroZone(HostID,ServiceID,ZoneName,TargetServer,RealServiceID) values('"..Values.HostID.."','"..Values.ServiceID.."','"..Values.ZoneName.."','"..Values.TargetServer.."','"..Values.RealServiceID.."') on duplicate key update ServiceID = '"..Values.ServiceID.."',ZoneName = '"..Values.ZoneName.."',TargetServer='"..Values.TargetServer.."',Flag='true'"
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
-
--- 获取跨服战区配置表
-function GetCroZone(self,Option)
-	local Where = {}
-	if Option.HostID then
-		table.insert(Where," a.HostID = '"..Option.HostID.."' ")
-	end
-	if Option.ServiceID then
-		table.insert(Where," a.ServiceID = '"..Option.ServiceID .. "' ")
-	end
-	local Sql = "select a.*, b.StartTime,b.Avg7Num,c.name,c.platformid,c.ports,c.crossport,d.tagid from smcs.tblCroZone a left join smcs.tblServerData b on a.HostID=b.HostID left join smcs.servers c on a.HostID=c.hostid left join smcs.groupclassinfo d on c.hostid=d.svrid where".. table.concat(Where, "and")
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
--- 更新跨服目标服和战区
-function UpdateTargetServer(self, HostID, ZoneName,TargetServer)
-	local Sql = "update smcs.tblCroZone set TargetServer ='"..TargetServer.."', ZoneName ='"..ZoneName.."' where HostID = '" .. HostID .. "'"
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
-
--- 获得跨服服务
-function GetCroService(self,ID)
-	local Where = " where Flag = 'true'"
-	if ID then
-		Where = Where .. " and ID = '"..ID.."'"
-	end
-	local Sql = "select * from smcs.tblCroService ".. Where
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
---更新跨服服务
-function UpdateCroService(self,Values)
-	local Sql = ""
-	if Values.ID and Values.ID ~= "" then
-		Sql = "update smcs.tblCroService set ServiceName = '"..Values.Name.."',NeedSelfGroup = '"..Values.NeedSelfGroup.."',Module = '"..Values.Module.."',Memo = '"..Values.Memo.."' where ID = '"..Values.ID.."'"
-	else
-		Sql = "insert into tblCroService(ServiceName,NeedSelfGroup,Module,Memo) values('"..Values.Name.."','"..Values.NeedSelfGroup.."','"..Values.Module.."','"..Values.Memo.."')"
-	end
-	local Res,Err = DB:ExeSql(Sql)
-	return Res, Err
-end
---删除跨服服务
-function DeleteCroService(self,ID)
-	local Sql = "update smcs.tblCroService set Flag = 'false' where ID = '"..ID.."'"
-	local Res,Err = DB:ExeSql(Sql)
-	return Res,Err
-end
-
--- 更新文件名
-function UpdateFileName(self, ID, FileName)
-	local Sql = "update smcs.tblCroServiceInfo set FileName ='"..FileName.."' where ID = '"..ID.."'"
-	local Res, Err = DB:ExeSql(Sql)
-	return Res, Err
-end
-
 -- 返回服与平台的对应的关系
 function GetServerPlatformMap(self)
-	local Servers = MixServerData:Get({})
+	local Servers = self:GetAllServers()
 	local ServerMap = {}
 	for _, Server in ipairs(Servers) do
-		ServerMap[Server.HostID] = Server.PlatformID
+		ServerMap[Server.hostid] = Server.platformid
 	end
 	return ServerMap
 end
 
 --获取统计标签的服
-function GetStaticsServers(self)
+function GetStaticsServers(self, PlatformID)
+	local ServerPlatformMap = self:GetServerPlatformMap()
+	--获得统计标签的服
 	local Sql = "select a.serverid as HostID from smcs.srvgroupinfo a, smcs.servergroup b where a.groupid = b.id and b.name = '统计专区'"
 	local Res, Err = DB:ExeSql(Sql)
 	local ServerMap = {}
 	if Res then
 		for _, ServerInfo in ipairs(Res) do
-			ServerMap[ServerInfo.HostID] = true
+			if ServerPlatformMap[ServerInfo.HostID] then
+				local HostID = CommonFunc.GetToHostID(ServerInfo.HostID) --合服转换
+				ServerMap[HostID] = ServerPlatformMap[HostID]
+			end
 		end
 	end
 	return ServerMap
@@ -474,31 +303,34 @@ end
 function GetServerList(self, ServerType, HostIDs, PlatformID)
 	local ServerPlatformMap = self:GetServerPlatformMap()
 	local HostIDList = {}
-	if tonumber(ServerType) ~= 1 then --除这些服之外
+	if tonumber(ServerType) == 1 then --只包含下面这些服
 		for HostID, TPlatformID in pairs(ServerPlatformMap) do
+			if PlatformID and PlatformID == TPlatformID then
+				HostID = tostring(HostID)
+				if type(HostIDs) == "table" then
+					--选择全部（HostIDs为空数组）的也全部选择上
+					if table.member_key(HostIDs, HostID) or #HostIDs == 0 then
+						table.insert(HostIDList, HostID)
+					end
+				elseif type(HostIDs) == "string" then
+					if HostID == HostIDs then
+						table.insert(HostIDList, HostID)
+						break
+					end
+				end
+			end
+		end
+	else --除这些服之外
+		for HostID, TPlatformID in pairs(ServerPlatformMap) do
+			HostID = tostring(HostID)
 			if PlatformID and PlatformID == TPlatformID then
 				if type(HostIDs) == "table" then
 					if not table.member_key(HostIDs, HostID) then
 						table.insert(HostIDList, HostID)
 					end
 				elseif type(HostIDs) == "string" then
-					if tostring(HostID) ~= HostIDs then
+					if HostID ~= HostIDs then
 						table.insert(HostIDList, HostID)
-					end
-				end
-			end
-		end
-	else --只包含下面这些服
-		for HostID, TPlatformID in pairs(ServerPlatformMap) do
-			if PlatformID and PlatformID == TPlatformID then
-				if type(HostIDs) == "table" then
-					if table.member_key(HostIDs, HostID) then
-						table.insert(HostIDList, HostID)
-					end
-				elseif type(HostIDs) == "string" then
-					if tostring(HostID) == HostIDs then
-						table.insert(HostIDList, HostID)
-						break
 					end
 				end
 			end
@@ -512,6 +344,13 @@ function GetServersByServerTime(self, Options)
 	local Where = " where 1=1 "
 	if Options.PlatformID and Options.PlatformID ~= "" then
 		Where = Where .. " and platformid = '" .. Options.PlatformID .. "'"
+	else
+		local Platforms = CommonFunc.GetPlatformList()
+		local PlatformIDs = {}
+		for PlatformID, PlatformName in pairs(Platforms) do
+			table.insert(PlatformIDs, PlatformID)
+		end
+		Where = Where .. " and platformid in ('" ..table.concat( PlatformIDs, "','") .. "')"
 	end
 	if Options.StartTime and Options.StartTime ~= "" then
 		Where = Where .. " and startservertime >= '" .. Options.StartTime .." 00:00:00'"
@@ -522,5 +361,67 @@ function GetServersByServerTime(self, Options)
 	local Sql = "select * from smcs.servers " .. Where
 	local Res, Err = DB:ExeSql(Sql)
 	local Results = {}
+	return Res
+end
+
+ --获得合服目标服列表（包含合服目标服和未合服的服务器列表）
+function GetMergedServers(self, Options)
+	if not Options.PlatformID or Options.PlatformID == "" then
+		return {} --没有选择平台就直接返回
+	end
+	local Servers = self:GetServer(Options)
+	local NewServers = {}
+	for _, Server in ipairs(Servers) do
+		if Server.mergeto and Server.mergeto ~= 0 then
+			if Server.hostid == Server.mergeto then --自身合并
+				NewServers[Server.hostid] = Server.name
+			else
+				NewServers[Server.mergeto] = NewServers[Server.mergeto] or "" --如果没有就设定为空
+			end
+		else
+			NewServers[Server.hostid] = Server.name
+		end
+	end
+	return NewServers
+end
+
+--更新Servers表中的mergeto字段
+function UpdateMergeTo(self, HostID, MergeTo)
+	local Sql = "update smcs.servers set mergeto = '" .. MergeTo 
+		.. "' where hostid = '" .. HostID .. "' or mergeto = '" .. HostID .. "'"
+	DB:ExeSql(Sql)
+	local NowTime = os.time()
+	local MinStartServerTime = NowTime
+	--再把所有合服目标服为MergeTo的服找出来
+	Sql = "select * from smcs.servers where mergeto = '" .. MergeTo .. "'"
+	local Res, Err = DB:ExeSql(Sql)
+	if Res and Res[1] then
+		for _, Info in ipairs(Res) do
+			local StartServerTime = GetTimeStamp(Info.startservertime)
+			if MinStartServerTime > StartServerTime then
+				MinStartServerTime = StartServerTime
+			end
+			--更新合服缓存配置
+			CommonFunc.SetToHostID(Info.hostid, Info.mergeto)
+		end
+		if MinStartServerTime < NowTime then
+			--更新合服后开服时间
+			local UpdateSql = "update smcs.servers set m_startservertime = '" .. os.date("%Y-%m-%d %H:%M:%S", MinStartServerTime)
+				.. "' where hostid = '" .. MergeTo .. "'"
+			DB:ExeSql(UpdateSql)
+		end
+	end
+	return true
+end
+
+--更新Servers表中相关的服对应的目标服
+function UpdateRelatedMerge(self, HostIDs, MergeTo)
+	Sql = "update smcs.servers set mergeto = '" .. MergeTo
+		.. "' where hostid in ('" .. table.concat( HostIDs, "','") .. "')"
+	local Res, Err = DB:ExeSql(Sql)
+	--更新缓存配置
+	for _, HostID in ipairs(HostIDs) do
+		CommonFunc.SetToHostID(tonumber(HostID), tonumber(MergeTo))
+	end
 	return Res
 end

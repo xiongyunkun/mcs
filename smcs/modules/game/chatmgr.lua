@@ -7,15 +7,22 @@
 --]]
 
 function ChatShow(self)
-	local Options = GetQueryArgs()
-	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",ngx.time()-7*24*3600)
-	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",ngx.time())
+	Options = GetQueryArgs()
+	Options.StartTime = Options.StartTime or os.date("%Y-%m-%d",os.time()-7*24*3600)
+	Options.EndTime = Options.EndTime or os.date("%Y-%m-%d",os.time())
 	Options.RoleName = Options.RoleName or ""
-	local Platforms = CommonFunc.GetPlatformList()
-	local Servers = CommonFunc.GetServers(Options.PlatformID)
-
+	Platforms = CommonFunc.GetPlatformList()
+	Servers = CommonFunc.GetServers(Options.PlatformID)
+	
+	local ServerTypes = CommonFunc.GetMulServerTypes()
+	local ServerList = ServerData:GetAllServers()
+	local NewServers = {}
+	for _, Server in ipairs(ServerList) do
+		NewServers[Server.hostid] = Server.name
+	end
+	ServerList = NewServers
 	--filter页面模板显示的参数
-	local Filters = {
+	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host"},
 		{["Type"] = "label", ["Text"] = "角色名:",},
@@ -25,9 +32,9 @@ function ChatShow(self)
 		{["Type"] = "EndTime",},
 	}
 	--展示数据
-	local Titles = {"平台", "服", "角色账号", "角色名", "聊天频道", "时间", "内容", "操作"}
+	Titles = {"平台", "服", "角色账号", "角色名", "聊天频道", "时间", "内容", "操作"}
 	local Channels = CommonData.ChatChannels
-	local TableData = {}
+	TableData = {}
 	if Options.RoleName ~= "" then
 		--先根据角色名获得对应的uid
 		local UserList = UserInfoData:Get({Name=Options.RoleName,PlatformID=Options.PlatformID})
@@ -52,20 +59,11 @@ function ChatShow(self)
 			end
 		end
 	end
-	local DataTable = {
+	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
-	local Params = {
-		Options = Options,
-		Platforms = Platforms,
-		Servers = Servers,
-		Filters = Filters,
-		TableData = TableData,
-		Titles = Titles,
-		DataTable = DataTable,
-	}
-	Viewer:View("template/game/chat_show.html", Params)
+	Viewer:View("template/game/chat_show.html")
 end
 
 DoRequest()

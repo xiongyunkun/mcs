@@ -29,12 +29,12 @@
 #local MaxCount = 0
 #for id, Server in ipairs(NoTagServers) do
 #	MaxCount = MaxCount + 1
-#	SvrId = Server.HostID
+#	SvrId = Server.hostid
 #	if (MaxCount-1)%5 == 0 then
 	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
 #	end
 	<td width="20%" height="26" style="text-align: left;" class="content" nowrap="nowrap">
-	<input type=checkbox name=cb_-1_$id$ value=$SvrId$><font color="#A00000'">$ServerInfoMap[Server.HostID]$</font>
+	<input type=checkbox name=cb_-1_$id$ value=$SvrId$><font color="#A00000'">$Server.name$</font>
 	</td>
 #	if (MaxCount)%5 == 0 then
 	</tr>
@@ -73,7 +73,7 @@
 	   	<tr class="$(id%2==0) and 'trOdd' or 'trEven' $">
 #			end
 	   	<td width="20%">
-	   	$ServerInfoMap[Server.HostID]$
+	   	$Server.name$
 		&nbsp;
 		<a href="/servermgr/domodservertag?cb_$Group.id$_$id$=$SvrId$&tagid=-1&mod=get"> 删除 </a>
 			

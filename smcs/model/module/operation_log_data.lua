@@ -50,13 +50,10 @@ function Insert(self, LogInfo)
 	for _, ColName in ipairs(LogCol) do
 		local ColValue = string.gsub(LogInfo[ColName], "'", "\\'")
 		local Value = LogInfo[ColName] and "'".. ColValue .."'" or "''"
-
---		local Value = LogInfo[ColName] and "'".. LogInfo[ColName].."'" or "''"
 		table.insert(Values, Value)
 	end
 	local ValueStr = table.concat(Values, ",")
 	Sql = Sql .. ValueStr .. ")"
-
 	local Res, Err = DB:ExeSql(Sql)
 	return Res, Err 
 end

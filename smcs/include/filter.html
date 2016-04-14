@@ -26,12 +26,12 @@
 	<input type="text" value="$Options.Time$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="Time">
 #end
 #if Filter.Type == "StartTime" then
-	<label>开始时间：</label>
-	<input type="text" value="$Options.StartTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="StartTime">
+	<label>$Filter.Label or "开始时间"$：</label>
+	<input type="text" value="$Options.StartTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="$Filter.Name or 'StartTime'$">
 #end
 #if Filter.Type == "EndTime" then	
-	<label>结束时间：</label>
-	<input type="text" value="$Options.EndTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="EndTime">
+	<label>$Filter.Label or "结束时间"$：</label>
+	<input type="text" value="$Options.EndTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="$Filter.Name or 'EndTime'$">
 #end
 #if Filter.Type == "<br>" then
 	<br>
