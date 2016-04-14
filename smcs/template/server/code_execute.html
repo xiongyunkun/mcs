@@ -1,0 +1,97 @@
+<html>
+#include("include/inc_position.html")
+#include("include/inc_header_datatable.html")
+<style>
+.cb_line{
+    height: 16px;
+    line-height: 16px;
+    display: inline-block;
+    margin-top: 10px;
+}
+.cb_icon{
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    border: 0;
+}
+label{
+	font: 13px/20px "微软雅黑",Arial,Helvetica, sans-serif;
+	color: #737373;
+}
+</style>
+<form class="search-box form-inline" method="post" action="">
+	<label>分区标签：</label>	
+	<select name="GroupID" class="chosen-select GroupID" tabindex="2" data-placeholder="选择分区标签">
+		<option value="">全部</option>
+#for ID,Name in pairs(GroupMap) do
+		<option value="$ID$">$Name$</option>
+#end
+	</select>
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$">$Platform$</option>
+#end
+	</select>
+	<span style="margin-left:5px;">
+		<label>执行进程：</label>
+		<input type="text" placeholder="进程号..." value="" name="GsID" style="width:80px;">
+	</span>
+	<span class="server_selected" style="margin-left:5px;">
+		<input type="checkbox" checked="" value="701" name="server_select">全选/不选
+	</span>
+	<div class="servers" style="margin-bottom:10px;"></div>
+	<div><label>执行代码：</label></div>
+	<div>
+		<textarea name="Code" cols="100" rows="8"></textarea>
+	</div>
+	
+	<div style="margin:10px 0 0 300px;">
+		<input type="submit" class="submit_btn" value="提交"> 
+	</div>
+</form>
+ <script language="JavaScript">
+ $(document).ready(function(){
+	$(".GroupID").chosen({width:"200px",});
+	$(".platformID").chosen({width:"200px",});
+	$(".GroupID").chosen().change(function(){
+		refreshServer();
+	});
+	$(".platformID").chosen().change(function(){
+		refreshServer();
+	});
+	$(".server_selected").hide();
+})
+function refreshServer(){
+	var groupID = $(".GroupID").val();
+	var platformID = $(".platformID").val();
+	$.post("/servermgr/getServerTagList",{TagID:groupID,PlatformID:platformID},function(result){
+		var groupMap = eval("("+result+")");
+		var grouprStr = '';
+		var i = 0;
+		for(id in groupMap){
+			grouprStr += '<span class="cb_line"><span class="cb_icon"></span><input type="checkbox" name="HostIDs" style="margin: 0;" value="'
+			+id+'" checked /><label style="margin-left:0;">' +groupMap[id] + '</label></span>';
+			i++;
+		}
+		$(".servers").html(grouprStr);
+		if(i > 0){
+			$(".server_selected").show();
+		}else{
+			$(".server_selected").hide();
+		}
+		$(".server_selected").find('input').change(function(){
+			if($(this).is(":checked")){
+				//所有服都要选上
+				$(".servers").find('input').prop('checked', true);
+			}else{
+				$(".servers").find('input').prop('checked', false);
+			}
+		})
+	});
+}
+ </script>
+#include("include/datatables.html")
+</body>
+</html>

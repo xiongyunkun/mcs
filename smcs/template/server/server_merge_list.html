@@ -1,0 +1,167 @@
+<html>
+#include("include/inc_header_datatable.html")
+<body>
+#include("include/inc_position.html")
+<button class="btn btn-warning release_button" type="button" style="float:right;margin:5px 5px 0 0">发布合服配置</button>
+<form class="search-box" method="POST" action="/servermgr/server_merge_post">
+	<input type="hidden" name="ID" value="" id="ID">
+	<label>平台名称：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
+		<option value="">全部</option>
+#for ID,Platform in pairs(Platforms) do
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+#end
+	</select>
+	<br>
+	<label>源服务器列表：</label>	
+	<select name="SrcHostIDs" class="chosen-select hostID" id="srcHostID" tabindex="2" multiple data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$">$ServerName$</option>
+#end
+	</select>
+	<label>目标服务器：</label>	
+	<select name="ToHostID" class="chosen-select hostID" id="toHostID" tabindex="2" data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+		<option value="$ID$">$ServerName$</option>
+#end
+	</select>
+	<div style="margin:10px 0 0 450px;">
+		<input class="submit_btn" type="submit" value="提交">
+	</div>
+</form>
+
+<table id="logTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+	<thead>
+        <tr style="background-color: #f1f1f1;border-bottom: 1px solid #EDF2F7;">
+            <th>时间</th>
+            <th>平台名称</th>
+            <th>源服务器列表</th>
+            <th>目标服务器</th>
+			<th>操作人</th>
+			<th>操作</th>
+        </tr>
+    </thead>
+	<tbody>
+#for id, Operation in ipairs(OperationInfoList) do
+	<tr id="$Operation.ID$" $Operation.Status == 0 and 'class="operation"' or ''$>
+		<td style="text-align:center">$Operation.SubmitTime$</td>
+		<td style="text-align:center" class="op_platformid" platformID="$Operation.PlatformID$">$Platforms[Operation.PlatformID]$</td>
+		<td style="text-align:center;word-break:break-all; word-wrap:break-word;" width="300px" class="src_server">$Operation.SrcServerNames$</td>
+		<td style="text-align:center" class="to_server">$Operation.ToServerName$</td>
+		<td style="text-align:center">$Users[Operation.Operator] or Operation.Operator$</td>
+		<td style="text-align:center">
+#if Operation.Status == 0 then
+			<a class="red" title="删除" href="#">
+				<i class="icon-trash bigger-140"></i>
+			</a>
+#end
+		</td>
+	</tr>
+#end
+</tbody>
+</table>
+<script language="JavaScript">
+$(document).ready(function(){
+	$('#logTable').dataTable({
+			"oLanguage":{
+				"sProcessing":   "处理中...",
+				"sLengthMenu":   "显示 _MENU_ 项结果",
+				"sZeroRecords":  "没有匹配结果",
+				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
+				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sInfoPostFix":  "",
+				"sSearch":       "搜索:",
+				"sUrl":          "",
+				"oPaginate": {
+				"sFirst":    "首页",
+				"sPrevious": "上一页",
+				"sNext":     "下一页",
+				"sLast":     "末页"
+				}
+			},
+		"bFilter": false,
+		"bLengthChange": false,
+		"order": [[ 0, "desc" ]]
+	});
+	$(".operation").click(function(){
+		var ID = $(this).attr("id");
+		$("#ID").val(ID); //ID赋值
+		var platformID = $(this).find(".op_platformid").attr("platformID");
+		$(".platformID").val(platformID);
+		$(".platformID").trigger("chosen:updated");
+		var srcServers = $(this).find(".src_server").html();
+		srcServers = srcServers.split(",");
+		var toServers = $(this).find(".to_server").html();
+		toServers = toServers.split(",");
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var srcServerStr = '';
+			var toServerStr = '';
+			for(id in serverList){
+				var srcSelectStr = "";
+				for(sid in srcServers){
+					if(serverList[id] == srcServers[sid]){
+						srcSelectStr = 'selected="selected"'
+					}
+				}
+				srcServerStr += '<option value="'+id+'"'+srcSelectStr+'>'+serverList[id]+'</option>';
+				var toSelectStr = "";
+				for(sid in toServers){
+					if(serverList[id] == toServers[sid]){
+						toSelectStr = 'selected="selected"'
+					}
+				}
+				toServerStr += '<option value="'+id+'"'+toSelectStr+'>'+serverList[id]+'</option>';
+			}
+			$("#srcHostID").html(srcServerStr);
+			$("#srcHostID").trigger("chosen:updated");
+			$("#toHostID").html(toServerStr);
+			$("#toHostID").trigger("chosen:updated");
+		});
+	});
+	$(".platformID").chosen({width:"100px",});
+	$("#srcHostID").chosen({width:"500px",});
+	$("#toHostID").chosen({width:"200px",});
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/json_merge_serverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
+	$(".red").click(function(e){
+		var id = $(this).parent().parent().attr("id");
+		var srcServer = $(this).parent().parent().find(".src_server").html();
+		if(confirm("你确认要删除源服为"+srcServer+"的跨服配置吗？")){
+			$.post("/servermgr/server_merge_delete",{ID:id},function(result){
+				$("#"+id).remove();
+				window.location.reload();
+			});
+		}
+		e.stopPropagation();
+	});
+	$(".release_button").click(function(){
+		if(confirm("你确认要发布合服配置吗？")){
+			$.post("/servermgr/server_merge_release",{},function(result){
+				if(result == 1){
+					alert("发布成功！");
+					window.location.href = "server_merge";
+				}else{
+					alert("发布失败！");
+				}
+			});
+
+		}
+	});
+})
+</script>
+</body>
+</html>
