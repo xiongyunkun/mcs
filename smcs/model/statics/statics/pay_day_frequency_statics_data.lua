@@ -57,7 +57,8 @@ function Get(self, PlatformID, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPayDayFrequencyStatics " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -120,7 +121,8 @@ function Insert(self, PlatformID, Results)
 	local Sql = "insert into "..PlatformID.."_statics.tblPayDayFrequencyStatics( "..table.concat(Cols, ",")
 		.. ") values(" .. table.concat(StrResults, ",") .. ") on duplicate key update " 
 		.. table.concat( UpdateResults, ", ")
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

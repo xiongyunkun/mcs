@@ -1,12 +1,13 @@
 -------------------------------------------
--- $Id: database.lua 94928 2015-11-09 04:09:34Z xiongyunkun $
+-- $Id: database.lua 114855 2016-04-27 10:04:13Z xiongyunkun $
 -------------------------------------------
 --[[
 -- database operator
 --]]
 module(...,package.seeall)
 
-function ExeSql(self, Sql)
+function ExeSql(self, Sql, HostIP)
+    HostIP = HostIP or "127.0.0.1"
 	local db, err = MYSQL:new()
 	if not db then
     	ngx.say("failed to instantiate mysql: ", err)
@@ -14,7 +15,7 @@ function ExeSql(self, Sql)
     end
     db:set_timeout(10000) -- 10 sec
     local ok, err, errno, sqlstate = db:connect{
-        host = "127.0.0.1",
+        host = HostIP,
         port = 3306,
         database = "smcs",
         user = "smcs",

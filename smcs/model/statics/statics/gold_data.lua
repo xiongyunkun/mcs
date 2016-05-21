@@ -55,7 +55,8 @@ function Get(self, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblGold " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -132,7 +133,8 @@ function Insert(self, PlatformID, HostID, Date, Channel, GoldType, StaticsType, 
 			.. Channel .. "','".. GoldType .. "','" .. StaticsType .. "','" .. Value 
 			.. "','" .. Uids .. "','" .. ConsumeNum .. "') on duplicate key update Value = '" .. Value 
 			.. "', Uids = '".. Uids .. "', ConsumeNum = '".. ConsumeNum .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

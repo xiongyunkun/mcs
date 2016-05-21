@@ -45,7 +45,8 @@ function Get(self, Options)
 	end
 	
 	local Sql = "select * from "..PlatformID.."_statics.tblInstanceStatics " .. Where
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -92,7 +93,8 @@ function Insert(self, PlatformID, Args)
 	end
 	local Sql = "replace into " .. PlatformID .. "_statics.tblInstanceStatics("
 			.. table.concat( Cols, ", ") .. ") values('" .. table.concat( InsertValues, "', '") .. "')"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then 
 		return nil, Err 
 	end

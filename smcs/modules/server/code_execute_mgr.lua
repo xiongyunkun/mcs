@@ -83,6 +83,17 @@ function MultiExecute(self, HostIDs, GsID, Code)
 			Memo = "",
 		}
 		local ID = GMOperationData:Insert(Options)
+		--需要对平台的时区进行转换
+		local TimeZone = 0
+		local PlatformInfo = PlatformData:GetPlatform(PlatformID)
+		if PlatformInfo and PlatformInfo[1] then
+			TimeZone = PlatformInfo[1].TimeZone or 0
+			if TimeZone ~= 0 then
+				OperationTime = GetTimeStamp(OperationTime)
+        		OperationTime = OperationTime - 3600 * TimeZone
+        		OperationTime = os.date("%Y-%m-%d %H:%M:%S", OperationTime)
+			end
+		end
 		--开始执行
 		local ShellValues = {HostID, GsID, '"' .. Code .. '"', "'" .. OperationTime .. "'", TransID}
 		ShellValues = table.concat(ShellValues, ";") --分号拼接

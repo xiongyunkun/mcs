@@ -32,7 +32,8 @@ function Get(self, Options)
 		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblLevel " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -74,7 +75,8 @@ function Insert(self, PlatformID, HostID, Level, Num)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblLevel(PlatformID, HostID, Level, Num)"
 			.. " values('" .. PlatformID .. "','".. HostID .. "','" .. Level .. "','" .. Num .. "')"
 			.. " on duplicate key update Num = '" .. Num .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

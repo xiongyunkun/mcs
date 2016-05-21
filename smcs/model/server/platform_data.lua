@@ -10,6 +10,8 @@ REATE TABLE `tblPlatform` (
   `ServerIDRange` varchar(32) NOT NULL DEFAULT '' COMMENT '服ID范围',
   `Memo` varchar(128) NOT NULL DEFAULT '' COMMENT '备注',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
+  `IP` varchar(32) NOT NULL DEFAULT '127.0.0.1' COMMENT '平台IP',
+  `TimeZone` int(11) NOT NULL DEFAULT '0' COMMENT '时区差',
   PRIMARY KEY (`PlatformID`)
  ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='平台信息表' ;
 
@@ -29,10 +31,10 @@ function GetPlatform(self, PlatformID)
 end
 
 
-PlatformCol = {"PlatformID", "PlatformName", "Sort", "Status", "ServerIDRange", "Memo"}
+PlatformCol = {"PlatformID", "PlatformName", "Sort", "Status", "ServerIDRange", "Memo", "IP", "TimeZone"}
 -- 插入更新操作
 function UpdatePlatform(self, PlatformInfo)
-	local Sql = "insert into smcs.tblPlatform (PlatformID, PlatformName, Sort, Status, ServerIDRange, Memo) values( "
+	local Sql = "insert into smcs.tblPlatform (PlatformID, PlatformName, Sort, Status, ServerIDRange, Memo, IP, TimeZone) values( "
 	local Values = {}
 	local UpdateValues = {}
 	for _, ColName in ipairs(PlatformCol) do
@@ -47,6 +49,12 @@ function UpdatePlatform(self, PlatformInfo)
 	local UpdateStr = table.concat(UpdateValues, ",")
 	Sql = Sql .. ValueStr .. ") on duplicate key update " .. UpdateStr
 	local Res, Err = DB:ExeSql(Sql)
+	--判断是否需要更新平台对应IP的数据库
+	local LocalIP = "127.0.0.1"
+	if PlatformInfo["IP"] ~= LocalIP then
+		Sql = string.gsub(Sql, PlatformInfo["IP"], LocalIP) --这里要替换成127.0.0.1
+		Res, Err = DB:ExeSql(Sql, PlatformInfo["IP"])
+	end
 	return Res, Err 
 end
 

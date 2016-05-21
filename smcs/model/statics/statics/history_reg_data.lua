@@ -60,7 +60,8 @@ function Get(self, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblHistoryReg " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -103,7 +104,8 @@ function Insert(self, PlatformID, HostID, Date, RegNum, Male, Female, TotalRegNu
 			.. " values('" .. PlatformID .. "','".. HostID .. "','" .. Date .. "','"  .. RegNum .. "','" .. Male 
 			.. "','" .. Female .. "','" .. TotalRegNum .. "') on duplicate key update RegNum = '" .. RegNum 
 			.. "', Male = '" .. Male .. "', Female = '" .. Female .. "', TotalRegNum = '" .. TotalRegNum .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

@@ -51,13 +51,14 @@ function FlushTable(self)
 		for X = 0, 7 do
 			table.insert(Days, os.date("%Y%m%d", NowTime - 86400 * X))
 		end
+		local HostIP = CommonFunc.GetHostIP(PlatformID)
 		for _, LogTable in ipairs(LogTables) do
 			for _, Day in ipairs(Days) do
 				local Sqls = {"delete from ", PlatformID, "_log.", LogTable, "_", Day,
 				" where HostID = '", HostID, "'"}
 				--ngx.say(table.concat( Sqls, ""))
 				local Sql = table.concat( Sqls, "")
-				DB:ExeSql(Sql)
+				DB:ExeSql(Sql, HostIP)
 			end
 		end
 		--再删除统计表
@@ -66,7 +67,7 @@ function FlushTable(self)
 				" where HostID = '", HostID, "'"}
 			--ngx.say(table.concat( Sqls, ""))
 			local Sql = table.concat( Sqls, "")
-			DB:ExeSql(Sql)
+			DB:ExeSql(Sql, HostIP)
 		end
 	--end
 	ngx.print(1)

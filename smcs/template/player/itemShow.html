@@ -103,6 +103,7 @@
 		return strArray[0]; //否则返回第一个
 	}
  }
+ var mails = jQuery.parseJSON('$JsonMail$');
  $(document).ready(function(){
 	$(".platformID").chosen({width:"100px",});
 	$(".OperationType").chosen({width:"100px",});
@@ -122,6 +123,13 @@
 			$(".hostID").html(ServerStr);
 			$(".hostID").trigger("chosen:updated");
 		});
+		if(mails[platformID]){ //需要多语言替换
+			$("input[name='Title']").val(mails[platformID].Title);
+			$("textarea[name='Content']").html(mails[platformID].Content);
+		}else{
+			$("input[name='Title']").val("");
+			$("textarea[name='Content']").html("谢谢您对游戏的支持，本邮件为GM发送的邮件！");
+		}
 	});
 	var availableTags = [$table.concat(ItemStrList, ",")$];
 	var oldAvailableTags = [$table.concat(OldItemStrList, ",")$];

@@ -45,7 +45,8 @@ function Get(self, PlatformID, Options)
         Where = Where .. " and PetID = '" .. Options.PetID .. "'"
     end
 	local Sql = "select * from " .. PlatformID .. "_log.tblPetDayStatics_" .. Date .. Where
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -70,12 +71,13 @@ function BatchInsert(self, PlatformID, Results)
 			table.insert(StrResults[Date], StrValue)
 		end
 	end
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
 	--插入数据库
 	for Date, DateResults in pairs(StrResults) do
 		local Sql = "insert into " .. PlatformID .. "_log.tblPetDayStatics_" .. Date .. "(" 
 			.. table.concat(Cols, ",") .. ") values(" .. table.concat(DateResults, "),(") .. ")"
 			.." on duplicate key update Level = values(Level),StarLevel = values(StarLevel),Fighting=values(Fighting)"
-		DB:ExeSql(Sql)
+		DB:ExeSql(Sql, HostIP)
 	end
 	return true
 end
@@ -86,6 +88,7 @@ function Delete(self, PlatformID, HostID, Date, PetUidList)
 	local Sql = "delete from " .. PlatformID .. "_log.tblPetDayStatics_" .. TableDate 
 		.. " where HostID = '" .. HostID .. "' and PetUid in ('" .. table.concat( PetUidList, "','")
 		.. "') and Date = '" .. Date .. "'"
-	DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	DB:ExeSql(Sql, HostIP)
 end
 

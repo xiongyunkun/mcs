@@ -38,7 +38,8 @@ function Get(self, PlatformID, Options)
 	end
 	local Sql = "select HostID, Uid, UNIX_TIMESTAMP(RegTime) as RegTime,  UNIX_TIMESTAMP(LoginTime) as LoginTime, UpdateTime, MountID, EvoLevel, Level from " 
         .. PlatformID .. "_statics.tblMountLevel " .. Where
-	local Res, Err = DB:ExeSql(Sql)
+    local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -66,11 +67,12 @@ function BatchInsert(self, PlatformID, Results)
 		local StrValue = table.concat(List, ",")
 		table.insert(StrResults, StrValue)
 	end
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
 	--插入数据库
 	local Sql = "replace into " .. PlatformID .. "_statics.tblMountLevel(" .. table.concat(Cols, ",") .. ") values("
 	-- 采用批量插入的方式
 	Sql = Sql .. table.concat(StrResults, "),(") .. ")"
-	local Res, Err = DB:ExeSql(Sql)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

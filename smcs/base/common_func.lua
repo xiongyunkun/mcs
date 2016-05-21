@@ -258,6 +258,18 @@ function ExecuteGM(Args, GMID, GMCMD, OperationTime, GsID)
 		Memo = "",
 	}
 	local ID = GMOperationData:Insert(Options)
+	--需要对平台的时区进行转换
+	local TimeZone = 0
+	local PlatformInfo = PlatformData:GetPlatform(Args.PlatformID)
+	if PlatformInfo and PlatformInfo[1] then
+		TimeZone = PlatformInfo[1].TimeZone or 0
+		if TimeZone ~= 0 then
+			OperationTime = GetTimeStamp(OperationTime)
+        	OperationTime = OperationTime + 3600 * TimeZone
+        	OperationTime = os.date("%Y-%m-%d %H:%M:%S", OperationTime)
+		end
+	end
+
 	--开始执行
 	local ShellValues = {Args.HostID, GsID, '"' .. GMCMD .. '"', "'" .. OperationTime .. "'", Options.TransID}
 	ShellValues = table.concat(ShellValues, ";") --分号拼接
@@ -462,4 +474,70 @@ end
 function SetToHostID(SrcHostID, ToHostID)
 	local MergeHostMap = ngx.shared.merge_host_map --合服映射表
 	MergeHostMap:set(SrcHostID, ToHostID)
+end
+
+--根据平台ID获得对应的IP地址
+function GetHostIP(PlatformID)
+	local HostIPMap = ngx.shared.host_ip_map --平台IP映射表
+	local IPs = HostIPMap:get_keys(0)
+	if #IPs == 0 then
+		--缓存为空，初始化缓存
+		local Platforms = PlatformData:GetPlatform()
+		for _, Info in ipairs(Platforms) do
+			if Info.IP and Info.IP ~= "" then
+				HostIPMap:set(Info.PlatformID, Info.IP)
+			end
+		end
+	end
+	local IP = HostIPMap:get(PlatformID)
+	return IP
+end
+
+--设置平台ID与IP的对应关系
+function SetHostIP(PlatformID, HostIP)
+	local HostIPMap = ngx.shared.host_ip_map --平台IP映射表
+	HostIPMap:set(PlatformID, HostIP)
+end
+
+--雅虎url
+local YAHOO_URL = "http://download.finance.yahoo.com/d/quotes.csv?s=%sUSD=X&f=sl1d1t1ba&e=.csv"
+function GetCurrency(Currency)
+	local CurrencyRateMap = ngx.shared.currency_rate_map --汇率映射表
+	local Url = string.format(YAHOO_URL, Currency)
+	local Flag = false
+	local Res = nil
+	for X = 1, 5 do
+		Flag, Res = ReqOutUrl(Url)
+		if Flag then
+			break
+		end
+	end
+	local Rate = nil
+	if Flag and Res then
+		Res = string.split(Res, ",")
+		Rate = Res[2]
+		CurrencyRateMap:set(Currency, Rate)
+	end
+	return Rate
+end
+
+--汇率转换,保留小数点后2位
+function TransformCurrency(Currency, CashNum)
+	local NewCashNum = CashNum
+	Currency = string.upper(Currency)
+	if Currency == "RMB" or Currency == "USD" then
+		return NewCashNum --如果是人民币或者美元就直接返回
+	end
+	local CurrencyRateMap = ngx.shared.currency_rate_map --汇率映射表
+	local Rate = CurrencyRateMap:get(Currency)
+	if not Rate then
+		Rate = GetCurrency(Currency)
+	end
+	if Rate then
+		Rate = tonumber(Rate)
+		if Rate then
+			NewCashNum = math.floor(NewCashNum * Rate * 100)/100
+		end
+	end
+	return NewCashNum
 end

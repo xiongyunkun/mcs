@@ -8,6 +8,8 @@ lua_package_path "$workpath$/?.lua;;";
 lua_package_cpath "$workpath$/lib/?.so;;";
 lua_shared_dict sessions 10m;
 lua_shared_dict merge_host_map 5m;
+lua_shared_dict host_ip_map 5m;
+lua_shared_dict currency_rate_map 1m;
 init_by_lua_file $workpath$/base/init.lua;
 
 server {

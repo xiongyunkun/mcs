@@ -68,7 +68,9 @@ function CronExecute(self)
 		if Module then
 			if Name == "PayActualTime" then --实时充值统计的不需要发送http请求
 				for HostID, PlatformID in pairs(ServerPlatformMap) do
-					Module:CronExecute(PlatformID, HostID)
+					if CommonFunc.GetHostIP(PlatformID) == "127.0.0.1" then
+						Module:CronExecute(PlatformID, HostID)
+					end
 				end
 			else
 				local LogList = RedisDB:GetLog(GET_STR, Name) --获得对应的日志数据

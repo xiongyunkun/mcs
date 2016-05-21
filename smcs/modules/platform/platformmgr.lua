@@ -13,6 +13,7 @@ Status = {
 	[1] = "可用",
 	[2] = "停用",
 }
+local GeserviceIP = "127.0.0.1:7666/update_host_ip_map"
 
 function ReqPlatformList(self, Msg)
 	PlatformList = PlatformData:GetPlatform()	
@@ -30,6 +31,8 @@ function DoUpdatePlatform(self)
 			Msg = MsgList[1]
 		else
 			local Res, Msg = PlatformData:UpdatePlatform(Args)
+			CommonFunc.SetHostIP(Args.PlatformID, Args.IP)
+			ReqOutUrl(GeserviceIP)
 		end
 		self:ReqPlatformList(Msg)
 		return

@@ -70,7 +70,8 @@ function Get(self, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPayRetention " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -148,7 +149,8 @@ function Insert(self, PlatformID, HostID, Date, RetInfo)
 		end
 	end
 	Sql = Sql .. table.concat(InsertValues, "','") .. "') on duplicate key update " .. table.concat(UpdateValues, ",")
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

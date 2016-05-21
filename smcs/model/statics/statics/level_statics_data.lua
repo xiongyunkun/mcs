@@ -47,7 +47,8 @@ function Get(self, Options)
 		Where = Where .. " and Level = '" .. Options.Level .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblLevelStatics " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -112,7 +113,8 @@ function Insert(self, PlatformID, HostID, Date, Level, NumInfo)
 	end
 	Sql = Sql .. table.concat(InsertValues, "','") .. "') on duplicate key update " 
 		.. table.concat(UpdateValues, ",")	
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -130,7 +132,8 @@ function UpdateLostNum(self, PlatformID, HostID, Date, Level, NumInfo)
 	end
 	Sql = Sql .. table.concat(UpdateValues, ",") .. " where PlatformID = '" .. PlatformID .. "' and HostID = '"
 		.. HostID .. "' and Date = '" .. Date .. "' and Level = '" .. Level .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

@@ -108,4 +108,15 @@ TIMER_INSTANCES = {
 	[54] = "神域争霸赛",
 	[55] = "暮光之战积分赛",
 }
+--邮件内容多语言配置
+MAIL_LANGUAGES = {
+	["pl"] = {
+		["Title"] = "Nagroda GM", 
+		["Content"] = "Ta wiadomość jest wysyłana przez GM，dziękujemy za wsparcie!",
+	},
+	["es"] = {
+		["Title"] = "GM oficial", 
+		["Content"] = "Agradecemos por su apoyo，este correo fue enviado por GM！",
+	},
+}
 

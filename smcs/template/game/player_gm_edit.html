@@ -12,21 +12,29 @@
 		<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
 			<option value="">全部</option>
 #for PID,Platform in pairs(Platforms) do
-			<option value="$PID$">$Platform$</option>
+			<option value="$PID$" $GMInfo.PlatformID and GMInfo.PlatformID == PID and "selected" or ""$>$Platform$</option>
 #end
 		</select>
 	</td>
 </tr>
 <tr>
-	<td width="20%" height="26" class="td_bg" style="text-align: center;">玩家角色ID：</td>
+	<td width="20%" height="26" class="td_bg" style="text-align: center;">服名称：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<input type="text" id="Uid" value="" name="Uid">
+		<select name="HostID" class="chosen-select hostID" tabindex="2" data-placeholder="选择服">
+		<option value="">全部</option>
+#for ID,ServerName in pairs(Servers) do
+			<option value="$ID$" 
+				$GMInfo.HostID and GMInfo.HostID == tonumber(ID) and "selected" or ""$>
+				$ServerName$
+			</option>
+#end
+		</select>
 	</td>
 </tr>
 <tr>
 	<td width="20%" height="26" class="td_bg" style="text-align: center;">玩家角色名：</td>
 	<td width="30%" height="26" style="text-align: left;" class="content">
-		<input type="text" id="RoleName" value="" name="RoleName">
+		<input type="text" id="RoleName" value="$GMInfo.RoleName or ''$" name="RoleName">
 	</td>
 </tr>
 <tr>
@@ -39,6 +47,22 @@
  <script language="JavaScript">
  $(document).ready(function(){
 	$(".platformID").chosen({width:"100px"});
+	$(".hostID").chosen({
+		width:'150px',
+	});
+	
+	$(".platformID").chosen().change(function(){
+		var platformID = $(this).val();
+		$.post("/servermgr/jsonserverlist",{PlatformID:platformID},function(result){
+			var serverList = eval("("+result+")");
+			var ServerStr = '<option value="">全部</option>';
+			for(id in serverList){
+				ServerStr += '<option value="'+id+'">'+serverList[id]+'</option>';
+			}
+			$(".hostID").html(ServerStr);
+			$(".hostID").trigger("chosen:updated");
+		});
+	});
 })
  </script>
 </body>

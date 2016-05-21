@@ -61,7 +61,8 @@ function Get(self, PlatformID, Options)
     	table.insert(Sqls, Sql)
     end
 	Sqls = table.concat( Sqls, " union ")
-	local Res, Err = DB:ExeSql(Sqls)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sqls, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -97,11 +98,12 @@ function BatchInsert(self, PlatformID, Results)
 		end
 		
 	end
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
 	--插入数据库
 	for Date, DateResults in pairs(StrResults) do
 		local Sql = "insert into " .. PlatformID .. "_log.tblLoginLog_" .. Date .."(" .. table.concat(Cols, ",") 
 			.. ") values(" .. table.concat(DateResults, "),(") .. ")"
-		DB:ExeSql(Sql)
+		DB:ExeSql(Sql, HostIP)
 	end
 	return true
 end

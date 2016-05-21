@@ -71,7 +71,8 @@ function Get(self, Options)
 		Where = Where .. " and NotDayReg <='" .. Options.MaxNotDayReg .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPlayWayStatics " .. Where
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -128,7 +129,8 @@ function Insert(self, PlatformID, Args)
 	end
 	local Sql = "replace into " .. PlatformID .. "_statics.tblPlayWayStatics("
 			.. table.concat( Cols, ", ") .. ") values('" .. table.concat( InsertValues, "', '") .. "')"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then 
 		return nil, Err 
 	end

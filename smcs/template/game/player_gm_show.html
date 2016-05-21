@@ -31,9 +31,9 @@
 })
 function deleteGM(Uid, PlatformID){
 	if(confirm("你确定要删除Uid为"+Uid+"的玩家GM吗？")){
-		$.post("/gamemgr/player_gm_delete",{Uid:Uid, PlatformID:PlatformID},function(result){
+		$.post("/gamemgr/player_gm_delete",{Uid:Uid},function(result){
 			if(result == 1){
-				window.location.reload();
+				window.location.href = "/gamemgr/player_gm_show";
 			}
 		});
 	}
@@ -41,9 +41,9 @@ function deleteGM(Uid, PlatformID){
 
 function publish(Uid, PlatformID){
 	if(confirm("你确定要同步Uid为"+Uid+"的玩家吗？")){
-		$.post("/gamemgr/player_gm_publish",{Uid:Uid, PlatformID:PlatformID},function(result){
+		$.post("/gamemgr/player_gm_publish",{Uid:Uid},function(result){
 			if(result == 1){
-				window.location.reload();
+				window.location.href = "/gamemgr/player_gm_show";
 			}
 		});
 	}

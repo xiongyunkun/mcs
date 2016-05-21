@@ -69,13 +69,13 @@ function Get(self, Options)
 		Where = Where .. " and Urs = '" .. Options.Urs .. "'"
 	end
 	if Options.Name and Options.Name ~= "" then
-		Where = Where .. " and Name like '%" .. Options.Name .. "%'"
+		Where = Where .. " and Name COLLATE utf8_bin like '%" .. Options.Name .. "%'"
 	end
 	if Options.RealName and Options.RealName ~= "" then
-		Where = Where .. " and Name = '" .. Options.RealName .. "'"
+		Where = Where .. " and Name COLLATE utf8_bin = '" .. Options.RealName .. "'"
 	end
 	if Options.Names and Options.Names ~= "" then
-		Where = Where .. " and Name in ('" .. Options.Names .. "')"
+		Where = Where .. " and Name COLLATE utf8_bin in ('" .. Options.Names .. "')"
 	end
 	if Options.RegTime and Options.RegTime ~= "" then
 		Where = Where .. " and RegTime >= '" .. Options.RegTime .. "'"
@@ -87,7 +87,8 @@ function Get(self, Options)
 		Where = Where .. " and Level >= '" .. Options.MinLevel .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblUserInfo " .. Where
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -120,8 +121,8 @@ function BatchInsert(self, PlatformID, Results)
 	-- 采用批量插入的方式
 	Sql = Sql .. table.concat(StrResults, "),(") 
 		.. ") on duplicate key update Name = values(Name),LastLoginTime=values(LastLoginTime),LastUpdateTime=values(LastUpdateTime),OnlineFlag='1'"	
-	
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res		
 end
@@ -160,7 +161,8 @@ function BatchUpdate(self, PlatformID, Results)
 	Sql = Sql .. table.concat(StrResults, "),(") 
 		.. ") on duplicate key update " .. table.concat(Duplicates, ",") 
 		.. ",TotalOnlineTime = TotalOnlineTime + values(TotalOnlineTime)"	
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -181,7 +183,8 @@ function BatchUpdateName(self, PlatformID, Results)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblUserInfo(".. table.concat(NameCols, ",") .. ") values("
 	-- 采用批量更新的方式
 	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update Name = values(Name)"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -207,7 +210,8 @@ function BatchUpdateLevel(self, PlatformID, Results)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblUserInfo(".. table.concat(NameCols, ",") .. ") values("
 	-- 采用批量更新的方式
 	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update Level = values(Level), Name= values(Name)"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

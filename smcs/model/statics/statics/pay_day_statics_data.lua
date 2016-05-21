@@ -64,7 +64,8 @@ function Get(self, PlatformID, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPayDayStatics " .. Where
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -92,9 +93,11 @@ end
 function MergeData(self, Results, PayInfoList)
 	for _, Info in ipairs(PayInfoList) do
 		if not Results[Info.Date] then
+			Info.CashNum = CommonFunc.TransformCurrency(Info.Currency, Info.CashNum)
+			Info.TotalCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.TotalCashNum)
 			Results[Info.Date] = Info
 		else
-			Results[Info.Date].CashNum = Results[Info.Date].CashNum + Info.CashNum
+			Results[Info.Date].CashNum = Results[Info.Date].CashNum + CommonFunc.TransformCurrency(Info.Currency, Info.CashNum)
 			Results[Info.Date].PayGold = Results[Info.Date].PayGold + Info.PayGold
 			Results[Info.Date].PayNum = Results[Info.Date].PayNum + Info.PayNum
 			Results[Info.Date].PayUserNum = Results[Info.Date].PayUserNum + Info.PayUserNum
@@ -103,7 +106,7 @@ function MergeData(self, Results, PayInfoList)
 			Results[Info.Date].GoldProduce = Results[Info.Date].GoldProduce + Info.GoldProduce
 			Results[Info.Date].TotalPayGold = Results[Info.Date].TotalPayGold + Info.TotalPayGold
 			Results[Info.Date].TotalGoldProduce = Results[Info.Date].TotalGoldProduce + Info.TotalGoldProduce
-			Results[Info.Date].TotalCashNum = Results[Info.Date].TotalCashNum + Info.TotalCashNum
+			Results[Info.Date].TotalCashNum = Results[Info.Date].TotalCashNum + CommonFunc.TransformCurrency(Info.Currency, Info.TotalCashNum)
 			Results[Info.Date].TotalGoldConsume = Results[Info.Date].TotalGoldConsume + Info.TotalGoldConsume
 			Results[Info.Date].TotalCreditGoldProduce = Results[Info.Date].TotalCreditGoldProduce + Info.TotalCreditGoldProduce
 			Results[Info.Date].TotalCreditGoldConsume = Results[Info.Date].TotalCreditGoldConsume + Info.TotalCreditGoldConsume
@@ -121,7 +124,7 @@ function Insert(self, PlatformID, Results)
 		"TotalCreditGoldProduce", "TotalCreditGoldConsume", "CreditGoldProduce", "CreditGoldConsume"}
 	local UpdateCols = {"CashNum", "PayGold", "PayNum", "PayUserNum" , "FirstPayUserNum", 
 		"GoldConsume", "GoldProduce", "TotalCashNum", "TotalPayGold", "TotalGoldProduce", "TotalGoldConsume",
-		"TotalCreditGoldProduce", "TotalCreditGoldConsume", "CreditGoldProduce", "CreditGoldConsume"}
+		"TotalCreditGoldProduce", "TotalCreditGoldConsume", "CreditGoldProduce", "CreditGoldConsume", "Currency"}
 	local StrResults = {}
 	for _, Col in ipairs(Cols) do
 		local Value = Results[Col] or ""
@@ -134,7 +137,8 @@ function Insert(self, PlatformID, Results)
 	--更新语句
 	local Sql = "insert into "..PlatformID.."_statics.tblPayDayStatics( "..table.concat(Cols, ",").. ") values("
 		.. table.concat(StrResults, ",") .. ") on duplicate key update " .. table.concat( UpdateResults, ", ")
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

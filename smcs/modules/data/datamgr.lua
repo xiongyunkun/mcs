@@ -106,6 +106,14 @@ end
 function OnlineStatics(self)
 	Options = GetQueryArgs()
 	local NowTime = os.time()
+	--如果单独选择了平台还要计算该平台的时差
+	if Options.PlatformID and Options.PlatformID ~= "" then
+		local PlatformInfo = PlatformData:GetPlatform(Options.PlatformID)
+		if PlatformInfo and PlatformInfo[1] then
+			local TimeZone = PlatformInfo[1].TimeZone or 0
+			NowTime = NowTime + TimeZone * 3600
+		end
+	end
 	Options.Time = Options.Time or os.date("%Y-%m-%d", NowTime)
 	Timestamp = GetTimeStamp(Options.Time .. " 00:00:00")
 	Platforms = CommonFunc.GetPlatformList()

@@ -49,7 +49,8 @@ function Get(self, PlatformID, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblUserPayDayStatics " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -71,7 +72,8 @@ function BatchInsert(self, PlatformID, Results)
 	-- 采用批量插入的方式
 	Sql = Sql .. table.concat(StrResults, "),(") 
 		.. ") on duplicate key update TotalCashNum = values(TotalCashNum), TotalNum = values(TotalNum),TotalGold = values(TotalGold)"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

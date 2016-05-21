@@ -31,6 +31,22 @@ function Get(self, Options)
 		end
 		Where = Where .. " and HostID = '" .. HostID .. "'"
 	end
+	if Options.HostIDs and type(Options.HostIDs) == "table" then
+		local HostIDs = Options.HostIDs
+		if not Options.NoMerge then
+			local NewHostIDs = {}
+			local THostMap = {}
+			for _, HostID in ipairs(HostIDs) do
+				HostID = CommonFunc.GetToHostID(HostID) --合服转换
+				if not THostMap[HostID] then
+					table.insert(NewHostIDs, HostID)
+					THostMap[HostID] = true
+				end
+			end
+			HostIDs = NewHostIDs
+		end
+		Where = Where .. " and HostID in ('" .. table.concat(HostIDs, "','") .. "')"
+	end
 	if Options.StartTime and Options.StartTime ~= "" then
 		Where = Where .. " and Time >= '" .. Options.StartTime .. "'"
 	end
@@ -44,7 +60,8 @@ function Get(self, Options)
 		Where = Where .. " and Time = '" .. Options.ExactTime .. "'"
 	end
 	local Sql = "select HostID, Time,sum(OnlineNum) as Num from "..PlatformID.."_statics.tblOnline " .. Where .. " group by HostID, Time"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -77,7 +94,8 @@ function Insert(self, PlatformID, HostID, OnlineNum, Time)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblOnline(PlatformID, HostID, OnlineNum, Time) values('"
 			.. PlatformID .. "','".. HostID .. "','" .. OnlineNum .. "','" .. Time
 			.. "') on duplicate key update OnlineNum = values(OnlineNum)"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res		
 end

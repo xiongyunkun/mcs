@@ -42,7 +42,7 @@ function DoGoldOperation(self)
 		local Rule = OperationInfo[1].Rule
 		local OperationType = Args.OperationType
 		OperationType = tonumber(OperationType)
-		local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
+		local OperationTime = os.date("%Y-%m-%d %H:%M:%S",ngx.time())
 		if Args.RoleName and Args.RoleName ~= "" then
 			--这里执行需要输入角色的GM指令
 			Results = self:GetUserInfo(Args)

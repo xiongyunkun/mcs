@@ -57,7 +57,8 @@ function Get(self, Options)
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPayZone " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -105,7 +106,8 @@ function BatchInsert(self, PlatformID, HostID, Date, ZoneInfo)
 	end
 	local Sql = "insert into " .. PlatformID .. "_statics.tblPayZone(PlatformID, HostID, Date, ZoneID, PayUserNum"
 			.. ") values('" .. table.concat( Values, "'),('") .. "') on duplicate key update PayUserNum = values(PayUserNum)"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

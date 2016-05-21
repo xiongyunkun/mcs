@@ -19,8 +19,8 @@ local NewRoleSucIndex = 5 --创角成功
 local EnterGameIndex = 6 --进入游戏
 local AccountEnterIndex = 7 --账号登陆验证
 local PlayerAddIndex = 8 --点击创角按钮
-
-
+--以此步骤的Uid为标准，大于该步骤的步骤统计时如果uid不在这里面则不统计
+local StandardStepID = 5 
 
 function CronStatics(self, PlatformID, HostID)
 	-- 统计前一个小时的
@@ -29,6 +29,11 @@ function CronStatics(self, PlatformID, HostID)
 	local Hour = tonumber(os.date("%H",Time))
 	local HourStart = os.date("%Y-%m-%d %H:00:00",Time)
 	local HourEnd = os.date("%Y-%m-%d %H:59:59",Time)
+	local StandardRes = self:GetLog(PlatformID, HostID, Day .. " 00:00:00", HourEnd, StandardStepID)
+	local StandardUids = {}
+	for _, Info in ipairs(StandardRes) do
+		StandardUids[tonumber(Info.Uid)] = true
+	end
 	local Res = self:GetLog(PlatformID, HostID, HourStart, HourEnd)
 	local StepNums = {} --记录各步骤的次数
 	local StepUids = {} --记录各步骤的Uid列表
@@ -38,8 +43,10 @@ function CronStatics(self, PlatformID, HostID)
 		if not StepUids[Step] then
 			StepUids[Step] = {}
 		end
-		StepUids[Step][Uid] = true
-		StepNums[Step] = (StepNums[Step] or 0) + 1
+		if Step <= StandardStepID or StandardUids[Uid] or Step == AccountEnterIndex then
+			StepUids[Step][Uid] = true
+			StepNums[Step] = (StepNums[Step] or 0) + 1
+		end
 	end
 	local LoginNum = math.max((StepNums[AccountEnterIndex] or 0) - (StepNums[EnterUserListUIInex] or 0), 0) -- 登陆接口
 	local DownloadNum = StepNums[DownloadSourceIndex] or 0--下载资源包
@@ -65,11 +72,12 @@ function CronStatics(self, PlatformID, HostID)
 end
 
 --获得某段时间内的登陆分析日志
-function GetLog(self, PlatformID, HostID, StartTime, EndTime)
+function GetLog(self, PlatformID, HostID, StartTime, EndTime, Step)
 	local Options = {
 		HostID = HostID, 
 		StartTime = StartTime,
 		EndTime = EndTime,
+		Step = Step,
 	}
 	local Res = ClientLoadLogData:Get(PlatformID, Options)
 	return Res

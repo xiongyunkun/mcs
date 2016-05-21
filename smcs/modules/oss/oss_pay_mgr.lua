@@ -135,9 +135,9 @@ function RolePayRank(self)
 			local DayPay = UserPayDayStaticsData:Get(UserPay.PlatformID, {Uid = UserPay.Uid, StartTime = Yesterday, EndTime = EndTime})
 			for _, DayInfo in ipairs(DayPay) do
 				if DayInfo.Date == Yesterday then
-					YesterdayPay = DayInfo.TotalCashNum or 0
+					YesterdayPay = CommonFunc.TransformCurrency(DayInfo.Currency, DayInfo.TotalCashNum) or 0
 				elseif DayInfo.Date == Today then
-					TodayPay = DayInfo.TotalCashNum or 0
+					TodayPay = CommonFunc.TransformCurrency(DayInfo.Currency, DayInfo.TotalCashNum) or 0
 				end
 			end
 			table.insert(Info, YesterdayPay) -- 昨充
@@ -229,10 +229,6 @@ function RolePayStatics(self)
 		Viewer:View("template/oss/rolePayRankStatics.html")
 	end
 	
-end
-
-function GetZoneData(self, Options)
-	local UserPayRes = UserPayStaticsData:Get(Options.PlatformID, Options)
 end
 
 --充值对账

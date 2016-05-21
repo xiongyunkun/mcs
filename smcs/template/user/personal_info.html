@@ -41,6 +41,10 @@
 				alert("新密码不能为空!");
 				return false;
 			}
+			if(newPasswrod == "123456" || newPasswrod.length <= 6){
+				alert("新密码过于简单！请重新设置");
+				return false;
+			}
 		});
 	})
 </script>

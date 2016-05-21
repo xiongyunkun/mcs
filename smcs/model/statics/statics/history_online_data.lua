@@ -60,7 +60,8 @@ function Get(self, Options)
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblHistoryOnline " .. Where .. " order by HostID, Date"
 	--ngx.say(Sql)
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -70,6 +71,7 @@ function GetStatics(self, Options)
 	local NewOptions = {
 		PlatformID = Options.PlatformID,
 		HostID = Options.HostID,
+		HostIDs = Options.HostIDs,
 	}
 	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID 
 		and Options.HostID ~= "" then
@@ -97,9 +99,13 @@ function GetStatics(self, Options)
 		end
 		while StartTime < EndTime do
 			local Date = os.date("%Y-%m-%d",StartTime)
+			local IsNewServer = 0 --默认不是新服
+			if tonumber(Options.ServerType) == 2 then
+				IsNewServer = 1 --只查询新服
+			end
 			if Date ~= Today and MD5Str then
 				--不是今天的数据，先看看全服统计库里面有没有数据
-				local TList = AllHistoryOnlineData:Get({MD5Str = MD5Str, Date = Date})
+				local TList = AllHistoryOnlineData:Get({MD5Str = MD5Str, Date = Date, IsNewServer = IsNewServer,})
 				if TList and TList[1] then
 					Results[Date] = TList[1] 
 				end
@@ -116,7 +122,7 @@ function GetStatics(self, Options)
 				}
 				--同时记录入库,今天的数据不记录
 				if  Date ~= Today and MD5Str then
-					AllHistoryOnlineData:Insert(PlatformIDs, Date, MaxOnline, AveOnline, MinOnline)
+					AllHistoryOnlineData:Insert(PlatformIDs, Date, MaxOnline, AveOnline, MinOnline, IsNewServer)
 				end
 			end
 			StartTime = StartTime + 86400
@@ -183,8 +189,8 @@ function Insert(self, PlatformID, HostID, Date, MaxOnline, AveOnline, MinOnline)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblHistoryOnline(PlatformID, HostID, Date, MaxOnline, AveOnline, MinOnline)"
 			.. " values('" .. PlatformID .. "','".. HostID .. "','" .. Date .. "','"  .. MaxOnline .. "','" .. AveOnline .. "','" .. MinOnline .. "')"
 			.. " on duplicate key update MaxOnline = '" .. MaxOnline .. "', AveOnline = '" .. AveOnline .. "', MinOnline = '" .. MinOnline .. "'"
-
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

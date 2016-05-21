@@ -86,7 +86,8 @@ function CronExecute(self)
 	local ExecuteTimeMap = {} --记录执行时间列表，用于更新上一次操作时间
 	for HostID, PlatformID in pairs(ServerPlatformMap) do
 		--只统计服务器状态不为维护或者异常的服
-		if ServerStatusMap[HostID] ~= 0 and ServerStatusMap[HostID] ~= 5 then
+		if ServerStatusMap[HostID] ~= 0 and ServerStatusMap[HostID] ~= 5 
+			and CommonFunc.GetHostIP(PlatformID) == "127.0.0.1" then
 			for Name, File in pairs(CronModule) do
 				local Module = self[Name]
 				if Module then
@@ -135,7 +136,7 @@ function ThreadExecute(self, PlatformID, HostID, ModuleName, ExecuteTime)
 		Module:CronStatics(PlatformID, HostID)
 	end
 	--ngx.log(ngx.ERR, string.format("before,ModuleName:%s,HostID:%d,memory:%s",ModuleName, HostID, collectgarbage("count")))
-	collectgarbage("collect")
+	--collectgarbage("collect")
 	--ngx.log(ngx.ERR, string.format("after,ModuleName:%s,HostID:%d,memory:%s",ModuleName, HostID, collectgarbage("count")))
 	
 	ngx.say("done")

@@ -56,7 +56,8 @@ function Get(self, PlatformID, Options)
 		Where = Where .. " order by " .. Options.OrderCol
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblUserPayStatics " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -88,7 +89,8 @@ function BatchInsert(self, PlatformID, Results)
 	-- 采用批量插入的方式
 	local Sql = "insert into "..PlatformID.."_statics.tblUserPayStatics( "..table.concat(Cols, ",").. ") values("
 	Sql = Sql .. table.concat(StrResults, "),(") .. ") on duplicate key update " .. table.concat( UpdateValues, ", ")
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -114,6 +116,11 @@ function GetPayRank(self, Options)
 			local Res = self:Get(Options.PlatformID, Options)
 			for _, Info in ipairs(Res) do
 				Info.PlatformID = Options.PlatformID
+				Info.TotalCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.TotalCashNum)
+				Info.MinCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.MinCashNum)
+				Info.MaxCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.MaxCashNum)
+				Info.FirstCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.FirstCashNum)
+				Info.LastCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.LastCashNum)
 				table.insert(Results, Info)
 			end
 			table.sort(Results, function(A, B) return A.TotalCashNum > B.TotalCashNum end)
@@ -123,18 +130,17 @@ function GetPayRank(self, Options)
 		local Res = self:Get(Options.PlatformID, Options) --已经是排好序的，直接返回
 		for _, Info in ipairs(Res) do
 			Info.PlatformID = Options.PlatformID
+			Info.TotalCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.TotalCashNum)
+			Info.MinCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.MinCashNum)
+			Info.MaxCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.MaxCashNum)
+			Info.FirstCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.FirstCashNum)
+			Info.LastCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.LastCashNum)
 			table.insert(Results, Info)
 		end
 	end
 	return Results
 end
 
---根据充值金额排序
-function SortRank(self, RankList, Res)
-	--数组先合并
-	
-	return 
-end
 
 
 

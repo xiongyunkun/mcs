@@ -35,6 +35,9 @@ function Get(self, Options)
 	if Options.EndTime and Options.EndTime ~= "" then
 		Where = Where .. " and Date <= '" .. Options.EndTime .. "'"
 	end
+	if Options.IsNewServer and Options.IsNewServer ~= "" then
+		Where = Where .. " and IsNewServer = '" .. Options.IsNewServer .. "'"
+	end
 	local Sql = "select * from smcs.tblAllHistoryOnline " .. Where .. " order by Date"
 	--ngx.say(Sql)
 	local Res, Err = DB:ExeSql(Sql)
@@ -42,15 +45,15 @@ function Get(self, Options)
 	return Res
 end
 
-function Insert(self, PlatformIDs, Date, MaxOnline, AveOnline, MinOnline)
+function Insert(self, PlatformIDs, Date, MaxOnline, AveOnline, MinOnline, IsNewServer)
 	--先对平台md5求值
 	table.sort(PlatformIDs)
 	PlatformIDs = table.concat(PlatformIDs, ",")
 	local MD5Str = ngx.md5(PlatformIDs)
 	local NowTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
-	local Sql = "insert into smcs.tblAllHistoryOnline(MD5Str, Date, PlatformIDs, MaxOnline, AveOnline, MinOnline)"
+	local Sql = "insert into smcs.tblAllHistoryOnline(MD5Str, Date, PlatformIDs, MaxOnline, AveOnline, MinOnline, IsNewServer)"
 			.. " values('" .. MD5Str .. "','".. Date .. "','" .. PlatformIDs .. "','"  .. MaxOnline .. "','" 
-			.. AveOnline .. "','" .. MinOnline .. "')"
+			.. AveOnline .. "','" .. MinOnline .. "','" .. IsNewServer .. "')"
 			.. " on duplicate key update MaxOnline = '" .. MaxOnline .. "', AveOnline = '" 
 			.. AveOnline .. "', MinOnline = '" .. MinOnline .. "',UpdateTime='" .. NowTime .. "'"
 

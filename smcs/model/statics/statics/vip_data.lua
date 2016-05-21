@@ -1,5 +1,5 @@
 ------------------------------------------
---$Id: vip_data.lua 90910 2015-09-26 04:07:46Z xiongyunkun $
+--$Id: vip_data.lua 114984 2016-04-28 10:04:46Z xiongyunkun $
 ------------------------------------------
 --[[
 CREATE TABLE `tblVIP` (
@@ -47,7 +47,8 @@ function Get(self, Options)
 		Where = Where .. " and VipLevel = '" .. Options.VipLevel .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblVIP " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -108,7 +109,8 @@ function Insert(self, PlatformID, HostID, Date, VipLevel, RetInfo)
 		end
 	end
 	Sql = Sql .. table.concat(InsertValues, "','") .. "') on duplicate key update " .. table.concat(UpdateValues, ",")
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -117,7 +119,8 @@ end
 function UpdateLostNum(self, PlatformID, HostID, Date, VipLevel, LostNum)
 	local Sql = "update " .. PlatformID .. "_statics.tblVIP set LostNum = '" .. LostNum 
 		.. "' where HostID = '" .. HostID .. "' and Date = '" .. Date .. "' and VipLevel = '" .. VipLevel .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

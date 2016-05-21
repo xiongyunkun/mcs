@@ -36,8 +36,8 @@ function Get(self, Options)
 		Limit = " limit 0," .. Options.Limit
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblFigtingRank " .. Where .. " order by HostID, Fighting DESC " .. Limit
-
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -84,7 +84,8 @@ function Insert(self, PlatformID, HostID, Uid, Name, Fighting)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblFigtingRank(PlatformID, HostID, Uid, Name, Fighting)"
 			.. " values('" .. PlatformID .. "','".. HostID .. "','" .. Uid .. "','"  .. Name .. "','" .. Fighting .. "')"
 			.. " on duplicate key update Name = '" .. Name .. "', Fighting = '" .. Fighting .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end
@@ -92,7 +93,8 @@ end
 function Delete(self, PlatformID, HostID)
 	local Sql = "delete from " .. PlatformID .. "_statics.tblFigtingRank where PlatformID = '" .. PlatformID
 			.."' and HostID = '" .. HostID .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res		
 end

@@ -45,6 +45,7 @@ function ItemShow(self, PlatformID, Results)
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
+	JsonMail = json.encode(CommonData.MAIL_LANGUAGES)
 	Viewer:View("template/player/itemShow.html")
 end
 

@@ -51,6 +51,11 @@ function Insert(self, Args)
 	local Sql = "insert into smcs.tblInterfaceKey (" .. table.concat( Cols, ",") .. ") values("
 		.. table.concat( Values, ",") .. ") on duplicate key update " ..table.concat( UpdateValues, ", ") .. ", Flag = 'true'"
 	local Res, Err = DB:ExeSql(Sql)
+	--还需要将对应的配置发送给PlatformID对应的数据库中去
+	local HostIP = CommonFunc.GetHostIP(Args["PlatformID"])
+	if HostIP and HostIP ~= "127.0.0.1" then
+		Res, Err = DB:ExeSql(Sql, HostIP)
+	end
 	if not Res then return nil, Err end
 	return Res
 end
@@ -59,6 +64,11 @@ function Delete(Self, PlatformID, IndexName)
 	local Sql = "update smcs.tblInterfaceKey set Flag = 'false' where PlatformID = '" .. PlatformID 
 		.. "' and IndexName = '" .. IndexName .. "'"
 	local Res, Err = DB:ExeSql(Sql)
+	--还需要将对应的配置发送给PlatformID对应的数据库中去
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	if HostIP and HostIP ~= "127.0.0.1" then
+		Res, Err = DB:ExeSql(Sql, HostIP)
+	end
 	if not Res then return nil, Err end
 	return Res
 end

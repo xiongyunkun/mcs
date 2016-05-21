@@ -114,6 +114,7 @@ function ApplyList(self, ErrMsg)
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
+	JsonMail = json.encode(CommonData.MAIL_LANGUAGES)
 	Viewer:View("template/game/item_apply_list.html")
 end
 
@@ -369,6 +370,13 @@ end
 
 function SendRewards(self, ApplyInfo)
 	local HostIDs = string.split(ApplyInfo.HostIDs, ",")
+	local THostID = HostIDs[1]
+	local Servers = ServerData:GetStaticsServers()
+	local PlatformID = Servers[tonumber(THostID)]
+	if PlatformID and CommonData.MAIL_LANGUAGES[PlatformID] then
+		EmailTitle = CommonData.MAIL_LANGUAGES[PlatformID].Title
+		EmailContent = CommonData.MAIL_LANGUAGES[PlatformID].Content
+	end
 	--发送邮件
 	local OperationInfo = GMRuleData:Get({ID = SendAllItemID})
 	local Rule = OperationInfo[1].Rule

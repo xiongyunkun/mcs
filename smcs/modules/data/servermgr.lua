@@ -142,7 +142,7 @@ function DataReport(self)
 			--留存率
 			local RetentionData = self:GetRetentionData(Options.PlatformID, ServerInfo.hostid, TimeInfo[1])
 			local ARPU = PayData.PayUserNum ~= 0 and math.floor(PayData.TotalCashNum * 100/PayData.PayUserNum)/100 or 0 --ARPU
-			local PayRate = RetentionData.LoginNum and RetentionData.LoginNum ~= 0 and math.floor(PayData.PayUserNum * 10000/RetentionData.LoginNum)/100 .. "%" or "0%"
+			local PayRate = LoginData.EnterGame and LoginData.EnterGame ~= 0 and math.floor(PayData.PayUserNum * 10000/LoginData.EnterGame)/100 .. "%" or "0%"
 			local RegShowRate = LoginData.LoginInterface ~= 0 and math.floor(LoginData.RegShow * 10000/LoginData.LoginInterface)/100 .. "%" or "0%"
 			local RegSucRate = LoginData.LoginInterface ~= 0 and math.floor(LoginData.RegSuc * 10000/LoginData.LoginInterface)/100 .. "%" or "0%"
 			local EnterLostRate = LoginData.LoginInterface ~= 0 and math.floor(LoginData.EnterGame * 10000/LoginData.LoginInterface)/100 .. "%" or "0%"
@@ -152,6 +152,7 @@ function DataReport(self)
 				ServerInfo.name,
 				LoginData.LoginInterface,
 				LoginData.RegSuc,
+				LoginData.EnterGame,
 				RetentionData.MaxOnline,
 				PayData.TotalCashNum,
 				PayData.PayUserNum,
@@ -166,7 +167,7 @@ function DataReport(self)
 			table.insert(TableData, Server)
 		end
 	end
-	Titles = {"开服时间", "平台", "服", "登陆接口数", "创角数",
+	Titles = {"开服时间", "平台", "服", "登陆接口数", "创角数", "进入游戏数",
 				"在线峰值", "充值金额", "充值人数", "ARPU", "活跃付费率", 
 				"到达创角率", "创角成功率","进入游戏率", "次日留存", "7日留存"}
 	if Options.Submit == "导出" then

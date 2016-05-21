@@ -19,7 +19,7 @@ function CronStatics(self, PlatformID, HostID)
 	local DayPayInfo = {
 		HostID = HostID,
 		Date = Day,
-		Currency = "RMB", --默认是人民币
+		Currency = "USD", --默认是人民币
 		CashNum = 0, --充值金额
 		PayGold = 0, --充值钻石数量
 		PayNum = 0, --充值次数

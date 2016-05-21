@@ -55,7 +55,8 @@ function Get(self, PlatformID, Options)
 		Where = Where .. " and Time <= '" .. Options.EndTime .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblPayOrder " .. Where .. " order by Time"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -73,7 +74,8 @@ function Insert(self, PlatformID, Args)
 		table.insert(Values, Value)
 	end
 	Sql = Sql .. table.concat(Values, ",") .. ")"
-	DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	DB:ExeSql(Sql, HostIP)
 end
 
 --更改状态
@@ -81,13 +83,15 @@ function UpdateStatus(self, PlatformID, OrderID, Status)
 	local NowTime = os.date("%Y-%m-%d %H:%M:%S", os.time())
 	local Sql = "update "..PlatformID.."_statics.tblPayOrder set Status = '" .. Status
 		.. "', LastUpdateTime='" .. NowTime .. "' where OrderID = '" ..OrderID .. "'"
-	DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	DB:ExeSql(Sql, HostIP)
 end
 
 --判断订单是否重复
 function CheckDuplicate(self, PlatformID, OrderID)
 	local Sql = "select * from " .. PlatformID .. "_statics.tblPayOrder where OrderID = '" .. OrderID .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if Res and #Res > 0 then
 		return true
 	else

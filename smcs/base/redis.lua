@@ -5,12 +5,14 @@
 -- redis相关操作逻辑
 --]]
 module(...,package.seeall)
+local IP = "127.0.0.1"
+local PORT = 6379
 
 --初始化连接
 function InitConnection(self)
     local Redis = REDIS:new()
     Redis:set_timeout(5000) -- 5 sec
-    local ok, err = Redis:connect("127.0.0.1", 6379)
+    local ok, err = Redis:connect(IP, PORT)
     if not ok then
         ngx.say("failed to connect: ", err)
         return
@@ -31,4 +33,5 @@ function GetLog(self, LuaStr, LogName)
     Redis:set_keepalive(10000, 100) --放入连接池
     return Result
 end
+
 

@@ -3,14 +3,14 @@
 ------------------------------------------
 --[[
 CREATE TABLE `tblPayActualTime` (
-  `ID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `HostID` int(11) NOT NULL DEFAULT '0' COMMENT '服ID',
   `PayCashNum` int(11) DEFAULT '0' COMMENT '充值金额',
   `PayUserNum` int(11) DEFAULT '0' COMMENT '充值人数',
-  `Time` timestamp NOT NULL COMMENT '统计时间',
+  `Time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '统计时间',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
-  PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='实时充值统计表'
+  `Currency` varchar(16) NOT NULL DEFAULT '' COMMENT '货币类型',
+  PRIMARY KEY (`HostID`,`Time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='实时充值统计表' 
 
 --]]
 module(...,package.seeall)
@@ -38,9 +38,10 @@ function Get(self, Options)
 	if Options.Time and Options.Time ~= "" then
 		Where = Where .. " and Time >= '" .. Options.Time .. " 00:00:00' and Time <= '" .. Options.Time .. " 23:59:59'"
 	end
-	local Sql = "select HostID, Time,sum(PayCashNum) as PayNum, sum(PayUserNum) as UserNum from "
+	local Sql = "select HostID, Time,sum(PayCashNum) as PayNum, sum(PayUserNum) as UserNum, Currency from "
 		..PlatformID.."_statics.tblPayActualTime " .. Where .. " group by HostID, Time"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -54,10 +55,11 @@ function GetStatics(self, Options)
 			Options.PlatformID = PlatformID
 			local Res = self:Get(Options)
 			for _, Info in ipairs(Res) do
+				local PayNum = CommonFunc.TransformCurrency(Info.Currency, Info.PayNum)
 				if not Results[Info.Time] then
-					Results[Info.Time] = {PayNum = Info.PayNum, UserNum = Info.UserNum}
+					Results[Info.Time] = {PayNum = PayNum, UserNum = Info.UserNum}
 				else
-					Results[Info.Time].PayNum = Results[Info.Time].PayNum + Info.PayNum
+					Results[Info.Time].PayNum = Results[Info.Time].PayNum + PayNum
 					Results[Info.Time].UserNum = Results[Info.Time].UserNum + Info.UserNum
 				end
 			end
@@ -66,15 +68,15 @@ function GetStatics(self, Options)
 	else
 		local Res = self:Get(Options)
 		for _, Info in ipairs(Res) do
+			local PayNum = CommonFunc.TransformCurrency(Info.Currency, Info.PayNum)
 			if not Results[Info.Time] then
-				Results[Info.Time] = {PayNum = Info.PayNum, UserNum = Info.UserNum}
+				Results[Info.Time] = {PayNum = PayNum, UserNum = Info.UserNum}
 			else
-				Results[Info.Time].PayNum = Results[Info.Time].PayNum + Info.PayNum
+				Results[Info.Time].PayNum = Results[Info.Time].PayNum + PayNum
 				Results[Info.Time].UserNum = Results[Info.Time].UserNum + Info.UserNum
 			end
 		end
 	end
-
 	return Results
 end
 
@@ -82,7 +84,8 @@ end
 function Insert(self, PlatformID, HostID, PayCashNum, PayUserNum, Time)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblPayActualTime(HostID, PayCashNum, PayUserNum, Time) values('"
 			.. HostID .. "','" .. PayCashNum .. "','" .. PayUserNum .. "','" .. Time .. "')"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res		
 end

@@ -2,6 +2,10 @@
  var d = new Date()
  var offset = d.getTimezoneOffset();  //时区差
  var cssID = "$Hicharts.CssID$";
+ var startTime = $Hicharts.PointInterval == 86400 and Hicharts.Timestamp * 1000 or 0$;
+ if(startTime == 0){
+    startTime = getDayTimeStamp();
+ }
 $(document).ready(function(){
 	$("#"+cssID).highcharts({
         chart: {
@@ -52,13 +56,22 @@ $(document).ready(function(){
                 type: 'area',
                 name: '$Hicharts.SeriesName$',
                 pointInterval: $Hicharts.PointInterval * 1000$, //时间间隔
-                pointStart: $Hicharts.Timestamp * 1000$ - offset *60 *1000, //还需要考虑时区差
+                pointStart: startTime - offset *60 *1000, //还需要考虑时区差
                 data: [
                     $table.concat(Hicharts.DateData, ",")$
                 ]
             }]
     });
 })
+ //获得当天0点的时间戳
+ function getDayTimeStamp(){
+    var today = new Date();
+    today.setHours(0);
+    today.setMinutes(0);
+    today.setSeconds(0);
+    today.setMilliseconds(0);
+    return Date.parse(today);
+ }
  </script>
 <div id="container" style="min-width: 310px; height: 300px; margin: 0 auto;"></div>
  <div style="clear:both"></div>

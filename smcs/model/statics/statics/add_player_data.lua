@@ -43,7 +43,8 @@ function Get(self, Options)
 	end
 	local Sql = "select HostID, Time,sum(RegNum) as Num, sum(Male) as Male, sum(Female) as Female from "
 		..PlatformID.."_statics.tblAddPlayer " .. Where .. " group by HostID, Time"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -75,7 +76,8 @@ end
 function Insert(self, PlatformID, HostID, RegNum, Male, Female, Time)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblAddPlayer(PlatformID, HostID, RegNum, Male, Female, Time) values('"
 			.. PlatformID .. "','".. HostID .. "','" .. RegNum .. "','".. Male .. "','" .. Female ..  "','" .. Time .. "')"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res		
 end

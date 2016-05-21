@@ -46,7 +46,8 @@ function Get(self, Options)
 		Where = Where .. " and Step = '" .. Options.Step .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblLoginStatics " .. Where .. " order by HostID, Date"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end
@@ -88,7 +89,8 @@ function Insert(self, PlatformID, HostID, Date, Hour, Step, Num)
 	local Sql = "insert into " .. PlatformID .. "_statics.tblLoginStatics(PlatformID, HostID, Date, Hour, Step, Num)"
 			.. " values('" .. PlatformID .. "','" .. HostID .. "','" .. Date .. "','"
 			.. Hour .. "','" .. Step .. "','" .. Num .. "') on duplicate key update Num = '" .. Num .. "'"
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = CommonFunc.GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return nil, Err end
 	return Res
 end

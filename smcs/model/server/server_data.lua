@@ -25,6 +25,11 @@ function AddServer(self, ServerInfo)
 	end
 	Sql = Sql .. table.concat(SetTbl, ",")
 	local Res, Err = DB:ExeSql(Sql)
+	--判断是否需要更新platformid对应IP的数据库
+	local HostIP = CommonFunc.GetHostIP(ServerInfo["platformid"])
+	if HostIP and HostIP ~= "127.0.0.1" then
+		Res, Err = DB:ExeSql(Sql, HostIP)
+	end
 	AllServers = {}
 	return Res, Err
 end
@@ -51,6 +56,11 @@ function ModifyServer(self, ServerId, ServerInfo)
 	end
 	local Sql = string.format(SqlFrm, table.concat(SetTbl,","))	
 	local Res, Err = DB:ExeSql(Sql)
+	--判断是否需要更新platformid对应IP的数据库
+	local HostIP = CommonFunc.GetHostIP(ServerInfo["platformid"])
+	if HostIP and HostIP ~= "127.0.0.1" then
+		Res, Err = DB:ExeSql(Sql, HostIP)
+	end
 	AllServers = {}
 	return (Err == nil), Err
 end
@@ -120,6 +130,16 @@ function AddServerToGroup(self, ServerId, GroupId, Weight)
 	local Sql = "insert into srvgroupinfo set serverid="..ServerId..",groupid="..GroupId..",weight="..(Weight or 100)
 	local Res, Err = DB:ExeSql(Sql)
 	AllServerGroupInfo = {}
+	--判断是否需要更新该服所在平台对应IP数据库
+	local PSql = "select a.hostid, a.platformid, b.IP from servers a, tblPlatform b "
+		.. "where a.platformid = b.PlatformID and a.hostid = '" .. ServerId .. "'"
+	local PRes = DB:ExeSql(PSql)
+	if PRes and PRes[1] then
+		local IP = PRes[1].IP
+		if IP ~= "127.0.0.1" then
+			DB:ExeSql(Sql, IP)
+		end
+	end
 	return (Err == nil), Err
 end
 
@@ -127,6 +147,16 @@ function ModifyServerGroupInfo(self, ServerId, GroupId, Weight)
 	local Sql = "update srvgroupinfo set weight="..(Weight or 100).." where serverid="..ServerId.." and groupid="..GroupId
 	local Res, Err = DB:ExeSql(Sql)
 	AllServerGroupInfo = {}
+	--判断是否需要更新该服所在平台对应IP数据库
+	local PSql = "select a.hostid, a.platformid, b.IP from servers a, tblPlatform b "
+		.. "where a.platformid = b.PlatformID and a.hostid = '" .. ServerId .. "'"
+	local PRes = DB:ExeSql(PSql)
+	if PRes and PRes[1] then
+		local IP = PRes[1].IP
+		if IP ~= "127.0.0.1" then
+			DB:ExeSql(Sql, IP)
+		end
+	end
 	return (Err == nil), Err
 end
 
@@ -134,6 +164,16 @@ function DelServerFromGroup(self, ServerId, GroupId)
 	local Sql = "delete from srvgroupinfo where serverid="..ServerId.." and groupid="..GroupId
 	local Res, Err = DB:ExeSql(Sql)
 	AllServerGroupInfo = {}
+	--判断是否需要更新该服所在平台对应IP数据库
+	local PSql = "select a.hostid, a.platformid, b.IP from servers a, tblPlatform b "
+		.. "where a.platformid = b.PlatformID and a.hostid = '" .. ServerId .. "'"
+	local PRes = DB:ExeSql(PSql)
+	if PRes and PRes[1] then
+		local IP = PRes[1].IP
+		if IP ~= "127.0.0.1" then
+			DB:ExeSql(Sql, IP)
+		end
+	end
 	return (Err == nil), Err
 end
 
@@ -425,3 +465,4 @@ function UpdateRelatedMerge(self, HostIDs, MergeTo)
 	end
 	return Res
 end
+

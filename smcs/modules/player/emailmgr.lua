@@ -32,6 +32,7 @@ function EmailShow(self, PlatformID, Results)
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
 	}
+	JsonMail = json.encode(CommonData.MAIL_LANGUAGES)
 	Viewer:View("template/player/emailShow.html")
 end
 
@@ -72,7 +73,9 @@ function DoSendEmail(self)
 		local Rule = OperationInfo[1].Rule
 		local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 		--验证参数
-		local GMParams = {MessageID, Args.Title, Args.Content, OptionStr}
+		local Title = self:ReplaceStr(Args.Title)
+		local Content = self:ReplaceStr(Args.Content)
+		local GMParams = {MessageID, Title, Content, OptionStr}
 		local Flag, GMCMD = CommonFunc.VerifyGMParms(Rule, GMParams)
 		if not Flag then
 			ExtMsg = "GM参数不对，参数为："..table.concat(GMParams, ",")
