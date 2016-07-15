@@ -69,7 +69,11 @@ function Get(self, Options)
 		Where = Where .. " and Urs = '" .. Options.Urs .. "'"
 	end
 	if Options.Name and Options.Name ~= "" then
-		Where = Where .. " and Name COLLATE utf8_bin like '%" .. Options.Name .. "%'"
+		if Options.RawQuery then
+			Where = Where .. " and Name like '%" .. Options.Name .. "%'"
+		else
+			Where = Where .. " and Name COLLATE utf8_bin like '%" .. Options.Name .. "%'"
+		end
 	end
 	if Options.RealName and Options.RealName ~= "" then
 		Where = Where .. " and Name COLLATE utf8_bin = '" .. Options.RealName .. "'"

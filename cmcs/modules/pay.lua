@@ -26,8 +26,6 @@ function DoPay(self)
 				Gold = Args.Gold,
 				OrderID = OrderID,
 				Time = Args.Time,
-				Callback = Args.Callback,
-				PlatformID = Args.PlatformID,
 			}
 			Content = Serialize(Content)
 			File:write(Content)
@@ -39,7 +37,7 @@ function DoPay(self)
 end
 
 local FinishDir = "/logic/dat/pay/finish"
-local PostUrl = "192.168.1.97:7666/update_pay_status" --gservice接收地址
+local PostUrl = GSERVICE_URL .. "/update_pay_status" --gservice接收地址
 --轮询获取充值结果文件
 function DoCronGetPayResult(self)
 	if CronGetPayResultFlag then
@@ -68,6 +66,7 @@ function DoCronGetPayResult(self)
 							local Result = File:read("*a")
 							File:close()
 							Result = string.strip(Result)
+							Result = ngx.escape_uri(Result)
 							--将OrderID和Result发送给gservice
 							local Flag, Res = ReqOutUrl(PostUrl, {OrderID = OrderID, HostID = HostID, Status = Result})
 							Res = tonumber(Res)

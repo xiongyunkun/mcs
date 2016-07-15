@@ -94,15 +94,17 @@ function ExportExcel(FileName, Titles, Contents)
 		Title = utf2gbk:iconv(Title) --转成gbk格式
 		table.insert(NewTitles, Title or "")
 	end
-	ContentStr = ContentStr .. table.concat(NewTitles, "\t") .. "\n"
+	local NewContents = {table.concat(NewTitles, "\t"), "\n"}
 	for _, RowContent in ipairs(Contents) do
 		local NewRowContent = {}
 		for _, ColValue in ipairs(RowContent) do
 			ColValue = utf2gbk:iconv(ColValue) --转成gbk格式
 			table.insert(NewRowContent, ColValue)
 		end
-		ContentStr = ContentStr .. table.concat(NewRowContent, "\t") .. "\n"
+		table.insert(NewContents, table.concat(NewRowContent, "\t"))
+		table.insert(NewContents, "\n")
 	end
+	ContentStr = table.concat( NewContents, "")
 	return ContentStr
 end
 --[[
@@ -541,3 +543,4 @@ function TransformCurrency(Currency, CashNum)
 	end
 	return NewCashNum
 end
+

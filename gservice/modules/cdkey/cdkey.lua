@@ -62,6 +62,14 @@ function ExchangeKey(self)
 			ngx.say(Serialize({Result=Result})) --不满足使用类型
 			return
 		end
+		--判断平台是否满足
+		local ServerInfo = ServerData:GetServerByHostID(HostID)
+		if not ServerInfo.platformid or ServerInfo.platformid ~= RewardRes.PlatformID then
+			CDKeyErrData:InsertErroData(CDKey, Uid, Urs, HostID)
+			local Result = UNVALID_FLAG
+			ngx.say(Serialize({Result=Result})) --不满足使用类型
+			return
+		end
 		--更新兑奖记录
 		local Args = {
 			CDKey = CDKey,
@@ -70,8 +78,11 @@ function ExchangeKey(self)
 			Urs = Urs,
 			ActivityID = RewardRes.ID,
 		}
+		--TODO:这里还要再次判断一下是否已经领取，防止有人并发访问
 		CDKeyExchangeData:Insert(Args)
-		CDKeyData:AbortKey({CDKey = CDKey})
+		if RewardRes.KeyType ~= 4 then
+			CDKeyData:AbortKey({CDKey = CDKey})
+		end
 		local RewardStr = RewardRes.Rewards
 		ngx.say(Serialize({Result=CAN_EXCHANG_FLAG, Rewards = RewardStr}))
 	else

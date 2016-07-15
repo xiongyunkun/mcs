@@ -16,14 +16,16 @@ function GoldOperationShow(self, PlatformID, Results)
 	Platforms = CommonFunc.GetPlatformList()
 	--获得服务器列表
 	Servers = CommonFunc.GetServers(Options.PlatformID)
-	OperationTypes = {"加钻石","加绑钻", "加金币","扣钻石","扣绑钻","扣金币"}
+	OperationTypes = {Translate("加钻石"),Translate("加绑钻"), Translate("加金币"),Translate("扣钻石"),
+		Translate("扣绑钻"),Translate("扣金币")}
 	--展示数据
-	Titles = {"平台", "服", "账号", "角色", "执行结果", }
+	Titles = {Translate("平台"), Translate("服"), Translate("账号"), Translate("角色"), Translate("执行结果"), }
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
 	TableData = {}
 	for _, Result in ipairs(Results or {}) do
-		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Result.Result or "执行失败"}
+		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", 
+			Translate(Result.Result or "执行失败")}
 		table.insert(TableData, CTable)
 	end
 	DataTable = {

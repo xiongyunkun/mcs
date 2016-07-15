@@ -66,12 +66,22 @@
 		});
 		$("#form").submit(function(){
 			var password = $("input[name=password]").val();
-			if(password == "123456" || password.length <= 5){
-				alert("密码过于简单，请重新设置");
+			if(checkPass(password) <3 ){
+				alert("密码必须包含大小写字母和数字，并且长度大于6");
 				return false;
 			}
 		});
 	})
+	//检查密码强度
+	function checkPass(pass){
+		if(pass.length < 6){  return 0; }
+		var ls = 0;
+		if(pass.match(/([a-z])+/)){  ls++; } 
+		if(pass.match(/([0-9])+/)){  ls++; } 
+		if(pass.match(/([A-Z])+/)){   ls++; } 
+		if(pass.match(/[^a-zA-Z0-9]+/)){ ls++;} 
+		return ls;
+	} 
 </script>
 </body>
 </html>

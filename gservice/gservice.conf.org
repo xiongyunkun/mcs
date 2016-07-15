@@ -6,7 +6,9 @@ upstream gservice {
 
 lua_package_path "$workpath$/?.lua;;";
 lua_package_cpath "$workpath$/lib/?.so;;";
-
+lua_shared_dict merge_src_host_map 5m;
+lua_shared_dict merge_to_host_map 5m;
+lua_shared_dict host_ip_map 5m;
 init_by_lua_file $workpath$/base/init.lua;
 
 allow 14.29.84.48;
@@ -108,13 +110,62 @@ location /update_pay_status {
 	content_by_lua_file modules/pay/pay_status.lua;
 }
 
-location /getserverconf {
+location /get_server_pay {
 	default_type "text/plain";
-	set $processfunc "DoGetServerListConf";
+	set $processfunc "GetHostPay";
 	content_by_lua_file modules/server/servinterface.lua;
 }
 
-#youmi platform
-include $workpath$/custom_conf/youmi.path;
+location /update_merge_host_map {
+	default_type "text/plain";
+	set $processfunc "UpdateMergeHostMap";
+	content_by_lua_file modules/server/servinterface.lua;
+}
 
+location /update_server {
+	default_type "text/plain";
+	set $processfunc "UpdateServer";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /add_server {
+	default_type "text/plain";
+	set $processfunc "AddServer";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /update_group_info {
+	default_type "text/plain";
+	set $processfunc "UpdateGroupInfo";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /update_server_tag {
+	default_type "text/plain";
+	set $processfunc "UpdateServerTag";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /get_server_info {
+	default_type "text/plain";
+	set $processfunc "GetServerInfo";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /update_host_ip_map {
+	default_type "text/plain";
+	set $processfunc "UpdateHostIPMap";
+	content_by_lua_file modules/server/servinterface.lua;
+}
+location /new_server_reward {
+	default_type "text/plain";
+	set $processfunc "Exchange";
+	content_by_lua_file modules/cdkey/new_server_reward.lua;
+}
+
+#yy platform
+include $workpath$/custom_conf/yy.path;
+include $workpath$/custom_conf/360.path;
+include $workpath$/custom_conf/sogou.path;
+include $workpath$/custom_conf/37.path;
+include $workpath$/custom_conf/baidu.path;
+include $workpath$/custom_conf/pps.path;
+include $workpath$/custom_conf/common_platform.path;
+include $workpath$/custom_conf/lvzhou.path;
+include $workpath$/custom_conf/bom.path;
 }

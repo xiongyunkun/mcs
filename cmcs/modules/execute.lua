@@ -1,5 +1,5 @@
 ----------------------------------
---$Id: execute.lua 65473 2015-05-18 02:30:32Z xiongyunkun $
+--$Id: execute.lua 121367 2016-06-24 02:09:24Z xiongyunkun $
 ----------------------------------
 --[[
 -- Execute a shell and return the shell result
@@ -46,6 +46,7 @@ function DoGMShell(self)
 	local ShellParam = Args.shellparam or ""
     local IsPend = Args.IsPend or "" --是否挂起等待结果，默认不用挂起
     local ParamMap = string.split(ShellParam, ";")
+    ParamMap[4] = "'" .. os.time() .. "'" --采用本地时间
     local NewShellParam = table.concat(ParamMap, " ")
     if not ShellName then
         ngx.say("must have shellname")
@@ -114,6 +115,52 @@ function GetGMResult(HostID, TransID, GsID)
 		end
 	end
 	return 
+end
+
+--统计在线人数
+function StaticsOnlineNum(self)
+	--遍历根目录下面的所有game文件夹
+	local BasePath = GetBasePath()
+	local RootDir = BasePath .. "/../../"
+	local Files = posix.dir(RootDir)
+	table.sort(Files)
+	local ShellName = "gm_cmd.sh"
+	local Redis = InitRedis()
+	for _, HostID in pairs(Files) do
+		if HostID ~= '.' and HostID ~= '..' and HostID ~= "mcs" and tonumber(HostID) then
+			local NowTime = os.time()
+			local RandomNum = math.random(100,999)
+    		local ShellFullName = BasePath.."/shell/"..ShellName
+    		local TimeFormat = os.date('"%Y-%m-%d %H:%M:%S"',NowTime)
+    		local TransID = NowTime .. RandomNum --交易号
+    		local ShellParams = {HostID, 0, '"return MASTER_ALLINFO:GetOnlineCnt()"', TimeFormat, TransID}
+    		ngx.say(table.concat(ShellParams, " "))
+    		local Ret = os.execute(ShellFullName.." "..table.concat(ShellParams, " ").." > /dev/null")
+    		if not Ret or Ret > 0 then
+        		ngx.say("shell error code:"..Ret .. ", HostID:" .. HostID)
+    		else
+    			--挂起等待
+        		local Result = nil
+        		local N = 2 -- 初始等待2秒
+        		while(true) do
+            		os.execute("sleep " .. N)
+            		Result = GetGMResult(ShellParams[1], ShellParams[5], ShellParams[2])
+            		if Result or N >= 3 then --如果有结果或者等待时间超过3秒后则退出
+                		break
+            		end
+            		N = N + 1
+        		end
+        		if Result and Result ~= "" then
+        			--发送给redis
+        			local OnlineNum = Result.Result or 0
+        			local JsonResult = {num = OnlineNum, hostid = HostID, time=NowTime}
+        			ngx.say(json.encode(JsonResult))
+        			Redis:rpush("online", json.encode(JsonResult))
+        		end
+    		end
+
+		end
+	end
 end
 
 DoRequest()

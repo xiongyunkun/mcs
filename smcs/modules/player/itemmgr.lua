@@ -26,14 +26,9 @@ function ItemShow(self, PlatformID, Results)
 	for ItemID, ItemName in pairs(ItemDataMap or {}) do
 		table.insert(ItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
 	end
-	--1.0版本的物品列表
-	OldItemStrList = {}
-	for ItemID, ItemName in pairs(OldItemDataMap or {}) do
-		table.insert(OldItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
-	end
-	DeductItemTypes = {"背包","身上"}
+	DeductItemTypes = {Translate("背包"),Translate("身上")}
 	--展示数据
-	Titles = {"平台", "服", "账号", "角色", "执行结果", }
+	Titles = {Translate("平台"), Translate("服"), Translate("账号"), Translate("角色"), Translate("执行结果"), }
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
 	TableData = {}
@@ -208,6 +203,8 @@ function ExecuteGM(self, GMID, Options, UserList)
 	local OperationTime = os.date("%Y-%m-%d %H:%M:%S",os.time())
 	local Title = Options.Title
 	local Content = Options.Content
+	Title = string.gsub(Title, ",", "，")
+	Content = string.gsub(Content, ",", "，")
 	local ItemStr = self:GetItems(Options)
 	local Gold = Options.Gold and tonumber(Options.Gold) or 0
 	local CreditGold = Options.CreditGold and tonumber(Options.CreditGold) or 0

@@ -8,21 +8,19 @@
 
 -- 需要统计的指标以及对应的处理文件都放在这里
 local CronModule = {
-	{"Retention", "modules.cron.statics.retention"},
-	{"OnlineTime", "modules.cron.statics.online_time"},
+	--{"Retention", "modules.cron.statics.retention"},
+	--{"OnlineTime", "modules.cron.statics.online_time"},
 	{"Gold", "modules.cron.statics.gold"},
 	{"VIP", "modules.cron.statics.vip"},
 	{"FigtingRank", "modules.cron.statics.fighting_rank"},
-	{"HistoryOnline", "modules.cron.statics.history_online"},
-	{"HistoryReg", "modules.cron.statics.history_reg"},
+	--{"HistoryOnline", "modules.cron.statics.history_online"},
+	--{"HistoryReg", "modules.cron.statics.history_reg"},
 	{"LevelStatics", "modules.cron.statics.level_statics"},
-	{"LoginStatics", "modules.cron.statics.login_statics"},
-	--{"MountLevelStatics", "modules.cron.statics.playways.mount_level_statics"},
+	--{"LoginStatics", "modules.cron.statics.login_statics"},
 	{"UserPayDayStatics", "modules.cron.pay.user_pay_day_statics"},
 	{"PayDayStatics", "modules.cron.pay.pay_day_statics"},
 	{"PayZoneStatics", "modules.cron.pay.pay_zone_statics"},
 	{"InstanceStatics", "modules.cron.statics.playways.instance_statics"},
-	--{"PetStatics", "modules.cron.statics.pet_statics"},
 }
 local Env = getfenv()
 for _, Conf in ipairs(CronModule) do
@@ -67,7 +65,7 @@ end
 
 
 function CronExecute(self)
-	local ServerPlatformMap = ServerData:GetStaticsServers()
+	local ServerPlatformMap = ServerData:GetStaticsServers(true)
 	for _, Conf in ipairs(CronModule) do
 		local Name, File = unpack(Conf)
 		local Module = self[Name]

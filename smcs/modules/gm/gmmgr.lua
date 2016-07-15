@@ -14,6 +14,32 @@ function ReqRuleList(self)
 	Viewer:View("template/gm/rulelist.html")
 end
 
+function TasLost()
+	local Sql = "select Uid,Name,Urs,Level,TotalOnlineTime,LastLoginTime,LastLogoutTime from test_statics.tblUserInfo where HostID = '1002' and LastLogoutTime <= '2016-06-01 00:00:00' and Level <= '35'"
+	local Res, Err = DB:ExeSql(Sql)
+	local Results = {}
+	for _, Info in ipairs(Res) do
+		local Uid = Info.Uid
+		local LastLogoutTimes = string.split(Info.LastLogoutTime, " ")
+		local LastLogoutDate = LastLogoutTimes[1]
+		LastLogoutDate = string.gsub(LastLogoutDate, "-", "")
+		local Where = " where TaskType = '1' and Uid = '" .. Uid .. "' order by ID desc limit 1"
+		local TaskSql = "select Task,TaskType from test_log.tblTaskLog_" .. LastLogoutDate .. Where
+		local TaskRes, TaskErr = DB:ExeSql(TaskSql)
+		if TaskRes and TaskRes[1] then
+			Info.TaskID = TaskRes[1].Task
+			Info.TaskType = TaskRes[1].TaskType == 1 and "接受任务" or "完成任务"
+		end
+		local Result = {Info.Uid, Info.Name, Info.Urs, Info.Level, Info.TotalOnlineTime, 
+			Info.LastLogoutTime, Info.TaskID, Info.TaskType}
+		table.insert(Results, Result)
+	end
+	local Titles = {"Uid", "角色名", "Urs", "等级", "总在线时长(秒)","最后退出时间", "最后任务ID","任务类型"}
+	local ExcelStr = CommonFunc.ExportExcel("任务流失.xls", Titles, Results)
+	ngx.print(ExcelStr)
+	
+end
+
 --GM指令编辑
 function RuleEdit(self)
 	if ngx.var.request_method == "POST" then

@@ -14,7 +14,8 @@ function GetServerData(self)
 	Platforms = CommonFunc.GetPlatformList()
 	Options.HostID = nil --这里没有HostID
 	--filter页面模板显示的参数
-	TabList = {"创建角色数", "登陆人数", "平均在线", "在线峰值", "付费人数", "付费金额"}
+	TabList = {Translate("创建角色数"), Translate("登陆人数"), Translate("平均在线"), Translate("在线峰值"), 
+		Translate("付费人数"), Translate("付费金额")}
 	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "StartTime",},
@@ -27,6 +28,11 @@ function GetServerData(self)
 		local LoginRes = RetentionData:Get(Options) -- 日活跃
 		local OnlineRes = HistoryOnlineData:Get(Options) --PCU最高在线
 		local ServerPayRes = PayDayStaticsData:Get(Options.PlatformID, Options) --服充值日统计数据
+		--需要做下汇率转换
+		for _, Info in ipairs(ServerPayRes) do
+			Info.CashNum = CommonFunc.TransformCurrency(Info.Currency, Info.CashNum)
+			Info.TotalCashNum = CommonFunc.TransformCurrency(Info.Currency, Info.TotalCashNum)
+		end
 		RegData = self:OrganizeData(RegRes, "RegNum") --创建角色数
 		LoginData = self:OrganizeData(LoginRes, "LoginNum") --登陆人数
 		AveOnlineData = self:OrganizeData(OnlineRes, "AveOnline") --平均在线
@@ -205,7 +211,7 @@ function GetPayData(self, PlatformID, HostID, Date)
 	local Res = PayDayStaticsData:Get(PlatformID, {HostID = HostID, Date = Date, NoMerge = true})
 	local Results = {TotalCashNum = 0, PayUserNum = 0, FirstPayUserNum = 0}
 	if Res and Res[1] then
-		Results.TotalCashNum = Res[1].TotalCashNum
+		Results.TotalCashNum = CommonFunc.TransformCurrency(Res[1].Currency, Res[1].TotalCashNum)
 		Results.PayUserNum = Res[1].PayUserNum
 		Results.FirstPayUserNum = Res[1].FirstPayUserNum
 	end

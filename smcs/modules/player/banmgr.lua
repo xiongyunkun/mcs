@@ -16,19 +16,19 @@ function ForbiddenShow(self, PlatformID, Results)
 	Servers = CommonFunc.GetServers(Options.PlatformID)
 	OperationTypes = CommonData.BanOperationTypes
 	ForbidTimes = {
-		[60] = "1小时",
-		[180] = "3小时",
-		[300] = "5小时",
-		[86400] = "24小时",
-		[0] = "永久",
+		[60] = Translate("1小时"),
+		[180] = Translate("3小时"),
+		[300] = Translate("5小时"),
+		[86400] = Translate("24小时"),
+		[0] = Translate("永久"),
 	}
 	--展示数据
-	Titles = {"平台", "服", "账号", "角色", "执行结果",}
+	Titles = {Translate("平台"), Translate("服"), Translate("账号"), Translate("角色"), Translate("执行结果"),}
 	local PlatformStr = PlatformID and Platforms[PlatformID] or "all"
 	local SeverMap = CommonFunc.GetServers(PlatformID)
 	TableData = {}
 	for _, Result in ipairs(Results or {}) do
-		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Result.Result or "执行失败"}
+		local CTable = {PlatformStr, SeverMap[Result.HostID] or "", Result.Uid or "", Result.Name or "", Translate(Result.Result) or Translate("执行失败")}
 		table.insert(TableData, CTable)
 	end
 	DataTable = {

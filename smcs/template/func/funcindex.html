@@ -14,7 +14,7 @@
 		<li>
 			<a href="$Info.act or '#'$" class="href_menu">
 				<i class="$Info.icon or 'icon-home'$"></i>
-				<span class="menu-text">$Info.name$</span>
+				<span class="menu-text">$Translate(Info.name)$</span>
 #if Info.sub then
 				<b class="arrow icon-angle-down"></b>
 #end
@@ -26,10 +26,10 @@
 #if SubInfo.act then
 					<a href="$SubInfo.act$" target="main">
 						<i class="icon-double-angle-right"></i>
-						$SubInfo.name$
+						$Translate(SubInfo.name)$
 					</a>
 #else
-					$SubInfo.name$
+					$Translate(SubInfo.name)$
 #end
 				</li>
 #end

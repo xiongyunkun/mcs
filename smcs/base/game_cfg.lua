@@ -8,6 +8,15 @@ local ItemDataMap = {}
 for ItemID, ItemInfo in pairs(ItemCfg.Cfg) do
 	ItemDataMap[ItemID] = ItemInfo.Name
 end
+--另外还要加载对应语言的物品配置表
+for Language, Contents in pairs(CommonData.LANGUAGE_CONTENTS) do
+	local ItemCfg = require("languages." .. Language .. ".itemattribute")
+	for ItemID, ItemInfo in pairs(ItemCfg.Cfg) do
+		if ItemDataMap[ItemID] then
+			Contents[ItemDataMap[ItemID]] = ItemInfo.Name
+		end
+	end
+end
 CfgMap["ItemDataMap"] = ItemDataMap
 --任务配置表
 local TaskCfg = require("custom_conf.story")

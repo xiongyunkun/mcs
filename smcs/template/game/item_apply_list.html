@@ -6,10 +6,10 @@
 <div class="tabbable">
 	<ul class="nav nav-tabs padding-12 tab-color-blue background-blue">
 		<li class="active">
-			<a data-toggle="tab" href="#tab_1">未审核列表</a>
+			<a data-toggle="tab" href="#tab_1">$Translate("未审核列表")$</a>
 		</li>
 		<li>
-			<a data-toggle="tab" href="#tab_2">已审核列表</a>
+			<a data-toggle="tab" href="#tab_2">$Translate("已审核列表")$</a>
 		</li>
 	</ul>
 </div>
@@ -21,7 +21,7 @@
 #for _,Title in pairs(Titles) do
 					<th>$Title$</th>
 #end	
-					<th>操作</th>			
+					<th>$Translate("操作")$</th>			
 				</tr>
 			</thead>
 			<tbody>
@@ -46,9 +46,9 @@
 #for _,Title in pairs(Titles) do
 					<th>$Title$</th>
 #end				
-					<th>审核时间</th>
-					<th>审核人</th>
-					<th>审核结果</th>
+					<th>$Translate("审核时间")$</th>
+					<th>$Translate("审核人")$</th>
+					<th>$Translate("审核结果")$</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -87,17 +87,9 @@ $(document).ready(function(){
 	});
 	var availableTags = [$table.concat(ItemStrList, ",")$];
 	
-	var oldAvailableTags = [$table.concat(OldItemStrList, ",")$];
 
 	$(".hostID").chosen().change(function(){
-		var hostID = $(this).val();
-		hostID = hostID + "";
-		var hostIDs = hostID.split(",");
-		var platformID = $(".platformID").val();
-		if(hostIDs[0] != "" && isOldVersion(platformID, parseInt(hostIDs[0]))){
-			availableTags = oldAvailableTags;
-			$(".item").autocomplete({source: availableTags,minLength: 2});
-		}
+		$(".item").autocomplete({source: availableTags,minLength: 2});
 	});
 
 	
@@ -129,20 +121,20 @@ $(document).ready(function(){
 	});
 	$('.dataTable').dataTable({
 			"oLanguage":{
-				"sProcessing":   "处理中...",
-				"sLengthMenu":   "显示 _MENU_ 项结果",
-				"sZeroRecords":  "没有匹配结果",
-				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
-				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
-				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sProcessing":   "$Translate('处理中...')$",
+				"sLengthMenu":   "$Translate('显示 _MENU_ 项结果')$",
+				"sZeroRecords":  "$Translate('没有匹配结果')$",
+				"sInfo":         "$Translate('显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项')$",
+				"sInfoEmpty":    "$Translate('显示第 0 至 0 项结果，共 0 项')$",
+				"sInfoFiltered": "$Translate('(由 _MAX_ 项结果过滤)')$",
 				"sInfoPostFix":  "",
-				"sSearch":       "搜索:",
+				"sSearch":       "$Translate('搜索:')$",
 				"sUrl":          "",
 				"oPaginate": {
-				"sFirst":    "首页",
-				"sPrevious": "上一页",
-				"sNext":     "下一页",
-				"sLast":     "末页"
+				"sFirst":    "$Translate('首页')$",
+				"sPrevious": "$Translate('上一页')$",
+				"sNext":     "$Translate('下一页')$",
+				"sLast":     "$Translate('末页')$"
 				}
 			},
 		"bFilter": false,
@@ -197,7 +189,7 @@ $(document).ready(function(){
 	});
 	$(".apply_delete").click(function(e){
 		var ID = $(this).parent().parent().attr("ID");
-		if(confirm("删除是不可恢复的，你确认要删除吗?")){
+		if(confirm('$Translate("删除是不可恢复的，你确认要删除吗?")$')){
 			$.post("/item_apply_mgr/apply_delete",{ID:ID},function(result){
 				result = parseInt(result);
 				if(result==1){
@@ -211,11 +203,11 @@ $(document).ready(function(){
 
 //构造道具输入框字符串
 function generateItemStr(itemName, number){
-	var str = '<div><label style="font-weight:normal;">道具：</label>'
+	var str = '<div><label style="font-weight:normal;">$Translate("道具：")$</label>'
 			+'<input type="text" name="Item" class="item" value="' + itemName + '" placeholder="物品ID...">'
 			+'<input type="text" name="Numbers" class="number" value="' + number + '" placeholder="个数...">'
-			+'<img src="/static/image/plus.png" alt="增加道具" title="增加道具" class="add_item"/>'
-			+'<img src="/static/image/minus_red.png" alt="删除道具" title="删除道具" class="del_item"/></div>'
+			+'<img src="/static/image/plus.png" alt="$Translate("增加道具")$" title="$Translate("增加道具")$" class="add_item"/>'
+			+'<img src="/static/image/minus_red.png" alt="$Translate("删除道具")$" title="$Translate("删除道具")$" class="del_item"/></div>'
 	return str
 }
 

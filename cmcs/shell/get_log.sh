@@ -6,7 +6,7 @@ if [ $# -lt 3 ];then #参数小于3，退出
 	echo "args length erro, need at least 3 args\n $HELP"
 fi
 #跳转到对应的服目录
-LOG_DIR="/home/jm/ccgame/logic/log" 
+LOG_DIR="/home/wgame/$1/logic/log" 
 if [ -d $LOG_DIR ];then
 	#根据开始时间和结束时间判断获得要统计的文件列表 
 	cd $LOG_DIR

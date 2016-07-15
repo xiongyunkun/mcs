@@ -64,7 +64,7 @@ end
 
 --每月27号自动创建下个月的日志表，同时删除上上个月的日志表
 function AutoCreateTable(self)
-	local ServerPlatformMap = ServerData:GetStaticsServers()
+	local ServerPlatformMap = ServerData:GetStaticsServers(true)
 	local PlatformIDMap = {}
 	for _, PlatformID in pairs(ServerPlatformMap) do
 		PlatformIDMap[PlatformID] = true

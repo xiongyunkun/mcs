@@ -50,6 +50,9 @@ function FuncMap.DoRequest(Force)
 	if User and User["name"] then
 		UserName = User["name"]
 	end
+	--多语言
+	UserLanguage = GetLanguage()
+	LanguageContents = CommonData.LANGUAGE_CONTENTS[UserLanguage]
 	-- 判断是否需要记录模块日志
 	if not Force and ngx.var.module_name and ngx.var.module_name ~= "" then
 		local Args = {}
@@ -223,6 +226,21 @@ function FuncMap.SetQueryArgsSession(Args)
 	SData.QueryArgs.Url = Url
 	SaveSessionInfo(Sid, SData)
 	return Args
+end
+
+--设置语言
+function FuncMap.SetLanguage(Language)
+	SetSession("Language", Language)
+end
+
+--获得当前设置的语言
+function FuncMap.GetLanguage()
+	local Language = "cn" --默认都是简体中文
+	local TLanguage = GetSession("Language")
+	if TLanguage then
+		Language = TLanguage
+	end
+	return Language
 end
 
 function FuncMap.ReqOutUrl(Url, Params)	
@@ -439,6 +457,17 @@ function FuncMap.table.size(Table)
 	else
 		return 0
 	end
+end
+
+--翻译文字内容
+function FuncMap.Translate(Content)
+	local TransContent = Content
+	if UserLanguage ~= "cn" and LanguageContents then
+		if LanguageContents[Content] then
+			TransContent = LanguageContents[Content]
+		end
+	end
+	return TransContent
 end
 
 return FuncMap

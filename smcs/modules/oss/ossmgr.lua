@@ -26,7 +26,7 @@ function Retention(self)
 		{["Type"] = "Host",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
-		{["Type"] = "Select", ["Label"] = "统计类型", ["Name"] = "OperationType", ["Values"] = {["1"] = "登陆用户", ["2"] = "付费用户"},},
+		{["Type"] = "Select", ["Label"] = "统计类型", ["Name"] = "OperationType", ["Values"] = {["1"] = Translate("登陆用户"), ["2"] = Translate("付费用户")},},
 		{["Type"] = "Export",},
 	}
 	--构造表格
@@ -57,10 +57,11 @@ function Retention(self)
 		table.insert(TableData, DateInfo)
 		StartTime = StartTime + 86400
 	end
-	local Title = Options.OperationType == "2" and "当日首充" or "当日新增"
-	Titles = {"时间", "平台", "服", Title, "次日留存", "3日留存率",
-				"4日留存率", "5日留存率", "6日留存率", "7日留存率", "14日留存率", 
-				"30日留存率"}
+	local Title = Options.OperationType == "2" and Translate("当日首充") or Translate("当日新增")
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate(Title), Translate("次日留存"), 
+				Translate("3日留存率"),
+				Translate("4日留存率"), Translate("5日留存率"), Translate("6日留存率"), Translate("7日留存率"), Translate("14日留存率"), 
+				Translate("30日留存率")}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("用户留存.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -95,7 +96,7 @@ function OnlineTime(self)
 	Filters = {
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
-		{["Type"] = "Select", ["Label"] = "玩家类型", ["Name"] = "UserType", ["Values"] = {[""] = "所有玩家", ["2"] = "新注册玩家"},},
+		{["Type"] = "Select", ["Label"] = "玩家类型", ["Name"] = "UserType", ["Values"] = {[""] = Translate("所有玩家"), ["2"] = Translate("新注册玩家")},},
 		{["Type"] = "<br>",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
@@ -146,10 +147,11 @@ function OnlineTime(self)
 		table.insert(TableData, DateInfo)
 		StartTime = StartTime + 86400
 	end
-	Titles = {"时间", "平台", "服", "平均在线时长", 
-			"<=1分钟", "(1,5]分钟", "(5,10]分钟", "(10,30]分钟", 
-			"(30,60]分钟", "(1,2]小时", "(2,4]小时", "(4,6]小时","(6,10]小时",
-			"(10,15]小时","(15,20]小时",">20小时"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("平均在线时长"), 
+			Translate("<=1分钟"), Translate("(1,5]分钟"), Translate("(5,10]分钟"), Translate("(10,30]分钟"), 
+			Translate("(30,60]分钟"), Translate("(1,2]小时"), Translate("(2,4]小时"), Translate("(4,6]小时"),
+			Translate("(6,10]小时"),
+			Translate("(10,15]小时"),Translate("(15,20]小时"),Translate(">20小时")}
 	if Options.Submit == "导出" then 
 		local ExcelStr = CommonFunc.ExportExcel("在线时长.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -157,9 +159,9 @@ function OnlineTime(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "玩家在线时长",
-			["Title"] = "在线时长(分钟)",
-			["SeriesName"] = "在线时长：",
+			["Text"] = Translate("玩家在线时长"),
+			["Title"] = Translate("在线时长(分钟)"),
+			["SeriesName"] = Translate("在线时长："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -190,7 +192,7 @@ function FightRank(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"平台", "服", "排名", "角色名", "战斗力"}
+	Titles = {Translate("平台"), Translate("服"), Translate("排名"), Translate("角色名"), Translate("战斗力")}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
@@ -237,12 +239,12 @@ function LoginStatics(self)
 	}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
-	Titles = {"序号", "过程点", "完成等级", "总耗时"}
+	Titles = {Translate("序号"), Translate("过程点"), Translate("完成等级"), Translate("总耗时")}
 	for X = 0, 23 do
 		table.insert(Titles, X)
 	end
-	table.insert(Titles, "总计")
-	table.insert(Titles, "占比")
+	table.insert(Titles, Translate("总计"))
+	table.insert(Titles, Translate("占比"))
 	local LoginStaticsStep = CommonData.LoginStaticsStep
 	local StaticsStep = {}
 	for Name, ID in pairs(LoginStaticsStep) do
@@ -272,7 +274,7 @@ function LoginStatics(self)
 		for Index, StepName in pairs(StaticsStep) do
 			local Info = {}
 			table.insert(Info, Index > 10 and Index - 5 or Index)
-			table.insert(Info, StepName)
+			table.insert(Info, Translate(StepName))
 			local Level = ActionAnalysisCfg.Cfg[Index] and ActionAnalysisCfg.Cfg[Index].Level or 1
 			local NeedTime = ActionAnalysisCfg.Cfg[Index] and ActionAnalysisCfg.Cfg[Index].NeedTime or 1
 			table.insert(Info, Level)
@@ -304,9 +306,9 @@ function LoginStatics(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "登陆数据表",
-			["Title"] = "日登陆",
-			["SeriesName"] = "日登陆：",
+			["Text"] = Translate("登陆数据表"),
+			["Title"] = Translate("日登陆"),
+			["SeriesName"] = Translate("日登陆："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = 86400,
@@ -338,27 +340,29 @@ function LevelStatics(self)
 		{["Type"] = "Time",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"日期", "平台", "服", "等级", "用户数", "占比", "流失率", "活跃用户数",
-		"活跃用户占比", "活跃用户流失率", "付费用户数", "付费用户占比", "付费用户流失率",
-		"付费活跃用户数", "付费活跃用户占比", "付费活跃用户流失率"}
+	Titles = {Translate("日期"), Translate("平台"), Translate("服"), Translate("等级"), Translate("用户数"), 
+		Translate("占比"), Translate("流失率"), Translate("活跃用户数"),
+		Translate("活跃用户占比"), Translate("活跃用户流失率"), Translate("付费用户数"), Translate("付费用户占比"), 
+			Translate("付费用户流失率"),
+		Translate("付费活跃用户数"), Translate("付费活跃用户占比"), Translate("付费活跃用户流失率"),}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
 	local DateInfo = LevelRes[Options.Time] or {} --直接拿这一天的出来展示即可
 	local TotalNum = 0
 	TitleTips = {
-		[5] = "截至统计日期，停留在统计等级的角色数",
-		[6] = "该等级用户数/全部用户数",
-		[7] = "该等级流失用户数/全部用户数",
-		[8] = "截至统计日期，当天在线时间超过4h的角色数",
-		[9] = "该等级活跃用户数/全部用户数",
-		[10] = "该等级活跃用户流失用户数/全部用户数",
-		[11] = "截至统计日期，有付费的角色数",
-		[12] = "该等级付费用户数/全部用户数",
-		[13] = "该等级付费用户流失用户数/全部用户数",
-		[14] = "截至统计日期，当天在线时间超过4h的付费角色数",
-		[15] = "该等级付费活跃用户数/全部用户数",
-		[16] = "该等级付费活跃用户流失用户数/全部用户数"
+		[5] = Translate("截至统计日期，停留在统计等级的角色数"),
+		[6] = Translate("该等级用户数/全部用户数"),
+		[7] = Translate("该等级流失用户数/全部用户数"),
+		[8] = Translate("截至统计日期，当天在线时间超过4h的角色数"),
+		[9] = Translate("该等级活跃用户数/全部用户数"),
+		[10] = Translate("该等级活跃用户流失用户数/全部用户数"),
+		[11] = Translate("截至统计日期，有付费的角色数"),
+		[12] = Translate("该等级付费用户数/全部用户数"),
+		[13] = Translate("该等级付费用户流失用户数/全部用户数"),
+		[14] = Translate("截至统计日期，当天在线时间超过4h的付费角色数"),
+		[15] = Translate("该等级付费活跃用户数/全部用户数"),
+		[16] = Translate("该等级付费活跃用户流失用户数/全部用户数")
 	}
 	for _, LevelInfo in pairs(DateInfo) do
 		TotalNum = TotalNum + LevelInfo.TotalNum
@@ -422,9 +426,10 @@ function RegHistory(self)
 		{["Type"] = "Export",},
 	}
 	
-	Titles = {"时间", "平台", "服", "当日注册", "历史注册", "男", "女",}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("当日注册"), Translate("历史注册"), 
+		Translate("男"), Translate("女"),}
 	TitleTips = {}
-	TitleTips[5] = "当前统计时间内的注册总量"
+	TitleTips[5] = Translate("当前统计时间内的注册总量")
 	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
 	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59") 
 	TableData = {}
@@ -463,9 +468,9 @@ function RegHistory(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "历史注册表",
-			["Title"] = "日注册",
-			["SeriesName"] = "日注册：",
+			["Text"] = Translate("历史注册表"),
+			["Title"] = Translate("日注册"),
+			["SeriesName"] = Translate("日注册："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -496,7 +501,8 @@ function OnlineHistroy(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"时间", "平台", "服", "最高在线", "平均在线", "平高比",}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("最高在线"), 
+		Translate("平均在线"), Translate("平高比"),}
 	local StartTime = GetTimeStamp(tostring(Options.StartTime) .. " 00:00:00")
 	local EndTime = GetTimeStamp(tostring(Options.EndTime) .. " 23:59:59") 
 	TableData = {}
@@ -536,9 +542,9 @@ function OnlineHistroy(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "历史在线表",
-			["Title"] = "日在线",
-			["SeriesName"] = "日在线：",
+			["Text"] = Translate("历史在线表"),
+			["Title"] = Translate("日在线"),
+			["SeriesName"] = Translate("日在线："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,

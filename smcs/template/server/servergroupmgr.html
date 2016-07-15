@@ -41,8 +41,8 @@
 #	local GroupNames = nil
 #	if InGroupServers[Server.hostid] then
 #		local NameTbl = {}
-#		for _, gid in ipairs(InGroupServers[Server.hostid] or {}) do
-#			table.insert(NameTbl,GroupMap[gid].name)
+#		for _, gid in ipairs(InGroupServers[Server.hostid]) do
+#			table.insert(NameTbl,GroupMap[gid] and GroupMap[gid].name or "")
 #		end
 #		GroupNames = table.concat(NameTbl,",")
 #	end

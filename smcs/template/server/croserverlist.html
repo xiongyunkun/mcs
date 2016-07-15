@@ -47,7 +47,7 @@ $(document).ready(function() {
 #for id, CroServer in ipairs(CroServerInfo) do
 	<tr id="$CroServer.ID$">
 		<td>$CroServer.Name$</td>
-		<td>$ServiceMap[CroServer.ServiceID]$</td>
+		<td>$ServiceMap[CroServer.ServiceID] or ""$</td>
 		<td>$CroServer.PlatformNames$</td>
 		<td>$CroServer.ServerNum$</td>
 		<td>$CroServer.Memo$</td>

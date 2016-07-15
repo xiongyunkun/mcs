@@ -1,5 +1,5 @@
 ---------------------------------------------
---$Id: fileop.lua 67056 2015-05-25 12:00:31Z xiongyunkun $
+--$Id: fileop.lua 79554 2015-07-26 04:05:14Z xiongyunkun $
 ---------------------------------------------
 --[[
 --	Get the game server file
@@ -37,7 +37,7 @@ function GetGameFile(self)
     local HostID = Args.HostID
     local Results = {}
     local BasePath = GetBasePath()
-	local HostDir = BasePath .. "/../../" .. HostID .. "/"
+    local HostDir = BasePath .. "/../../" .. HostID .. "/"
     FilePaths = string.split(FilePaths, ",")
     for _, FilePath in ipairs(FilePaths) do
         local fl = io.open(HostDir..FilePath, "r")
@@ -85,6 +85,7 @@ function GetLog(self)
 	ngx.say(Serialize(Results))
 end
 
+--通过子请求读取文件
 function GetFileBySubRequest(self, Path)
 	local Res = ngx.location.capture(Path)
 	if Res.status ~= ngx.HTTP_OK then

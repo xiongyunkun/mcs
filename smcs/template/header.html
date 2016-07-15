@@ -1,5 +1,6 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=utf8">
+<script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
 <head>
 <style>
 a{text-decoration: none;}
@@ -7,15 +8,32 @@ a{text-decoration: none;}
 </head>
 <body bgcolor="#438eb9">
 	<span style="float:left;margin-left:5px;">
-		<h1 style="margin-top:0px;"><font color="#FFFFFF">游戏后台管理系统</font></h1>
+		<h1 style="margin-top:0px;"><font color="#FFFFFF">$Translate("游戏后台管理系统", UserLanguage)$</font></h1>
 	</span>
 	<span style="float:right;margin:0 20px 0 0">
-		<font color="#FFFFFF">$UserName$，欢迎你！</font>
+#if CommonData.SHOW_LANGUAGE_FLAG then
+		<select name="Language" class="language">
+#for ID,Language in pairs(CommonData.LANGUAGES) do
+		<option value="$ID$" $UserLanguage==ID and "selected" or ""$>$Language$</option>
+#end
+		</select>
+#end
+		<font color="#FFFFFF">$UserName$，$Translate("欢迎你")$！</font>
 		<a target="_top" href="/logout">
-		<img width="20" height="20" src="/static/image/exit.png">
-				<font color="#FFFFFF">退出登录</font>
-	</a>
+			<img width="20" height="20" src="/static/image/exit.png">
+			<font color="#FFFFFF">$Translate("退出登录")$</font>
+		</a>
 	</span>
-	
+<script language="JavaScript">
+ $(document).ready(function(){
+ 	$(".language").change(function(){
+ 		var language = $(this).val();
+ 		$.post("/servermgr/setlanguage",{Language:language},function(result){
+ 			//刷新整个页面
+ 			window.parent.location.reload();
+ 		});
+ 	})
+ });
+</script>
 </body>
 </html>

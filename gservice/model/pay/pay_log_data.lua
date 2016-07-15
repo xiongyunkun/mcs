@@ -19,6 +19,7 @@ module(...,package.seeall)
 --查询数据
 function Get(self, Options)
 	local Where = " where 1=1 "
+	local Date = os.date("%Y%m%d", os.time()) --按日期分表,默认是当天
 	if Options.OrderID and Options.OrderID ~= "" then
 		Where = Where .. " and OrderID = '" .. Options.OrderID .. "'"
 	end
@@ -28,7 +29,7 @@ function Get(self, Options)
 	if Options.EndTime and Options.EndTime ~= "" then
 		Where = Where .. " and Time <= '" .. Options.EndTime .. "'"
 	end
-	local Sql = "select * from "..Options.PlatformID.."_log.tblPayLog" .. Where 
+	local Sql = "select * from "..PlatformID.."_log.tblPayLog_" .. Date .. Where 
 	local Res, Err = DB:ExeSql(Sql)
 	if not Res then return {}, Err end
 	return Res
@@ -39,7 +40,8 @@ end
 --插入数据
 function Insert(self, PlatformID, Args)
 	local InsertCols = {"OrderID", "Args", "Result"}
-	local Sql = "insert into "..PlatformID.."_log.tblPayLog" .. "("..table.concat(InsertCols, ",").. ") values("
+	local Date = os.date("%Y%m%d", os.time()) --按日期分表,默认是当天
+	local Sql = "insert into "..PlatformID.."_log.tblPayLog_" .. Date .. "("..table.concat(InsertCols, ",").. ") values("
 	local Values = {}
 	for _, Col in ipairs(InsertCols) do
 		local Value = Args[Col] and "'" .. Args[Col] .. "'" or "''"

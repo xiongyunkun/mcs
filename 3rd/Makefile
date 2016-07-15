@@ -1,13 +1,13 @@
 CUR_PATH:=$(shell pwd)/$(lastword $(MAKEFILE_LIST))
 CUR_PATH:=$(shell dirname $(CUR_PATH))
-LUAJIT_LIB=/home/zork/running/3rd/lua/luajit-2.0/src
-LUAJIT_INC=/home/zork/running/3rd/lua/luajit-2.0/src
+LUAJIT_LIB=$(CUR_PATH)/LuaJIT-2.1-20150622/src
+LUAJIT_INC=$(CUR_PATH)/LuaJIT-2.1-20150622/src
 export LUAJIT_LIB
 export LUAJIT_INC
 NGX_DEVEL_KIT=$(CUR_PATH)/ngx_devel_kit
-NGX_LUA=$(CUR_PATH)/lua-nginx-module
-NGX_DRIZZLE=$(CUR_PATH)/drizzle-nginx-module
-NGX_PATH=$(CUR_PATH)/nginx-1.2.6
+NGX_LUA=$(CUR_PATH)/ngx_lua-0.9.16
+NGX_DRIZZLE=$(CUR_PATH)/drizzle-nginx-module-0.1.9
+NGX_PATH=$(CUR_PATH)/nginx-1.7.10
 LUA_RDS=$(CUR_PATH)/lua-rds-parser
 LUA_ICONV=$(CUR_PATH)/lua-iconv-7
 PCRE=$(CUR_PATH)/pcre-8.32

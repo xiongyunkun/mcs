@@ -2,25 +2,49 @@ iconv = require("iconv")
 require("libtools")
 utf2gbk = iconv.new("gbk","utf8")
 json = require("base.json")
+MYSQL = require("base.mysql")
 DB = require("base.database")
+REDIS = require("base.redis")
 
-ServerData = require("model.serverdata")
-PlatformData = require("model.platform_data")
+PlatformData = require("model.server.platform_data")
+ServerData = require("model.server.serverdata")
+CroServerData = require("model.server.cro_server_data")
 GMRuleData = require("model.gm_rule_data")
 GMOperationData = require("model.gm_operation_data")
 PlayerInfoData = require("model.user_info_data")
+StartServerInfoData = require("model.server.start_server_info_data")
+MergeServerInfoData = require("model.server.merge_server_info_data") --独代平台合服信息表
+ServerMergeData = require("model.server.server_merge_data") --合服配置表
+
 --激活码
 CDKeyActivityData = require("model.cdkey.cdkey_activity_data")
 CDKeyData = require("model.cdkey.cdkey_data")
 CDKeyExchangeData = require("model.cdkey.cdkey_exchange_data")
 CDKeyErrData = require("model.cdkey.cdkey_err_data")
-
+NewServerExchangeData = require("model.cdkey.new_server_exchange_data")
+--公告
+BroadcastData = require("model.broadcast.broadcast_cfg_data")
+--邮件
+EmailData = require("model.email.email_cfg_data")
+--用户统计数据
+HistoryOnlineData = require("model.user_statics_num.history_online_data")
+HistoryRegData = require("model.user_statics_num.history_reg_data")
+OnlineData = require("model.user_statics_num.online_data")
+RetentionData = require("model.user_statics_num.retention_data")
+FigtingRankData = require("model.user_statics_num.fighting_rank_data")
 --接口密钥
 InterfaceKeyData = require("model.interface_key.interface_key_data")
+--封号日志
+BanLogData = require("model.log.ban_log_data")
+GoldLogData = require("model.log.gold_log_data")
+MoneyLogData = require("model.log.money_log_data")
+LoginLogData = require("model.log.login_log_data")
+AddPlayerLogData = require("model.log.add_player_log_data")
 --充值
 PayLogData = require("model.pay.pay_log_data") --充值日志
 PayOrderData = require("model.pay.pay_order_data") --充值数据
 UserPayStaticsData = require("model.pay.user_pay_statics_data") --玩家充值统计数据
+PayDayStaticsData = require("model.pay.pay_day_statics_data") --服日充值统计
 
 --IP白名单
 IPWhiteListData = require("model.ip_white_list_data")
@@ -64,7 +88,6 @@ function DoRequest(Force)
 	end
 	local ProcFunc = ngx.var.processfunc
 	local Model = getfenv(2)
-	Model.CURPOSITION = "所在的位置"
 	Model[ProcFunc](Model)
 end
 
@@ -113,67 +136,58 @@ function GetBasePath()
 	return ngx.var.document_root
 end
 
--- session operation
-local LastCheckTime = os.time()
-local CheckTime = 60
-SessionData = {}
-CookieName = "_ns_f"
-local function GetCookie(Key)
-	local header = ngx.req.get_headers()
-	local CookieStr = header.Cookie
-	if CookieStr then
-		return string.match(CookieStr,CookieName.."=(%w+)")
+--初始化合服映射表
+function InitServerMergeMap()
+	local MergesrcHostMap = ngx.shared.merge_src_host_map --源服合服映射表
+	local MergeToHostMap = ngx.shared.merge_to_host_map --目标服合服映射表
+	local Servers = ServerData:GetAllServers()
+	local ToHostIDMap = {}
+	for _, Server in ipairs(Servers) do
+		MergesrcHostMap:set(Server.hostid, Server.mergeto)
+		local ToHostID = Server.mergeto ~= 0 and Server.mergeto or Server.hostid
+		ToHostIDMap[ToHostID] = ToHostIDMap[ToHostID] or {}
+		table.insert(ToHostIDMap[ToHostID], Server.hostid)
+	end
+	for ToHostID, SrcHostIDs in pairs(ToHostIDMap) do
+		MergeToHostMap:set(ToHostID, table.concat( SrcHostIDs, ","))
 	end
 end
 
-local function NewSession(Life)
-	local Sid = tostring(math.random(100,999))..os.time()
-	SessionData[Sid] = {LastTime=os.time(),Life=Life or 30*60, Data={}}
-	ngx.header['Set-Cookie'] = {CookieName..'='..Sid..'; path=/'}	
-	return SessionData[Sid]
+--查询获得合服之后的目标服，如果没有合服则直接返回源服HostID
+function GetToHostID(SrcHostID)
+	SrcHostID = tonumber(SrcHostID)
+	local MergesrcHostMap = ngx.shared.merge_src_host_map --源服合服映射表
+	local SrcHostIDs = MergesrcHostMap:get_keys(0)
+	if #SrcHostIDs == 0 then
+		--缓存里面为空，初始化缓存
+		InitServerMergeMap()
+	end
+	local ToHostID = MergesrcHostMap:get(SrcHostID)
+	if not ToHostID or ToHostID == 0 then
+		ToHostID = SrcHostID --没有进行过合服，目标服就是源服
+	end
+	return ToHostID
 end
 
-function GetSession(Key)
-	CheckCleanSession()
-	local Sid = GetCookie(CookieName)
-	if not Sid then return end
-	local SData = SessionData[Sid]
-	if not SData then return end
-	SData.LastTime = os.time()
-	return SData.Data[Key]
-end
-
-function SetSession(Key,Value)
-	CheckCleanSession()
-	local Sid = GetCookie(CookieName)
-	local SData
-	if Sid then
-		SData = SessionData[Sid]
+--返回合服目标服为ToHostID的服列表
+function GetSrcHostIDs(ToHostID)
+	ToHostID = tonumber(ToHostID)
+	local MergeToHostMap = ngx.shared.merge_to_host_map --目标服合服映射表
+	local ToHostIDs = MergeToHostMap:get_keys(0)
+	if #ToHostIDs == 0 then
+		--缓存里面为空，初始化缓存
+		InitServerMergeMap()
 	end
-	if not SData then
-		SData = NewSession()	
+	local SrcHostIDs = MergeToHostMap:get(ToHostID)
+	if not SrcHostIDs then
+		return {ToHostID} --如果为空直接返回目标服
+	end 
+	SrcHostIDs = string.split(SrcHostIDs, ",")
+	local NewSrcHostIDs = {}
+	for _, SrcHostID in ipairs(SrcHostIDs) do
+		table.insert(NewSrcHostIDs, tonumber(SrcHostID))
 	end
-	SData.LastTime = os.time()
-	SData.Data[Key] = Value
-end
-
-function DelSession()
-	local Sid = GetCookie(CookieName)
-	if Sid then
-		SessionData[Sid] = nil
-	end
-end
-
-function CheckCleanSession()
-	local Now = os.time()
-	if Now - LastCheckTime >= CheckTime then
-		LastCheckTime = Now
-		for Sid, Session in pairs(SessionData) do
-			if Now - Session.LastTime >= Session.Life then
-				SessionData[Sid] = nil	
-			end
-		end
-	end
+	return NewSrcHostIDs
 end
 
 function ReqOutUrl(Url, Params)
@@ -193,7 +207,6 @@ function ReqOutUrl(Url, Params)
 end
 
 -- access the cmcs interface and return the context
-local CmcsPort = 7633
 function ReqCmcsByServerId(SvrId, Inter, Params)
 	local Servers = ServerData:GetAllServers()
 	local TargetSvr
@@ -204,9 +217,10 @@ function ReqCmcsByServerId(SvrId, Inter, Params)
 		end
 	end
 	if not TargetSvr then
-		return nil, "no cmcs found "
+		return "no cmcs found "
 	end
-	local TargetUrl = TargetSvr.address .. ":"..CmcsPort.."/"..Inter 
+	local IP = TargetSvr.address .. ":7633"
+	local TargetUrl = IP.."/"..Inter 
 	return ReqOutUrl(TargetUrl, Params)
 end
 
@@ -346,6 +360,55 @@ function table.size(Table)
 		return 0
 	end
 end
+
+--独代平台ID映射表
+DD_PlatformIDMap = {
+	dw = "YY", --多玩平台
+}
+
+--初始化平台IP的dict
+function InitHostIPMap()
+	local HostIPMap = ngx.shared.host_ip_map --平台IP映射表
+	local Platforms = PlatformData:GetPlatform()
+	for _, Info in ipairs(Platforms) do
+		if Info.IP and Info.IP ~= "" then
+			HostIPMap:set(Info.PlatformID, Info.IP)
+		end
+	end
+end
+
+--根据平台ID获得对应的IP地址
+function GetHostIP(PlatformID)
+	local HostIPMap = ngx.shared.host_ip_map --平台IP映射表
+	local IPs = HostIPMap:get_keys(0)
+	if #IPs == 0 then
+		InitHostIPMap()
+	end
+	local IP = HostIPMap:get(PlatformID)
+	return IP
+end
+
+local RedisIP = "127.0.0.1"
+local RedisPort = 6379
+--rpush到redis中
+function RPushRedis(Key, Value)
+	local Redis = REDIS:new()
+    Redis:set_timeout(240000) -- 4 min
+    local ok, err = Redis:connect(RedisIP, RedisPort)
+    if not ok then
+        ngx.say("failed to connect: ", err)
+        return
+    end
+    --[[local res, err = Redis:auth("FfsOI89KL")
+    if not res then
+        ngx.say("failed to authenticate: ", err)
+        return
+    end]]
+    Redis:rpush(Key, Value)
+    Redis:set_keepalive(10000, 100) --放入连接池
+    return true
+end
+
 
 
 

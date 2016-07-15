@@ -9,14 +9,14 @@
 local SendAllItemID = 17
 local MessageID = 1113 --对应到消息配置表中消息ID
 local ReplaceArray = {[";"]="^^" ,[","] = "@@"} --标题和内容中需要替换的字符串
-local EmailTitle = "GM奖励邮件"
-local EmailContent = "感谢您的支持，本邮件为GM发送的奖励邮件！"
+local EmailTitle = Translate("GM奖励邮件")
+local EmailContent = Translate("感谢您的支持，本邮件为GM发送的奖励邮件！")
 local StatusMap = {
-	[1] = "未审核",
-	[2] = "已审核",
-	[3] = "审核未通过",
-	[4] = "道具已发送",
-	[5] = "不发送道具",
+	[1] = Translate("未审核"),
+	[2] = Translate("已审核"),
+	[3] = Translate("审核未通过"),
+	[4] = Translate("道具已发送"),
+	[5] = Translate("不发送道具"),
 }
 
 function ApplyList(self, ErrMsg)
@@ -41,7 +41,8 @@ function ApplyList(self, ErrMsg)
 		{["Type"] = "EndTime",},
 	}
 	--展示数据
-	Titles = {"申请时间", "平台", "服", "角色列表", "道具列表", "申请原因"}
+	Titles = {Translate("申请时间"), Translate("平台"), Translate("服"), Translate("角色列表"), 
+		Translate("道具列表"), Translate("申请原因")}
 	local User = UserData:GetUserById(GetSession("UserId"))
 	local UserAccount = User and User["account"]
 	if not UserAccount then 
@@ -62,20 +63,13 @@ function ApplyList(self, ErrMsg)
 	--物品列表
 	ItemStrList = {}
 	for ItemID, ItemName in pairs(ItemDataMap or {}) do
+		ItemName = Translate(ItemName)
 		table.insert(ItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
 	end
 	--钻石、绑钻、金钱都加入到物品列表里面来
 	for BonusName, _ in pairs(CommonData.mBONUS_MAP) do
+		BonusName = Translate(BonusName)
 		table.insert(ItemStrList, "'" .. BonusName .. "'")
-	end
-	--1.0版本的物品列表
-	OldItemStrList = {}
-	for ItemID, ItemName in pairs(OldItemDataMap or {}) do
-		table.insert(OldItemStrList, "'" .. ItemName .. "_" .. ItemID .. "'")
-	end
-	--钻石、绑钻、金钱都加入到物品列表里面来
-	for BonusName, _ in pairs(CommonData.mBONUS_MAP) do
-		table.insert(OldItemStrList, "'" .. BonusName .. "'")
 	end
 
 	for _, ApplyInfo in ipairs(ApplyList or {}) do
@@ -143,10 +137,12 @@ function ApplyEdit(self)
 		local Items = {}
 		if type(Item) == "table" then
 			for ID, ItemName in ipairs(Item) do
+				ItemName = self:UnTranslate(ItemName) --转换为原文
 				local Number = tonumber(Numbers[ID]) or 1
 				Items[ItemName] = Number
 			end
 		else
+			Item = self:UnTranslate(Item)
 			Items[Item] = tonumber(Numbers) or 1
 		end
 		Args.Items = Serialize(Items)
@@ -445,6 +441,7 @@ function GetRewards4Show(self, ApplyInfo)
 	if ApplyInfo.Items ~= "" then
 		local Items = UnSerialize(ApplyInfo.Items)
 		for ItemName, Amount in pairs(Items) do
+			ItemName = Translate(ItemName)
 			Rewards[ItemName] = Amount
 		end
 	end
@@ -452,6 +449,23 @@ function GetRewards4Show(self, ApplyInfo)
 	RewardStr = string.gsub(RewardStr, ",", "<br>")
 	RewardStr = string.sub(RewardStr, 2, string.len(RewardStr) - 1)
 	return RewardStr
+end
+
+--将译文转换为原文
+function UnTranslate(self, ItemName)
+	local Result = ItemName
+	for BonusName, _ in pairs(CommonData.mBONUS_MAP) do
+		if Translate(BonusName) == ItemName then
+			Result = BonusName
+			return Result
+		end
+	end
+	local ItemNames = string.split(ItemName, "_")
+	if #ItemNames == 2 then
+		local ItemID = ItemNames[2]
+		Result = ItemDataMap[tonumber(ItemID)] and (ItemDataMap[tonumber(ItemID)] .. "_" ..ItemID) or ItemName
+	end
+	return Result
 end
 
 DoRequest()

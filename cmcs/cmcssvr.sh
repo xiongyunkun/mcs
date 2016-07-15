@@ -20,11 +20,13 @@ NGX_CMD=$IPATH/../nginx_bin/nginx
 if [ $1 == "start" ]; then
 	$NGX_CMD -c $IPATH/conf/nginx.conf -p $IPATH
 	nohup $IPATH/shell/cron_send_pay_status.sh start >/dev/null 2>&1 &
+	nohup $IPATH/shell/cron_send_online_num.sh start >/dev/null 2>&1 &
 fi
 
 if [ $1 == "stop" ]; then
 	$NGX_CMD -s stop -c $IPATH/conf/nginx.conf -p $IPATH
 	$IPATH/shell/cron_send_pay_status.sh stop
+	$IPATH/shell/cron_send_online_num.sh stop
 fi
 
 if [ $1 == "reload" ]; then

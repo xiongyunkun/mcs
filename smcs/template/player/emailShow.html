@@ -1,22 +1,22 @@
 <html>
 #include("include/inc_header_datatable.html")
 <form class="search-box form-inline" method="post" action="/playermgr/dosendemail">
-	<label>平台名称：</label>	
-	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
-		<option value="">全部</option>
+	<label>$Translate("平台名称")$：</label>	
+	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="$Translate('选择平台')$">
+		<option value="">$Translate("全部")$</option>
 #for ID,Platform in pairs(Platforms) do
 		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
 #end
 	</select>
-	<label>选择大区：</label>	
+	<label>$Translate("选择大区：")$</label>	
 	<select name="ServerType">
 #for ID,Value in pairs(ServerTypes) do
 		<option value="$ID$">$Value$</option>
 #end
 	</select>
-	<label>服名称：</label>	
-	<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="选择服">
-		<option value="">全部</option>
+	<label>$Translate("服名称")$：</label>	
+	<select name="HostIDs" class="chosen-select hostID" tabindex="2" multiple data-placeholder="$Translate('选择服')$">
+		<option value="">$Translate("全部")$</option>
 #for ID,ServerName in pairs(Servers) do
 		<option value="$ID$" 
 			$Options.HostID and ((Options.HostID==tostring(ID)) or (type(Options.HostID) == "table" and table.member_key(Options.HostID, tostring(ID)))) and "selected" or ""$>
@@ -25,28 +25,28 @@
 #end
 	</select>
 	<br>
-	<label>操作方式：</label>	
-	<select name="OperationType" class="chosen-select OperationType" tabindex="2" data-placeholder="选择操作方式">
+	<label>$Translate("操作方式：")$</label>	
+	<select name="OperationType" class="chosen-select OperationType" tabindex="2" data-placeholder="$Translate('选择操作方式')$">
 #for ID,Type in pairs(OperationTypes) do
 		<option value="$ID$">$Type$</option>
 #end
 	</select>
 	<br>
 	<span id="multisend" style="display:none;">
-		<label>最低等级：</label>
+		<label>$Translate("最低等级：")$</label>
 		<input type="text" name="MinLevel" value="">	
-		<label>创角时间：</label>
+		<label>$Translate("创角时间：")$</label>
 		<input type="text" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'yyyy-MM-dd', maxDate:'2050-12'})" name="CreateTime">
 	</span>
 	<span id="onlysend">
-		<span style="margin-left:10px;">玩家角色列表，用 分号(;) 来分隔多个角色名 </span>
+		<span style="margin-left:10px;">$Translate("玩家角色列表，用 分号(;) 来分隔多个角色名")$</span>
 		<br>	
 		<textarea class="span5" rows="3" cols="60" name="RoleName" style="margin-left:10px;"></textarea>
 	</span>
 <br>
-<label>邮件标题：</label><input type="text" name="Title" value="">
+<label>$Translate("邮件标题")$：</label><input type="text" name="Title" value="">
 <br>
-<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;">谢谢您对游戏的支持，本邮件为GM发送的邮件！</textarea>
+<textarea class="span5" rows="3" cols="60" name="Content" style="margin-left:10px;">$Translate("谢谢您对游戏的支持，本邮件为GM发送的邮件！")$</textarea>
 <br>	
 <div style="margin:10px 0 0 300px;">
 	<input type="submit" class="submit_btn" value="提交"> 

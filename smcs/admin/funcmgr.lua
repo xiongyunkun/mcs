@@ -1,5 +1,5 @@
 ---------------------------------------
---$Id: funcmgr.lua 63960 2015-05-09 07:07:56Z xiongyunkun $
+--$Id: funcmgr.lua 121879 2016-06-29 02:38:19Z xiongyunkun $
 ---------------------------------------
 --[[
 --List the function index for user who can use
@@ -46,7 +46,7 @@ function ReqFuncList(self)
 	local TempModules = {}
 	local UserId = GetSession("UserId")
 	local Index = 1
-	local ModulePermissions = GetSession("ModulePermissions") 
+	local ModulePermissions = GetSession("ModulePermissions")
 	for _, Module in pairs(Modules) do
 		if Module.isshow == "true" and ModulePermissions[Module.name] then
 			local name = Module.name

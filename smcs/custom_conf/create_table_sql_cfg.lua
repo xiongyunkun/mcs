@@ -38,7 +38,7 @@ return
   `HostID` int(11) NOT NULL DEFAULT '0' COMMENT '服ID',
   `Vfd` bigint(20) NOT NULL DEFAULT '0' COMMENT '玩家进程ID',
   `Uid` bigint(20) NOT NULL DEFAULT '0' COMMENT '玩家账号ID',
-  `Step` tinyint(4) NOT NULL DEFAULT '1' COMMENT '执行步骤',
+  `Step` int(11) NOT NULL DEFAULT '1' COMMENT '执行步骤',
   `Time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '时间',
   `Flag` varchar(8) NOT NULL DEFAULT 'true' COMMENT '标志位',
   `Urs` varchar(32) NOT NULL DEFAULT '' COMMENT '平台账号',
@@ -394,4 +394,19 @@ return
   KEY `index1` (`Time`),
   KEY `index2` (`HostID`,`Time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='方舟之战日志表']],
+  ["tblLottoLog"] = [[(
+  `ID` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `HostID` int(11) NOT NULL DEFAULT '0' COMMENT '服ID',
+  `Uid` bigint(20) NOT NULL DEFAULT '0' COMMENT '玩家账号ID',
+  `Urs` varchar(64) NOT NULL DEFAULT '' COMMENT '平台账号',
+  `Name` varchar(64) NOT NULL DEFAULT '' COMMENT '玩家角色名',
+  `Rate` decimal(9,2) NOT NULL DEFAULT '0.00' COMMENT '兑换倍数',
+  `PayGold` int(11) NOT NULL DEFAULT '0' COMMENT '充值钻石',
+  `ExchangeGold` int(11) NOT NULL DEFAULT '0' COMMENT '兑换钻石',
+  `LottoTime` timestamp NOT NULL DEFAULT '1971-01-01 01:00:01' COMMENT '抽奖时间',
+  `Time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+  PRIMARY KEY (`ID`),
+  KEY `index1` (`Time`),
+  KEY `index2` (`HostID`,`Time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='乐透转盘兑换表']],
 }

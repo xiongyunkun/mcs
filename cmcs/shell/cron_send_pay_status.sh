@@ -7,6 +7,7 @@ if [ $1 == "start" ]; then #启动定时器
 		sleep 5 #等待5秒
 		continue
 	done
+
 fi
 if [ $1 == "stop" ]; then 
 	kill -9 `ps -ef|grep -v "grep"|grep "cron_send_pay_status.sh start"|awk '{print $2}'`

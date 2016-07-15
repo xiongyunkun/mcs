@@ -60,6 +60,7 @@ function CronStatics(self, PlatformID, HostID)
 	local YesterdayInfo = PayDayStaticsData:Get(PlatformID, {HostID = HostID, Date = Yesterday})
 	if YesterdayInfo and YesterdayInfo[1] then
 		--叠加昨天的数据
+		DayPayInfo.Currency = YesterdayInfo[1].Currency --沿用昨天的汇率
 		DayPayInfo.TotalCashNum = DayPayInfo.TotalCashNum + YesterdayInfo[1].TotalCashNum
 		DayPayInfo.TotalPayGold = DayPayInfo.TotalPayGold + YesterdayInfo[1].TotalPayGold
 		DayPayInfo.TotalGoldProduce = DayPayInfo.TotalGoldProduce + YesterdayInfo[1].TotalGoldProduce

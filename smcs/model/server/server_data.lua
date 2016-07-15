@@ -312,18 +312,25 @@ function GetServer(self,Options)
 end
 
 -- 返回服与平台的对应的关系
-function GetServerPlatformMap(self)
+function GetServerPlatformMap(self, IsLocal)
 	local Servers = self:GetAllServers()
 	local ServerMap = {}
 	for _, Server in ipairs(Servers) do
-		ServerMap[Server.hostid] = Server.platformid
+		if IsLocal then
+			local HostIP = CommonFunc.GetHostIP(Server.platformid)
+			if HostIP == "127.0.0.1" then
+				ServerMap[Server.hostid] = Server.platformid
+			end
+		else
+			ServerMap[Server.hostid] = Server.platformid
+		end
 	end
 	return ServerMap
 end
 
 --获取统计标签的服
-function GetStaticsServers(self, PlatformID)
-	local ServerPlatformMap = self:GetServerPlatformMap()
+function GetStaticsServers(self, IsLocal)
+	local ServerPlatformMap = self:GetServerPlatformMap(IsLocal)
 	--获得统计标签的服
 	local Sql = "select a.serverid as HostID from smcs.srvgroupinfo a, smcs.servergroup b where a.groupid = b.id and b.name = '统计专区'"
 	local Res, Err = DB:ExeSql(Sql)

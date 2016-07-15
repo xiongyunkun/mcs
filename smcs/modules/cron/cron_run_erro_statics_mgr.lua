@@ -11,7 +11,7 @@ local RequestType = "getlog"
 local StaticsIndex = "RunErroStatics"
 local ErroLogResultPath = "game_logs/game_erro_result.log" --外网服务器日志存放路径
 local ErroLogPath = "game_logs/game_erro.log" --98服务器拖回来的日志存放路径
-local RTXReciever = "0083,0012,0013,0030,0088,0099" --如果有多个请用逗号隔开
+local RTXReciever = "0083,0012,0013,0030,0088,0099,0095,0042,0053,0064" --如果有多个请用逗号隔开
 local TimeInterval = 15 --15分钟执行一次
 
 --获得上一次的统计时间

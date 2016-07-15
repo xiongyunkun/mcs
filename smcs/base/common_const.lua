@@ -87,11 +87,13 @@ BONUS_ID2NAME = {"物品","金币","钻石","经验","魔魂","绑钻","星钻",
 --禁言封号操作列表
 BanOperationTypes = {"禁言", "解除禁言", "封号", "解除封号", "禁言封禁IP"}
 RTX_URL = "192.168.1.99:8012/sendNotify.cgi?" --RTX地址
-ERRO_LOG_STATICS_URL = "ht2.zszs.game.yy.com/api/get_run_erro"
+ERRO_LOG_STATICS_URL = "ht-zszs.gogpl.oasgames.com/api/get_run_erro"
 --ERRO_LOG_STATICS_URL = "192.168.1.98:8081/api/get_run_erro"
 --活动名称列表
-ActivityList = {"旅行商人活动","英雄试炼_运营火","英雄试炼_运营水",
-	"英雄试炼_运营木","金玉满堂", "财运亨通", "一掷千金", "积善成福"} 
+ActivityList = {nil,"旅行商人活动","英雄试炼_运营火","英雄试炼_运营水",
+    "英雄试炼_运营木",nil, "财运亨通", "一掷千金", "积善成福", "幸运转盘_全服",
+    "盗梦空间", "芝麻开门_开服", "坐骑羁绊", "星空璀璨", "附魔大师", "宝石魅力", "圣光辉印",
+    "虚空鉴宝", "金玉满堂_新服", "英雄试炼_星级", "乐透转盘"}
 
 --系统玩法
 SYS_INSTANCES = {
@@ -119,4 +121,19 @@ MAIL_LANGUAGES = {
 		["Content"] = "Agradecemos por su apoyo，este correo fue enviado por GM！",
 	},
 }
+
+--多语言标签
+LANGUAGES = {
+	["cn"] = "简体中文",
+	["kor"] = "한국어",
+}
+
+--多语言内容
+LANGUAGE_CONTENTS = {
+	["kor"] = require("languages.kor.language"),
+}
+
+--多语言标签，默认是不展示的
+SHOW_LANGUAGE_FLAG = false
+
 

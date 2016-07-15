@@ -78,5 +78,14 @@ function AbortKey(self, Args)
 	DB:ExeSql(Sql)
 end
 
+--获得某个活动的激活码列表
+function GetActivityKeyList(self, PlatformID, ActivityName)
+	local Sql = "select a.* from smcs.tblCDKey a, smcs.tblCDKeyActivity b where a.ActivityID = b.ID and b.Name='" 
+		.. ActivityName .. "' and b.PlatformID = '" .. PlatformID .. "'"
+	local Res, Err = DB:ExeSql(Sql)
+	if not Res then return nil, Err end
+	return Res
+end
+
 
 

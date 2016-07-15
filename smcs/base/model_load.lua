@@ -90,6 +90,7 @@ return {
 	MountLevelLogData = require("model.statics.log.mount_level_log_data"),
 	PetSoulLogData = require("model.statics.log.pet_soul_log_data"),
 	EndlessBattleLogData = require("model.statics.log.endless_battle_log_data"),
+	LottoLogData = require("model.statics.log.lotto_log_data"),
 
 	--game
 	BroadcastData = require("model.game.broadcast_cfg_data"),

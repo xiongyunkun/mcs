@@ -39,6 +39,9 @@ function Get(self, Options)
 	if Options.Urs and Options.Urs ~= "" then
 		Where = Where .. " and Urs = '" .. Options.Urs .. "'"
 	end
+	if Options.UrsList and Options.UrsList ~= "" then
+		Where = Where .. " and Urs in ('" .. Options.UrsList .. "')"
+	end
 	if Options.Name and Options.Name ~= "" then
 		Where = Where .. " and Name = '" .. Options.Name .. "'"
 	end
@@ -52,7 +55,8 @@ function Get(self, Options)
 		Where = Where .. " and Level >= '" .. Options.MinLevel .. "'"
 	end
 	local Sql = "select * from "..PlatformID.."_statics.tblUserInfo " .. Where 
-	local Res, Err = DB:ExeSql(Sql)
+	local HostIP = GetHostIP(PlatformID)
+	local Res, Err = DB:ExeSql(Sql, HostIP)
 	if not Res then return {}, Err end
 	return Res
 end

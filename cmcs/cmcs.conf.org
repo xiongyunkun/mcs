@@ -1,8 +1,4 @@
 root $workpath$/;
-upstream cmcs {
-	drizzle_server 127.0.0.1:3306 dbname=toplist
-		password=smcsdb user=sysmcs charset=utf8 protocol=mysql;
-}
 lua_package_path "$workpath$/?.lua;;";
 lua_package_cpath "$workpath$/lib/?.so;;";
 
@@ -77,14 +73,10 @@ location /proxy {
 location /log_result {
 }
 
-location /getmysql {
+location /do_cron_get_online_num {
 	default_type "text/plain";
-	set $processfunc "GetMysql";
-	content_by_lua_file modules/mysqlop.lua;
-}
-location /mysql {
-	drizzle_query $request_body;
-	drizzle_pass cmcs;
+	set $processfunc "StaticsOnlineNum";
+	content_by_lua_file modules/execute.lua;
 }
 
 }

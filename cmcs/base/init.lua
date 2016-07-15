@@ -1,7 +1,8 @@
 iconv = require("iconv")
-DB = require("base.database")
 utf2gbk = iconv.new("gbk","utf8")
 require("lposix")
+REDIS = require("base.redis")
+json = require("base.json")
 
 function GetPostArgs()
 	ngx.req.read_body()
@@ -158,4 +159,16 @@ function ReqOutUrl(Url, Params)
 end
 
 CronGetPayResultFlag = false --定时轮询获取充值结果标志位
+GSERVICE_URL = "api.zszs.game.yy.com" --gservice地址
+
+function InitRedis()
+    local Redis = REDIS:new()
+    Redis:set_timeout(240000) -- 4 min
+    local ok, err = Redis:connect("127.0.0.1", 6379)
+    if not ok then
+        ngx.say("failed to connect: ", err)
+        return
+    end
+    return Redis
+end
 

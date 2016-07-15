@@ -13,7 +13,7 @@ function PlayerInfo(self)
 	--获得服务器列表
 	Servers = CommonFunc.GetServers(Options.PlatformID)
 	ServerTypes = CommonFunc.GetMulServerTypes()
-	Radios = {"根据游戏帐号", "根据游戏角色名", "根据平台帐号名",}
+	Radios = {Translate("根据游戏帐号"), Translate("根据游戏角色名"), Translate("根据平台帐号名"),}
 	--filter页面模板显示的参数
 	Filters = {
 		{["Type"] = "Platform",},
@@ -23,7 +23,7 @@ function PlayerInfo(self)
 		{["Type"] = "<br>",},
 		{["Type"] = "radio",["Values"] = Radios, ["Name"] = "AccountType",},
 		{["Type"] = "<br>",},
-		{["Type"] = "text", ["Name"] = "Account", ["Placeholder"] = "此处输入角色名或帐号...",},
+		{["Type"] = "text", ["Name"] = "Account", ["Placeholder"] = Translate("此处输入角色名或帐号..."),},
 	}
 	FilterStyles = {
         ["hostID"] = {["width"] = "600px",}
@@ -32,10 +32,10 @@ function PlayerInfo(self)
 	local Sexes = {"男","女"}
 	--获得提交过来的值
 	--展示数据
-	Titles = {"平台", "服", "游戏账号", "平台账号", 
-			"角色", "性别", "等级", "VIP等级",
-			"钻石", "金币", "封号","禁言",
-			"最后登录","总在线时长"}
+	Titles = {Translate("平台"), Translate("服"), Translate("游戏账号"), Translate("平台账号"), 
+			Translate("角色"), Translate("性别"), Translate("等级"), Translate("VIP等级"),
+			Translate("钻石"), Translate("金币"), Translate("封号"),Translate("禁言"),
+			Translate("最后登录"),Translate("总在线时长")}
 	local UserData = self:GetUserInfo(Options)
 	--封装成表格展示的格式
 	TableData = {}
@@ -45,15 +45,15 @@ function PlayerInfo(self)
 		local LoginTime = os.date("%Y-%m-%d %H:%M:%S", tonumber(Data.LoginTime))
 		local Hours, Minutes = self:GetTotalOnlineTime(Data.TotalGameTime)
 		local BanChat, BanLogin = self:CheckIfBan(Options.PlatformID, tonumber(Data.Uid))
-		local CTable = {PlatformStr, Servers[Data.HostID] or "", Data.Uid, Data.URS, Data.Name,Sexes[Data.Sex],
-		Data.Level, VipLevel, Data.Gold, Data.Money, BanLogin and BanWord or "否", BanChat and BanWord or "否", 
-		LoginTime, Hours .. "小时" .. Minutes .. "分"}
+		local CTable = {Translate(PlatformStr), Translate(Servers[Data.HostID] or ""), Data.Uid, Data.URS, Data.Name,Translate(Sexes[Data.Sex]),
+		Data.Level, VipLevel, Data.Gold, Data.Money, Translate(BanLogin and BanWord or "否"), Translate(BanChat and BanWord or "否"), 
+		LoginTime, Hours .. Translate("小时") .. Minutes .. Translate("分")}
 		table.insert(TableData, CTable)
 	end
 	DataTable = {
 		["ID"] = "logTable",
 		["NoDivPage"] = true,
-		["NoResult"] = "没有该角色或者账号",
+		["NoResult"] = Translate("没有该角色或者账号"),
 	}
 	Viewer:View("template/player/playerInfo.html")
 end
@@ -71,7 +71,8 @@ function GetUserInfo(self, Options)
 		local UserOptions = {
 			PlatformID = Options.PlatformID,
 			HostIDs = table.concat(HostList, "','"),
-			[AccountType] = Options.Account
+			[AccountType] = Options.Account,
+			RawQuery = true,
 		}
 		local Res = UserInfoData:Get(UserOptions)
 		if #Res ~= 0 then

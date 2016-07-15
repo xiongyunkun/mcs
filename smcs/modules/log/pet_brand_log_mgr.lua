@@ -32,7 +32,7 @@ function LogShow(self)
 	TableData = {}
 	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID and Options.HostID ~= "" then
 		local PetBrandLogList = PetBrandLogData:Get(Options.PlatformID, Options)
-		if #PetBrandLogList >= 1000 then
+		if #PetBrandLogList >= 5000 then
 			ExtMsg = "数据量太大，请缩小查询范围后查询"
 			DataTable = {
 				["ID"] = "logTable",

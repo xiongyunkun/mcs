@@ -107,7 +107,7 @@ function OnlineStatics(self)
 	Options = GetQueryArgs()
 	local NowTime = os.time()
 	--如果单独选择了平台还要计算该平台的时差
-	if Options.PlatformID and Options.PlatformID ~= "" then
+	if Options.PlatformID and Options.PlatformID ~= "" and Options.HostID ~= "2007" then
 		local PlatformInfo = PlatformData:GetPlatform(Options.PlatformID)
 		if PlatformInfo and PlatformInfo[1] then
 			local TimeZone = PlatformInfo[1].TimeZone or 0
@@ -147,7 +147,7 @@ function OnlineStatics(self)
 		table.insert(DateData, Data)
 		StartTime = StartTime + 300
 	end
-	Titles = {"时间", "平台", "服", "在线人数"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("在线人数")}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时在线.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -155,9 +155,9 @@ function OnlineStatics(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "实时在线人数",
-			["Title"] = "在线人数",
-			["SeriesName"] = "实时在线人数：",
+			["Text"] = Translate("实时在线人数"),
+			["Title"] = Translate("在线人数"),
+			["SeriesName"] = Translate("实时在线人数："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -217,7 +217,7 @@ function RegStatics(self)
 		TotalRegNum,
 	}
 	table.insert(TableData, 1, TotalInfo)
-	Titles = {"时间", "平台", "服", "注册人数"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("注册人数")}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时注册.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -225,9 +225,9 @@ function RegStatics(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "实时注册人数",
-			["Title"] = "注册人数",
-			["SeriesName"] = "实时注册人数：",
+			["Text"] = Translate("实时注册人数"),
+			["Title"] = Translate("注册人数"),
+			["SeriesName"] = Translate("实时注册人数："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -287,7 +287,7 @@ function PayStatics(self)
 		TotalPayNum,
 	}
 	table.insert(TableData, 1, TotalInfo)
-	Titles = {"时间", "平台", "服", "充值金额"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("充值金额")}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("实时充值.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -295,9 +295,9 @@ function PayStatics(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "实时充值金额",
-			["Title"] = "充值金额",
-			["SeriesName"] = "实时充值金额：",
+			["Text"] = Translate("实时充值金额"),
+			["Title"] = Translate("充值金额"),
+			["SeriesName"] = Translate("实时充值金额："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -320,6 +320,14 @@ function GetTotalRegNumByPlatform(self,Options)
 		local Platforms = CommonFunc.GetPlatformList()
 		for PlatformID, _ in pairs(Platforms) do
 			NewOptions.PlatformID = PlatformID
+			--要考虑时区
+			local PlatformInfo = PlatformData:GetPlatform(PlatformID)
+			if PlatformInfo and PlatformInfo[1] then
+				local TimeZone = PlatformInfo[1].TimeZone
+				if TimeZone ~= 0 then
+					NewOptions.Date = os.date("%Y-%m-%d", GetTimeStamp(NewOptions.Date .. " 00:00:00") + TimeZone * 3600)
+				end
+			end
 			local Num = 0
 			local RegRes = HistoryRegData:GetStatics(NewOptions)
 			for _, Info in pairs(RegRes) do
@@ -330,6 +338,14 @@ function GetTotalRegNumByPlatform(self,Options)
 		end
 	else
 		--选择了平台，只统计该平台的
+		--要考虑时区
+		local PlatformInfo = PlatformData:GetPlatform(NewOptions.PlatformID)
+		if PlatformInfo and PlatformInfo[1] then
+			local TimeZone = PlatformInfo[1].TimeZone
+			if TimeZone ~= 0 then
+				NewOptions.Date = os.date("%Y-%m-%d", GetTimeStamp(NewOptions.Date .. " 00:00:00") + TimeZone * 3600)
+			end
+		end
 		local Num = 0
 		local RegRes = HistoryRegData:GetStatics(NewOptions)
 		for _, Info in pairs(RegRes) do
@@ -366,6 +382,14 @@ function GetTotalCashNumByPlatform(self, Options)
 		local Platforms = CommonFunc.GetPlatformList()
 		for PlatformID, _ in pairs(Platforms) do
 			NewOptions.PlatformID = PlatformID
+			--要考虑时区
+			local PlatformInfo = PlatformData:GetPlatform(PlatformID)
+			if PlatformInfo and PlatformInfo[1] then
+				local TimeZone = PlatformInfo[1].TimeZone
+				if TimeZone ~= 0 then
+					NewOptions.Date = os.date("%Y-%m-%d", GetTimeStamp(NewOptions.Date .. " 00:00:00") + TimeZone * 3600)
+				end
+			end
 			local Num = 0
 			local PayRes = PayDayStaticsData:GetStatics(NewOptions)
 			for _, Info in pairs(PayRes) do
@@ -376,6 +400,14 @@ function GetTotalCashNumByPlatform(self, Options)
 		end
 	else
 		--选择了平台，只统计该平台的
+		--要考虑时区
+		local PlatformInfo = PlatformData:GetPlatform(NewOptions.PlatformID)
+		if PlatformInfo and PlatformInfo[1] then
+			local TimeZone = PlatformInfo[1].TimeZone
+			if TimeZone ~= 0 then
+				NewOptions.Date = os.date("%Y-%m-%d", GetTimeStamp(NewOptions.Date .. " 00:00:00") + TimeZone * 3600)
+			end
+		end
 		local Num = 0
 		local RegRes = PayDayStaticsData:GetStatics(NewOptions)
 		for _, Info in pairs(RegRes) do

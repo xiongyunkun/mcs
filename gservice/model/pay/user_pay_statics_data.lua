@@ -27,6 +27,9 @@ function Get(self, PlatformID, Options)
 	if Options.HostID and Options.HostID ~= "" then
 		Where = Where .. " and HostID = '" .. Options.HostID .. "'"
 	end
+	if Options.HostIDs and Options.HostIDs ~= "" then
+		Where = Where .. " and HostID in ('" .. table.concat(Options.HostIDs, "','") .. "')"
+	end
 	if Options.Name and Options.Name ~= "" then
 		Where = Where .. " and Name = '" .. Options.Name .. "'"
 	end

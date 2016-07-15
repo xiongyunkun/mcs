@@ -66,9 +66,10 @@ function PayData(self)
 		end
 		
 	end
-	Titles = {"时间", "平台", "服", "日活跃", 
-			"充值次数", "充值人数", "首充人数", "ARPU", 
-			"付费率", "日充值", "日消耗", "总存量","总充值", "总消耗",}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("日活跃"), 
+			Translate("充值次数"), Translate("充值人数"), Translate("首充人数"), Translate("ARPU"), 
+			Translate("付费率"), Translate("日充值"), Translate("日消耗"), Translate("总存量"),
+			Translate("总充值"), Translate("总消耗"),}
 	if Options.Submit == "导出" then
 		local ExcelStr = CommonFunc.ExportExcel("充值数据.xls", Titles, TableData)
 		ngx.say(ExcelStr)
@@ -77,9 +78,9 @@ function PayData(self)
 		--hicharts插件内容
 		Hicharts = {
 			["CssID"] = "container",
-			["Text"] = "充值数据表",
-			["Title"] = "日充值",
-			["SeriesName"] = "日充值：",
+			["Text"] = Translate("充值数据表"),
+			["Title"] = Translate("日充值"),
+			["SeriesName"] = Translate("日充值："),
 			["Timestamp"] = Timestamp,
 			["DateData"] = DateData, --时间数据
 			["TimeRange"] = TimeRange,
@@ -104,10 +105,10 @@ function RolePayRank(self)
 		{["Type"] = "Host",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"排名", "平台", "服", "账号", 
-			"角色", "累计充值", "累计次数", "昨充", 
-			"今充", "单次最少", "单次最多", "首充","首充时间",
-			"最后充", "最后充值时间"}
+	Titles = {Translate("排名"), Translate("平台"), Translate("服"), Translate("账号"), 
+			Translate("角色"), Translate("累计充值"), Translate("累计次数"), Translate("昨充"), 
+			Translate("今充"), Translate("单次最少"), Translate("单次最多"), Translate("首充"),Translate("首充时间"),
+			Translate("最后充"), Translate("最后充值时间")}
 	TableData = {}
 	if Options.PlatformID then		
 		local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
@@ -177,11 +178,11 @@ function RolePayStatics(self)
 		{["Type"] = "Platform",},
 		{["Type"] = "Host",},
 		{["Type"] = "Time",},
-		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {"全服数据", "新服数据"},},
+		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {Translate("全服数据"), Translate("新服数据")},},
 		{["Type"] = "Export",},
 	}
 	TableData = {}
-	Titles = {"平台", "服", "用户档次(元宝)", "帐号数", "占比"}
+	Titles = {Translate("平台"), Translate("服"), Translate("用户档次(元宝)"), Translate("帐号数"), Translate("占比")}
 	
 	if Options.PlatformID then
 		local ZoneMap = PayZoneStaticsData:GetZoneMap()
@@ -255,8 +256,9 @@ function PayVerify(self)
 		{["Type"] = "Export",},
 	}
 	if Options.PlatformID then
-		Titles = {"充值时间", "平台", "服名称", "订单号", "玩家角色ID", "玩家角色名","玩家平台账号",
-		"充值金额", "货币类型","所获钻石","充值状态"}
+		Titles = {Translate("充值时间"), Translate("平台"), Translate("服名称"), Translate("订单号"), Translate("玩家角色ID"),
+		 Translate("玩家角色名"),Translate("玩家平台账号"),
+		Translate("充值金额"), Translate("货币类型"),Translate("所获钻石"),Translate("充值状态")}
 		local ServerList = ServerData:GetAllServers()
 		local ServerMap = {}
 		for _, ServerInfo in ipairs(ServerList) do
@@ -287,7 +289,7 @@ function PayVerify(self)
 			table.insert(TData, PayOrderInfo.CashNum)
 			table.insert(TData, PayOrderInfo.Currency)
 			table.insert(TData, PayOrderInfo.Gold)
-			local StatusMap = {[-1] = "充值失败", [1] = "已充值",[0] = "已发送充值请求"}
+			local StatusMap = {[-1] = Translate("充值失败"), [1] = Translate("已充值"),[0] = Translate("已发送充值请求")}
 			table.insert(TData, StatusMap[PayOrderInfo.Status] )
 			table.insert(TableData, TData)
 		end
@@ -322,11 +324,11 @@ function VipStatics(self)
 		{["Type"] = "Time",},
 		{["Type"] = "Export",}
 	}
-	Titles = {"时间", "平台", "服", "VIP等级", "vip人数", "当前vip人数",
-		"VIP同级流失","同级流失率","总流失率","总人数"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("VIP等级"), Translate("vip人数"), Translate("当前vip人数"),
+		Translate("VIP同级流失"),Translate("同级流失率"),Translate("总流失率"),Translate("总人数")}
 	TitleTips = {}
-	TitleTips[5] = "当前VIP总人数(包括激活和非激活)"
-	TitleTips[6] = "当前激活的VIP人数"
+	TitleTips[5] = Translate("当前VIP总人数(包括激活和非激活)")
+	TitleTips[6] = Translate("当前激活的VIP人数")
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
@@ -395,9 +397,11 @@ function GoldConsume(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"货币类型", "渠道", "相关系统", "物品名称", "物品数量", "元宝消耗值", "占比", "消费人数", "消费次数"}
+	Titles = {Translate("货币类型"), Translate("渠道"), Translate("相关系统"), Translate("物品名称"), 
+		Translate("物品数量"), Translate("元宝消耗值"), Translate("占比"), Translate("消费人数"), 
+			Translate("消费次数")}
 
-	local Channels = {"VIP购买","众神之门","魔法炼金", "快速扫荡","宠物购买",}
+	local Channels = {Translate("VIP购买"),Translate("众神之门"),Translate("魔法炼金"), Translate("快速扫荡"),Translate("宠物购买"),}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
@@ -467,7 +471,7 @@ function GoldGenerate(self)
 	Platforms = CommonFunc.GetPlatformList()
 	Servers = CommonFunc.GetServers(Options.PlatformID)
 	local GoldTypes = CommonData.GoldTypeNames
-	local TGoldTypes = {[""] = "全部",}
+	local TGoldTypes = {[""] = Translate("全部"),}
 	for ID, GoldName in pairs(GoldTypes) do
 		TGoldTypes[tostring(ID)] = GoldName
 	end
@@ -481,7 +485,8 @@ function GoldGenerate(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"平台", "服", "货币", "渠道", "相关系统", "物品名称", "物品数量",  "元宝产出量","占比"}
+	Titles = {Translate("平台"), Translate("服"), Translate("货币"), Translate("渠道"), Translate("相关系统"), 
+			Translate("物品名称"), Translate("物品数量"),  Translate("元宝产出量"),Translate("占比")}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
@@ -543,10 +548,12 @@ function PayFrequencyShow(self)
 		{["Type"] = "Host",},
 		{["Type"] = "StartTime",},
 		{["Type"] = "EndTime",},
-		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {"全服数据", "新服数据"},},
+		{["Type"] = "Select", ["Label"] = "服类型", ["Name"] = "ServerType", ["Values"] = {Translate("全服数据"), Translate("新服数据")},},
 		{["Type"] = "Export",},
 	}
-	Titles = {"时间","平台", "服", "充值人数","1次","2次","3次","4次","5次","6-10","11-20","20次以上"}
+	Titles = {Translate("时间"),Translate("平台"), Translate("服"), Translate("充值人数"),Translate("1次"),
+			Translate("2次"),Translate("3次"),Translate("4次"),Translate("5次"),Translate("6-10"),
+			Translate("11-20"),Translate("20次以上")}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"
@@ -599,7 +606,9 @@ function GoldAccumulate(self)
 		{["Type"] = "EndTime",},
 		{["Type"] = "Export",},
 	}
-	Titles = {"时间", "平台", "服", "充值钻石数", "消费非绑定钻石数", "消费绑定钻石数", "非绑定钻石囤积", "绑定钻石囤积"}
+	Titles = {Translate("时间"), Translate("平台"), Translate("服"), Translate("充值钻石数"), 
+			Translate("消费非绑定钻石数"), Translate("消费绑定钻石数"), Translate("非绑定钻石囤积"), 
+				Translate("绑定钻石囤积")}
 	TableData = {}
 	local PlatformStr = Options.PlatformID and Platforms[Options.PlatformID] or "all"
 	local HostStr = Options.HostID and Servers[tonumber(Options.HostID)] or "all"

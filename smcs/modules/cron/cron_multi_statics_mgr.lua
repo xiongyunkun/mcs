@@ -79,7 +79,7 @@ function GetServerStatusMap(self)
 end
 
 function CronExecute(self)
-	local ServerPlatformMap = ServerData:GetStaticsServers()
+	local ServerPlatformMap = ServerData:GetStaticsServers(true)
 	local ServerStatusMap = self:GetServerStatusMap()
 	--local SubRequestList = {} --子请求列表
 	local ThreadList = {} -- 线程列表

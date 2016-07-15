@@ -273,7 +273,7 @@ function PlayerGMEdit(self)
 		local UserOptions = {
 			PlatformID = Args.PlatformID,
 			HostID = Args.HostID,
-			Name = Args.RoleName,
+			RealName = Args.RoleName,
 		}
 		local UserList = UserInfoData:Get(UserOptions)
 		if not UserList or #UserList == 0 then

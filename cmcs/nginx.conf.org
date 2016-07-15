@@ -1,7 +1,7 @@
 
 #user zork zork;
 #user  nobody;
-worker_processes  1;
+worker_processes  2;
 
 #error_log  logs/error.log;
 #error_log  logs/error.log  notice;
@@ -34,7 +34,7 @@ http {
 
     #gzip  on;
     lua_code_cache off;
-    resolver 114.114.114.114;
+    resolver 114.114.114.114 114.114.114.115;
 
     include $workpath$/cmcs.conf;
 #    server {

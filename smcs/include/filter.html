@@ -1,36 +1,36 @@
 <form class="search-box form-inline" method="GET" action="">
 #for _, Filter in ipairs(Filters) do
 #if Filter.Type == "Platform" then
-	<label>平台名称：</label>	
+	<label>$Translate("平台名称")$：</label>	
 	<select name="PlatformID" class="chosen-select platformID" tabindex="2" data-placeholder="选择平台">
-		<option value="">全部</option>
+		<option value="">$Translate("全部")$</option>
 #for ID,Platform in pairs(Platforms) do
-		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Platform$</option>
+		<option value="$ID$" $Options.PlatformID and Options.PlatformID==ID and "selected" or ""$>$Translate(Platform)$</option>
 #end
 	</select>
 #end
 #if Filter.Type == "Host" then
-	<label>服名称：</label>	
-	<select name="HostID" class="chosen-select hostID" tabindex="2" $Filter.Multiple and "multiple" or ""$  data-placeholder="选择服">
-		<option value="">全部</option>
+	<label>$Translate("服名称")$：</label>	
+	<select name="HostID" class="chosen-select hostID" tabindex="2" $Filter.Multiple and "multiple" or ""$  data-placeholder="$Translate("选择服")$">
+		<option value="">$Translate("全部")$</option>
 #for ID,ServerName in pairs(Servers) do
 		<option value="$ID$" 
 			$Options.HostID and ((Options.HostID==tostring(ID)) or (type(Options.HostID) == "table" and table.member_key(Options.HostID, tostring(ID)))) and "selected" or ""$>
-			$ServerName$
+			$Translate(ServerName)$
 		</option>
 #end
 	</select>
 #end
 #if Filter.Type == "Time" then
-	<label>查询时间：</label>
+	<label>$Translate("查询时间")$：</label>
 	<input type="text" value="$Options.Time$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="Time">
 #end
 #if Filter.Type == "StartTime" then
-	<label>$Filter.Label or "开始时间"$：</label>
+	<label>$Translate(Filter.Label or "开始时间")$：</label>
 	<input type="text" value="$Options.StartTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="$Filter.Name or 'StartTime'$">
 #end
 #if Filter.Type == "EndTime" then	
-	<label>$Filter.Label or "结束时间"$：</label>
+	<label>$Translate(Filter.Label or "结束时间")$：</label>
 	<input type="text" value="$Options.EndTime$" onclick="WdatePicker({firstDayOfWeek:1,dateFmt:'$Filter.Format or "yyyy-MM-dd"$', maxDate:'2050-12'})" name="$Filter.Name or 'EndTime'$">
 #end
 #if Filter.Type == "<br>" then
@@ -47,7 +47,7 @@
 	</label>
 #end
 #if Filter.Type == "label" then
-	<label style="$Filter.Style or ""$">$Filter.Text$</label>
+	<label style="$Filter.Style or ""$">$Translate(Filter.Text)$</label>
 #end	
 #if Filter.Type == "radio" then
 #for ID,Radio in pairs(Filter.Values) do
@@ -57,17 +57,17 @@
 #end	
 #end
 #if Filter.Type == "Select" then
-	<label>$Filter.Label$：</label>	
-	<select name="$Filter.Name$">
+	<label>$Translate(Filter.Label)$：</label>	
+	<select name="$Translate(Filter.Name)$">
 #for ID,Value in pairs(Filter.Values) do
-		<option value="$ID$" $Options[Filter.Name] and Options[Filter.Name]==tostring(ID) and "selected" or ""$>$Value$</option>
+		<option value="$ID$" $Options[Filter.Name] and Options[Filter.Name]==tostring(ID) and "selected" or ""$>$Translate(Value)$</option>
 #end
 	</select>
 #end
 #end
-	<input type="submit" name="Submit" class="submit_btn" value="查询">
+	<input type="submit" name="Submit" class="submit_btn" value="$Translate('查询')$">
 #if Filters[#Filters].Type == "Export" then
-	<input type="submit" name="Submit" class="submit_btn" value="导出">
+	<input type="submit" name="Submit" class="submit_btn" value="$Translate('导出')$">
 #end	
 </form>
  <script language="JavaScript">

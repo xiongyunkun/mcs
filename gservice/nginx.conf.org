@@ -1,5 +1,5 @@
 #user  nobody;
-worker_processes  1;
+worker_processes  8;
 
 #error_log  logs/error.log;
 #error_log  logs/error.log  notice;
@@ -29,10 +29,11 @@ http {
 
     #keepalive_timeout  0;
     keepalive_timeout  65;
+    port_in_redirect off;
 
     #gzip  on;
-    lua_code_cache off;
-    resolver 8.8.8.8;
+    lua_code_cache on;
+    resolver 114.114.114.114 114.114.114.115;
 
     include $workpath$/gservice.conf;
 }

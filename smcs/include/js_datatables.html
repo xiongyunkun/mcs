@@ -4,20 +4,20 @@
 	$(".help").qtip();
 	$('#'+dtID).dataTable({
 			"oLanguage":{
-				"sProcessing":   "处理中...",
-				"sLengthMenu":   "显示 _MENU_ 项结果",
-				"sZeroRecords":  "没有匹配结果",
-				"sInfo":         "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
-				"sInfoEmpty":    "显示第 0 至 0 项结果，共 0 项",
-				"sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+				"sProcessing":   "$Translate('处理中...')$",
+				"sLengthMenu":   "$Translate('显示 _MENU_ 项结果')$",
+				"sZeroRecords":  "$Translate('没有匹配结果')$",
+				"sInfo":         "$Translate('显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项')$",
+				"sInfoEmpty":    "$Translate('显示第 0 至 0 项结果，共 0 项')$",
+				"sInfoFiltered": "$Translate('(由 _MAX_ 项结果过滤)')$",
 				"sInfoPostFix":  "",
-				"sSearch":       "搜索:",
+				"sSearch":       "$Translate('搜索:')$",
 				"sUrl":          "",
 				"oPaginate": {
-				"sFirst":    "首页",
-				"sPrevious": "上一页",
-				"sNext":     "下一页",
-				"sLast":     "末页"
+				"sFirst":    "$Translate('首页')$",
+				"sPrevious": "$Translate('上一页')$",
+				"sNext":     "$Translate('下一页')$",
+				"sLast":     "$Translate('末页')$"
 				}
 			},
 		"paging": $DataTable.NoDivPage and 'false' or 'true'$, //是否分页

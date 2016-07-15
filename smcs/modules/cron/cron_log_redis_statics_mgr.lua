@@ -61,7 +61,7 @@ return Result
 ]]
 
 function CronExecute(self)
-	local ServerPlatformMap = ServerData:GetStaticsServers() --统计服列表
+	local ServerPlatformMap = ServerData:GetStaticsServers(true) --统计服列表
 	for _, Conf in ipairs(CronModule) do
 		local Name, File = unpack(Conf)
 		local Module = self[Name]

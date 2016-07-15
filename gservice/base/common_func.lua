@@ -129,6 +129,57 @@ function IsStrEmpty(Str)
 	return not Str or Str == ""
 end
 
+--从合服服务器列表中查询玩家信息，可能有多个玩家账号
+function GetUserInfoFromMerge(PlatformID, HostID, SearchKey, SearchValue)
+	local UserInfo = {}
+	local ToHostID = GetToHostID(HostID) --目标服
+	local SrcHostIDs = GetSrcHostIDs(ToHostID) --源服列表
+	--判断玩家账号是否存在,先到数据库中查询玩家信息
+	local Res = PlayerInfoData:Get({
+		["PlatformID"] = PlatformID, 
+		[SearchKey] = SearchValue, 
+		["HostIDs"] = table.concat( SrcHostIDs, "','"),
+	})
+	if not Res or #Res == 0 then
+		--再去对应服查询该玩家信息
+		UserInfo = CommonFunc.GetUserInfoFromCmcs(HostID, SearchKey, SearchValue)
+	else
+		UserInfo = Res[1]
+	end
+	return UserInfo
+end
+
+--从数据库中查询玩家信息，因为涉及到合服，可能会有多个玩家账号
+function GetUserInfoFromDB(PlatformID, HostID, SearchKey, SearchValue)
+	local ToHostID = GetToHostID(HostID) --目标服
+	local SrcHostIDs = GetSrcHostIDs(ToHostID) --源服列表
+	--判断玩家账号是否存在,先到数据库中查询玩家信息
+	local Res = PlayerInfoData:Get({
+		["PlatformID"] = PlatformID, 
+		[SearchKey] = SearchValue, 
+		["HostIDs"] = table.concat( SrcHostIDs, "','"),
+	})
+	return Res
+end
+
+--查询玩家信息
+function GetUserInfo(PlatformID, HostID, SearchKey, SearchValue)
+	local UserInfo = {}
+	--判断玩家账号是否存在,先到数据库中查询玩家信息
+	local Res = PlayerInfoData:Get({
+		["PlatformID"] = PlatformID, 
+		[SearchKey] = SearchValue, 
+		["HostID"] = HostID,
+	})
+	if not Res or #Res == 0 then
+		--再去对应服查询该玩家信息
+		UserInfo = CommonFunc.GetUserInfoFromCmcs(HostID, SearchKey, SearchValue)
+	else
+		UserInfo = Res[1]
+	end
+	return UserInfo
+end
+
 --调用cmcs端通过查询登陆日志获得玩家信息,适用于UserInfoData中查询不到玩家的情况
 --param: HostID:服ID， SearchKey:查找字段(Uid, Urs), Value:字段值，需要转换为string类型
 function GetUserInfoFromCmcs(HostID, SearchKey, Value)
@@ -204,30 +255,87 @@ end
 
 --获得平台账号，根据传递过来的平台账号然后还得加上平台ID
 function GetPlatformAccount(PlatformID, Account)
-	local NewAccount = ""
-	if PlatformID == "test" then
-		PlatformID = "" --如果是测试环境就为空字符串
+	if PlatformID ~= "test" and Account and Account ~= "" then
+		Account = PlatformID .. "_" .. Account
 	end
-	if Account and Account ~= "" then
-		NewAccount = PlatformID .. "_" .. Account
-	end
-	return NewAccount
+	return Account
 end
 
 --获得平台账号列表，前面加上平台ID前缀
 function GetPlatformAccounts(PlatformID, Accounts)
 	local NewAccounts = {}
-	if Accounts and Accounts ~= "" then
-		if PlatformID == "test" then
-			PlatformID = "" --如果是测试环境就为空字符串
-		end
+	if PlatformID ~= "test" and Accounts and Accounts ~= "" then
 		Accounts = string.split(Accounts, ",")
 		for _, Account in ipairs(Accounts) do
 			table.insert(NewAccounts, PlatformID .. "_" .. Account)
 		end
 	end
-	return table.concat( NewAccounts, ",")
+	return #NewAccounts > 0 and table.concat( NewAccounts, ",") or Accounts
 end
+
+--调用cmcs接口发送充值请求
+function SendPayRequest(Args)
+	--先获得服IP地址
+	local Result = -1
+	local Params = {
+		OrderID = Args.OrderID,
+		HostID = Args.HostID,
+		Uid = Args.Uid,
+		Name = ngx.escape_uri(Args.Name),
+		Urs = Args.Urs,
+		Gold = Args.Gold,
+		Time = Args.Time,
+	}
+	local Flag = false
+	local Response = nil
+	for X = 1, 3 do --默认调用三次，只要有一次成功则跳出循环
+		Flag, Response = ReqCmcsByServerId(tonumber(Args.HostID), "dopay", Params)
+		if Flag then
+			Result = tonumber(Response) or -1
+			break
+		end
+	end
+	return Result
+end
+
+--记录封禁日志
+function LogBan(PlatformID, HostID, Accounts, BanTime, OperationType, Operator, Reason)
+	local Accounts = string.split(Accounts, ",")
+	local NowTime = os.time()
+	local StartTime = os.date("%Y-%m-%d %H:%M:%S", NowTime)
+	local EndTime = NowTime + tonumber(BanTime)
+	EndTime = os.date("%Y-%m-%d %H:%M:%S", EndTime)
+	local Results = {}
+	for _, Account in ipairs(Accounts) do
+		--从数据库中查询获得该玩家信息
+		local Res = PlayerInfoData:Get({PlatformID = PlatformID, Urs = Account, HostID = HostID})
+		if Res and Res[1] then
+			local UserInfo = Res[1]
+			local Result = {
+				HostID = UserInfo.HostID,
+				Uid = UserInfo.Uid,
+				Name = UserInfo.Name,
+				Operator = Operator,
+				OperationType = OperationType,
+				BanStartTime = StartTime,
+				BanEndTime = EndTime,
+				Reason = Reason,
+				Time = StartTime,
+			}
+			table.insert(Results, Result)
+		end
+	end
+	if #Results > 0 then
+		BanLogData:BatchInsert(PlatformID, Results)
+	end
+end
+
+function GetMySqlTableDate(Time)
+	local Date = string.match(Time, "(%d%d%d%d%-%d%d%-%d%d)") --提取日期出来
+	Date = string.gsub(Date, "-","") --替换-
+	return Date
+end
+
 
 
  

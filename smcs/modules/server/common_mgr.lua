@@ -31,4 +31,11 @@ function GetJsonMergeServer(self)
 	ngx.say(JsonStr)
 end
 
+--设置语言
+function TransLanguage(self)
+	local Args = GetPostArgs()
+	SetLanguage(Args.Language)
+	ngx.print(1)
+end
+
 DoRequest(true)
